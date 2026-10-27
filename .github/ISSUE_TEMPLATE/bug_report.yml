@@ -1,0 +1,26 @@
+name: Rapport de bug
+description: Signaler un comportement inattendu
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Description
+      description: Décrivez le comportement observé et celui attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      description: Listez les étapes pour reproduire le problème.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environnement
+      description: Navigateur, OS, version ou commit concerné.
+    validations:
+      required: false
