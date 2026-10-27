@@ -23,7 +23,7 @@ export default defineConfig({
     },
     {
       name: 'tablet-chromium',
-      use: { ...devices['iPad Mini'] },
+      use: { ...devices['iPad Mini'], browserName: 'chromium' },
     },
   ],
   webServer: {
