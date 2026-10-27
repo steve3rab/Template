@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine AS build
+FROM node:22.12-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --no-audit --no-fund
+RUN npm install --global npm@10.9.4 && npm --version && npm install --no-audit --no-fund
 COPY . .
 RUN npm run check
 
