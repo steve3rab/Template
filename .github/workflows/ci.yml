@@ -19,7 +19,7 @@ jobs:
       - name: Pin npm to a stable version
         run: npm install --global npm@10.9.4
       - run: npm --version
-      - run: npm install --no-audit --no-fund
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
@@ -35,7 +35,7 @@ jobs:
       - name: Pin npm to a stable version
         run: npm install --global npm@10.9.4
       - run: npm --version
-      - run: npm install --no-audit --no-fund
+      - run: npm install --legacy-peer-deps --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
   docker:
