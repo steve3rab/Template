@@ -20,7 +20,7 @@ npm run lint            # ESLint
 npm run format:check    # Prettier
 npm run test            # tests unitaires / composants
 npm run test:coverage   # couverture avec seuils
-npm run test:e2e        # tests navigateur Playwright
+npm run test:e2e        # tests navigateur Chromium : desktop, mobile et tablette
 npm run build           # contrôle types + build production
 npm run check           # typecheck, lint, format, tests et build
 ```
@@ -29,6 +29,10 @@ Installer les navigateurs Playwright lors de la première utilisation E2E :
 ```bash
 npx playwright install chromium
 ```
+
+## Responsive et accessibilité
+
+La mise en page utilise des tailles fluides, des points de rupture progressifs, des zones tactiles adaptées, la prise en compte des préférences de réduction des animations et des polices système pour éviter une dépendance réseau à Google Fonts. Les scénarios E2E vérifient les formats desktop, mobile et tablette, ainsi que l'absence de débordement horizontal sur des largeurs de 320 à 1920 pixels. Ces tests complètent les essais réels sur appareils : ils ne remplacent pas les vérifications sur Safari/iOS, Android et les navigateurs cibles de la future application.
 
 ## Docker
 ```bash
@@ -57,13 +61,14 @@ e2e/                   # scénarios navigateur Playwright
 - **Architecture par fonctionnalité** : placer chaque domaine dans `src/features/<domaine>`, avec composants, modèles, services et tests. Éviter les imports circulaires.
 - **Frontières explicites** : isoler les accès réseau, la configuration et la validation des données externes. Ne jamais considérer les données serveur comme fiables sans validation.
 - **Sécurité** : pas de secrets dans le bundle client ; CSP et en-têtes HTTP via Nginx ; dépendances suivies par Dependabot ; permissions minimales dans la CI.
-- **Performance** : build optimisé, assets statiques cachables, découpage par route/feature lorsque nécessaire et mesure avant optimisation.
+- **Performance** : build optimisé, assets statiques cachables, pas de chargement obligatoire de polices tierces, découpage par route/feature lorsque nécessaire et mesure avant optimisation.
 - **Résilience** : tests des comportements critiques, endpoint de santé et échecs CI bloquants.
 
 ## Stratégie de tests
 - **Unitaires / composants** : Vitest, Testing Library et user-event.
 - **Couverture** : seuils initiaux de 80 % lignes/instructions/fonctions et 75 % branches.
-- **End-to-end** : Playwright sur Chromium, avec traces et captures sur échec.
+- **End-to-end** : Playwright sur Chromium desktop, mobile et tablette ; traces et captures sur échec.
+- **Responsive anti-régression** : viewport widths 320, 360, 375, 390, 430, 540, 640, 768, 820, 1024, 1280, 1440 et 1920 pixels.
 - **Anti-régression** : contrôles exécutés en CI sur pull requests et pushs vers `main`.
 
 ## Avant une mise en production réelle
