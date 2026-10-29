@@ -150,7 +150,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
       return reply.code(201).send({ user: publicUser(user) });
     } catch (error) {
       // A concurrent registration may win the unique-email race.
-      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'P2002') {
         return reply.code(400).send({ error: 'Unable to create account with these details.' });
       }
       throw error;
