@@ -21,10 +21,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
-        run: npm install
       - name: Apply Prettier
-        run: npm run format
+        run: npx --yes prettier@3.6.2 --write .
       - name: Commit formatting changes
         run: |
           if git diff --quiet; then
