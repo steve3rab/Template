@@ -1,4 +1,4 @@
-import { useTranslation, translations } from '../shared/i18n';
+import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
 import { useState } from 'react';
 
@@ -21,7 +21,7 @@ export function App() {
                 type="button"
                 key={option}
                 aria-pressed={language === option}
-                aria-label={translations[language].languageNames[option]}
+                aria-label={option === 'fr' ? 'French' : 'English'}
                 onClick={() => setLanguage(option)}
               >
                 {option.toUpperCase()}
