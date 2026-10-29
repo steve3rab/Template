@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --global npm@10.9.4 && npm --version && npm install --legacy-peer-deps --no-audit --no-fund
 COPY . .
+RUN npm run db:generate
 RUN npm run check
 
 FROM nginxinc/nginx-unprivileged:1.28-alpine AS runtime
