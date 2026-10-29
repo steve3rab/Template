@@ -25,6 +25,7 @@ do {
     Write-Host '  7. Exécuter tous les contrôles qualité'
     Write-Host '  8. Construire l’image Docker'
     Write-Host '  9. Nettoyer les fichiers générés'
+    Write-Host ' 10. Prévisualiser le build de production'
     Write-Host '  0. Quitter'
     Write-Host ''
 
@@ -40,6 +41,7 @@ do {
             '7' { Invoke-Script 'check.ps1' }
             '8' { Invoke-Script 'docker.ps1' @('-Action', 'Build') }
             '9' { Invoke-Script 'clean.ps1' }
+            '10' { Invoke-Script 'preview.ps1' }
             '0' { break }
             default { Write-Warning 'Choix non reconnu.' }
         }
