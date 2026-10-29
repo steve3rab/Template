@@ -95,9 +95,14 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   app.addHook('onRequest', async (request, reply) => {
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return;
     const origin = request.headers.origin;
-    if (origin && origin !== allowedOrigin) {
+    if (origin !== allowedOrigin) {
       return reply.code(403).send({ error: 'Forbidden origin' });
     }
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    request.log.error(error);
+    return reply.code(500).send({ error: 'Internal server error.' });
   });
 
   app.get('/api/health', async () => ({ status: 'ok' }));
@@ -115,7 +120,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
 
     const existing = await prisma.user.findUnique({ where: { email: credentials.email } });
     if (existing) {
-      return reply.code(409).send({ error: 'Unable to create account with these details.' });
+      return reply.code(400).send({ error: 'Unable to create account with these details.' });
     }
 
     const passwordHash = await argon2.hash(credentials.password, { type: argon2.argon2id });
