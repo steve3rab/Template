@@ -10,7 +10,7 @@ Assert-DependenciesInstalled
 
 if ($E2E) {
     if ($InstallBrowser) {
-        Invoke-Npm -Arguments @('exec', 'playwright', 'install', 'chromium')
+        Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
     }
     Invoke-Npm -Arguments @('run', 'test:e2e')
 }
