@@ -1,6 +1,7 @@
+import { useState } from 'react';
+import { AuthPanel } from '../features/auth/AuthPanel';
 import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
-import { useState } from 'react';
 
 export function App() {
   const [count, setCount] = useState<number>(0);
@@ -49,6 +50,7 @@ export function App() {
             {t('increment')} <span aria-hidden="true">↗</span>
           </button>
         </div>
+        <AuthPanel language={language} />
         <div className="next-steps">
           <div className="step-number" aria-hidden="true">01</div>
           <div>
@@ -61,7 +63,7 @@ export function App() {
         </div>
       </section>
       <footer className="footer">
-        <span>React · TypeScript · Vite</span>
+        <span>React · TypeScript · Fastify · Prisma · SQLite</span>
         <span>{t('footerQuality')}</span>
       </footer>
     </main>
