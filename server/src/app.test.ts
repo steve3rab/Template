@@ -246,6 +246,16 @@ describe('authentication API', () => {
     expect(foreignOrigin.statusCode).toBe(403);
   });
 
+  it('rate limits repeated registration attempts', async () => {
+    const responses = await Promise.all(Array.from({ length: 6 }, () => app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      headers: validHeaders,
+      payload: { email: 'invalid', password: 'too-short' },
+    })));
+    expect(responses[5]?.statusCode).toBe(429);
+  });
+
   it('does not reveal internal exception details to API clients', async () => {
     store.prisma.user.findUnique = vi.fn(async () => {
       throw new Error('database-secret-detail');
