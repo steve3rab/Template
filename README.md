@@ -30,6 +30,54 @@ Installer les navigateurs Playwright lors de la première utilisation E2E :
 npx playwright install chromium
 ```
 
+## Scripts PowerShell (Windows)
+
+Les scripts du dossier `scripts/` simplifient les tâches courantes. Depuis la racine du dépôt, ouvrez PowerShell et lancez :
+
+```powershell
+# Si nécessaire, autoriser les scripts pour cette session uniquement
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Installer les dépendances
+.\scripts\setup.ps1
+
+# Démarrer le serveur de développement
+.\scripts\dev.ps1
+
+# Construire l'application pour la production
+.\scripts\build.ps1
+
+# Exécuter les tests unitaires, avec couverture ou E2E
+.\scripts\test.ps1
+.\scripts\test.ps1 -Coverage
+.\scripts\test.ps1 -E2E -InstallBrowser
+
+# Exécuter les contrôles qualité (types, lint, format, tests et build)
+.\scripts\check.ps1
+
+# Construire puis prévisualiser le build
+.\scripts\build.ps1 -Preview
+
+# Construire une image Docker, puis la lancer dans un autre terminal
+.\scripts\docker.ps1 -Action Build
+.\scripts\docker.ps1 -Action Run
+
+# Nettoyer les fichiers générés ; ajouter -Dependencies pour supprimer node_modules
+.\scripts\clean.ps1
+.\scripts\clean.ps1 -Dependencies
+```
+
+Pour ouvrir le menu interactif regroupant les commandes, exécutez `.\scripts\menu.ps1`.
+
+Options utiles :
+- `.\scripts\dev.ps1 -Port 3000` choisit un autre port pour le serveur de développement.
+- `.\scripts\dev.ps1 -Expose` rend le serveur accessible depuis le réseau local.
+- `.\scripts\build.ps1 -Preview -Port 5000` prévisualise le build sur un autre port.
+- `.\scripts\docker.ps1 -Action Stop` arrête le conteneur nommé `template-react-local`.
+- `.\scripts\docker.ps1 -Action Logs` suit ses journaux.
+
+Les commandes Docker nécessitent Docker Desktop (ou un moteur Docker compatible). Les scripts utilisent les commandes npm déjà définies dans `package.json` et s'arrêtent lorsqu'une commande échoue.
+
 ## Docker
 ```bash
 docker build -t template-react .
