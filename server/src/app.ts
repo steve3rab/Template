@@ -4,7 +4,7 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyError, type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { z } from 'zod';
@@ -118,7 +118,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     }
   });
 
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: FastifyError, request, reply) => {
     const statusCode = error.statusCode && error.statusCode >= 400 && error.statusCode < 500
       ? error.statusCode
       : 500;
