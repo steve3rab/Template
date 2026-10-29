@@ -31,7 +31,7 @@ Pour démarrer séparément :
 - Validation d'entrée avec Zod, limitation de débit sur les routes d'authentification, CORS limité à l'origine configurée et vérification de l'origine des requêtes mutantes.
 - Routes : `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
 
-Les réponses d'authentification ne révèlent pas si un e-mail existe déjà. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. Les flux de réinitialisation de mot de passe, vérification d'e-mail, MFA et gestion des rôles métier restent à ajouter selon les besoins du produit.
+Le refus d'inscription pour une adresse déjà utilisée utilise un message générique, mais la différence entre création réussie et refus peut encore permettre l'énumération d'adresses. Pour un produit public, ajoutez une vérification d'e-mail avec réponse uniforme. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. Les flux de réinitialisation de mot de passe, vérification d'e-mail, MFA et gestion des rôles métier restent à ajouter selon les besoins du produit.
 
 ## Base de données Prisma + SQLite
 
@@ -50,6 +50,8 @@ npm run db:deploy
 SQLite convient au développement et aux déploiements simples sur disque persistant. Pour une API multi-instance ou une forte concurrence d'écritures, préférez PostgreSQL et configurez le provider Prisma correspondant ; le code d'accès aux données reste isolé dans Prisma.
 
 ## Contrôles qualité
+
+Les tests couvrent les scénarios d'API (inscription, connexion, déconnexion, expiration de session, validation, cookies, origine, limitation de débit et erreurs internes) ainsi que les interactions du formulaire frontend. Les tests API utilisent un faux dépôt Prisma pour rester rapides et déterministes ; ajoutez en complément des tests d'intégration contre une base SQLite temporaire avant les déploiements majeurs.
 
 ```bash
 npm run typecheck
@@ -103,4 +105,4 @@ scripts/                 # commandes PowerShell
 ```
 
 ## Sécurité et production
-Le projet fournit une base sécurisée, pas une certification de sécurité. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.
+Le projet fournit une base sécurisée, pas une certification de sécurité. Les limites à traiter avant une exposition publique sont : vérification/récupération d'e-mail, MFA si le risque le justifie, autorisations métier explicites, limitation de débit distribuée (le stockage mémoire est local à chaque instance), journalisation/alerting, sauvegardes et tests de charge. En production, `APP_ORIGIN` doit être une origine HTTPS exacte et `SESSION_SECRET` doit être un secret aléatoire d'au moins 32 caractères. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.
