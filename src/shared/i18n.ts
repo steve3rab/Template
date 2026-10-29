@@ -40,7 +40,9 @@ export const translations = {
 } as const;
 
 export type Language = keyof typeof translations;
-export type TranslationKey = keyof typeof translations.fr;
+export type TranslationKey = {
+  [Key in keyof typeof translations.fr]: (typeof translations.fr)[Key] extends string ? Key : never;
+}[keyof typeof translations.fr];
 
 const STORAGE_KEY = 'template-react-language';
 
