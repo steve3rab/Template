@@ -63,7 +63,7 @@ async function currentUser(request: FastifyRequest, prisma: PrismaClient) {
   });
   if (!session) return null;
   if (session.expiresAt.getTime() <= Date.now()) {
-    await prisma.session.delete({ where: { id: session.id } });
+    await prisma.session.deleteMany({ where: { id: session.id } });
     return null;
   }
   return session.user;
@@ -80,7 +80,19 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     bodyLimit: 16 * 1024,
   });
 
-  const allowedOrigin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+  const allowedOrigin = process.env.APP_ORIGIN ?? (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
+  let parsedOrigin: URL;
+  try {
+    parsedOrigin = new URL(allowedOrigin);
+  } catch {
+    throw new Error('APP_ORIGIN must be configured as an absolute origin URL.');
+  }
+  if (!allowedOrigin || parsedOrigin.origin !== allowedOrigin || parsedOrigin.username || parsedOrigin.password) {
+    throw new Error('APP_ORIGIN must contain only the frontend origin, without a path or credentials.');
+  }
+  if (process.env.NODE_ENV === 'production' && parsedOrigin.protocol !== 'https:') {
+    throw new Error('APP_ORIGIN must use HTTPS in production.');
+  }
 
   await app.register(helmet, {
     contentSecurityPolicy: {
