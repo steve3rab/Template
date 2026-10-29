@@ -5,7 +5,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
-import { PrismaClient, type User } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { z } from 'zod';
 
 const SESSION_COOKIE = 'template_session';
@@ -133,7 +134,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     } catch (error) {
       // A concurrent registration may win the unique-email race.
       if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
-        return reply.code(409).send({ error: 'Unable to create account with these details.' });
+        return reply.code(400).send({ error: 'Unable to create account with these details.' });
       }
       throw error;
     }
