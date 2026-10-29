@@ -7,3 +7,4 @@ dist/
 coverage/
 .vscode/
 .idea/
+\nserver/dist/\nserver/prisma/*.db\nserver/prisma/*.db-journal\n
