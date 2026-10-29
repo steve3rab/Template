@@ -69,7 +69,8 @@ describe('AuthPanel', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.getByText('test@example.com')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Sign out' }).catch?.(() => null));
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
   });
 
   it('switches to sign-in mode and submits login credentials', async () => {
