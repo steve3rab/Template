@@ -11,6 +11,10 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./dev.db
+      APP_ORIGIN: http://localhost:5173
+      SESSION_SECRET: ci-only-secret-that-is-long-enough-for-tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,11 +24,14 @@ jobs:
         run: npm install --global npm@10.9.4
       - run: npm --version
       - run: npm install --legacy-peer-deps --no-audit --no-fund
+      - run: npm run db:generate
+      - run: npm run db:deploy
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
       - run: npm run test:coverage
       - run: npm run build
+      - run: npm run build:server
   e2e:
     runs-on: ubuntu-latest
     steps:
