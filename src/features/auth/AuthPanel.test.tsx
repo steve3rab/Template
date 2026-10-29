@@ -54,6 +54,45 @@ describe('AuthPanel', () => {
     }));
   });
 
+  it('allows sign-in and restores an existing session', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(true, { user: registeredUser }))
+      .mockResolvedValueOnce(response(false, { error: 'Temporary failure.' }, 500))
+      .mockResolvedValueOnce(response(true, { user: registeredUser }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="en" />);
+    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
+    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Sign out' }).catch?.(() => null));
+  });
+
+  it('switches to sign-in mode and submits login credentials', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(false))
+      .mockResolvedValueOnce(response(true, { user: registeredUser }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="en" />);
+    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /already registered/i }));
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'correct-horse-battery');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/auth/login', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ email: 'test@example.com', password: 'correct-horse-battery' }),
+    }));
+  });
+
   it('shows a useful message when the API rejects registration', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn()
