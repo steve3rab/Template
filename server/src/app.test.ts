@@ -1,4 +1,5 @@
 // @vitest-environment node
+import type { OutgoingHttpHeaders } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -110,10 +111,10 @@ async function register(email = 'test@example.com', password = 'correct-horse-ba
   });
 }
 
-function sessionCookie(response: { headers: Record<string, string | string[] | undefined> }) {
+function sessionCookie(response: { headers: OutgoingHttpHeaders }) {
   const value = response.headers['set-cookie'];
   const cookie = Array.isArray(value) ? value[0] : value;
-  const match = cookie?.match(/template_session=([^;]+)/);
+  const match = typeof cookie === 'string' ? cookie.match(/template_session=([^;]+)/) : null;
   if (!match?.[1]) throw new Error('Expected a session cookie');
   return `template_session=${match[1]}`;
 }
