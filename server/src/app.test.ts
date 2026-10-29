@@ -27,8 +27,9 @@ function makePrisma() {
 
   const prisma = {
     user: {
-      findUnique: vi.fn(async ({ where }: { where: { email: string } }) =>
-        [...users.values()].find((user) => user.email === where.email) ?? null,
+      findUnique: vi.fn(
+        async ({ where }: { where: { email: string } }) =>
+          [...users.values()].find((user) => user.email === where.email) ?? null,
       ),
       create: vi.fn(async ({ data }: { data: { email: string; passwordHash: string } }) => {
         if ([...users.values()].some((user) => user.email === data.email)) {
@@ -56,18 +57,23 @@ function makePrisma() {
         sessions.set(session.tokenHash, session);
         return session;
       }),
-      findUnique: vi.fn(async ({ where, include }: {
-        where: { tokenHash: string };
-        include?: { user?: boolean };
-      }) => {
-        const session = sessions.get(where.tokenHash);
-        if (!session) return null;
-        if (include?.user) {
-          const user = users.get(session.userId);
-          return user ? { ...session, user } : null;
-        }
-        return session;
-      }),
+      findUnique: vi.fn(
+        async ({
+          where,
+          include,
+        }: {
+          where: { tokenHash: string };
+          include?: { user?: boolean };
+        }) => {
+          const session = sessions.get(where.tokenHash);
+          if (!session) return null;
+          if (include?.user) {
+            const user = users.get(session.userId);
+            return user ? { ...session, user } : null;
+          }
+          return session;
+        },
+      ),
       delete: vi.fn(async ({ where }: { where: { id: string } }) => {
         for (const [key, session] of sessions.entries()) {
           if (session.id === where.id) sessions.delete(key);
@@ -77,7 +83,10 @@ function makePrisma() {
       deleteMany: vi.fn(async ({ where }: { where: { tokenHash?: string; id?: string } }) => {
         let count = 0;
         for (const [key, session] of sessions.entries()) {
-          if ((where.tokenHash && key === where.tokenHash) || (where.id && session.id === where.id)) {
+          if (
+            (where.tokenHash && key === where.tokenHash) ||
+            (where.id && session.id === where.id)
+          ) {
             sessions.delete(key);
             count += 1;
           }
@@ -248,12 +257,16 @@ describe('authentication API', () => {
   });
 
   it('rate limits repeated registration attempts', async () => {
-    const responses = await Promise.all(Array.from({ length: 6 }, () => app.inject({
-      method: 'POST',
-      url: '/api/auth/register',
-      headers: validHeaders,
-      payload: { email: 'invalid', password: 'too-short' },
-    })));
+    const responses = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        app.inject({
+          method: 'POST',
+          url: '/api/auth/register',
+          headers: validHeaders,
+          payload: { email: 'invalid', password: 'too-short' },
+        }),
+      ),
+    );
     expect(responses[5]?.statusCode).toBe(429);
   });
 

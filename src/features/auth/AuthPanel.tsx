@@ -32,7 +32,9 @@ export function AuthPanel({ language }: { language: Language }) {
       .finally(() => {
         if (active) setBusy(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [t.authError]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -85,12 +87,21 @@ export function AuthPanel({ language }: { language: Language }) {
         <h2 id="auth-title">{t.authTitle}</h2>
         <p>{t.authIntro}</p>
       </div>
-      {busy && !user ? <p role="status" className="auth-message">{t.authLoading}</p> : null}
+      {busy && !user ? (
+        <p role="status" className="auth-message">
+          {t.authLoading}
+        </p>
+      ) : null}
       {user ? (
         <div className="auth-profile">
           <p>{t.authWelcome}</p>
           <strong>{user.email}</strong>
-          <button className="primary-button" type="button" onClick={() => void logout()} disabled={busy}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => void logout()}
+            disabled={busy}
+          >
             {t.authLogout}
           </button>
         </div>
@@ -127,13 +138,23 @@ export function AuthPanel({ language }: { language: Language }) {
           <button
             className="auth-mode-button"
             type="button"
-            onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setMessage(''); }}
+            onClick={() => {
+              setMode(mode === 'register' ? 'login' : 'register');
+              setMessage('');
+            }}
           >
             {mode === 'register' ? t.authSwitchLogin : t.authSwitchRegister}
           </button>
         </form>
       )}
-      {message ? <p className={isError ? 'auth-message auth-error' : 'auth-message'} role={isError ? 'alert' : 'status'}>{message}</p> : null}
+      {message ? (
+        <p
+          className={isError ? 'auth-message auth-error' : 'auth-message'}
+          role={isError ? 'alert' : 'status'}
+        >
+          {message}
+        </p>
+      ) : null}
     </section>
   );
 }

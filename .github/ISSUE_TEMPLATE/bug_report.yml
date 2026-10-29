@@ -1,7 +1,7 @@
 name: Rapport de bug
 description: Signaler un comportement inattendu
-title: "[Bug]: "
-labels: ["bug"]
+title: '[Bug]: '
+labels: ['bug']
 body:
   - type: textarea
     id: summary

@@ -4,7 +4,12 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
-import Fastify, { type FastifyError, type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import Fastify, {
+  type FastifyError,
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+} from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { z } from 'zod';
@@ -14,7 +19,12 @@ const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const localSessionSecret = 'local-development-only-change-this-secret';
 
 const credentialsSchema = z.object({
-  email: z.string().trim().email().max(254).transform((email) => email.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .max(254)
+    .transform((email) => email.toLowerCase()),
   password: z.string().min(12).max(128),
 });
 
@@ -70,7 +80,10 @@ async function currentUser(request: FastifyRequest, prisma: PrismaClient) {
 }
 
 export async function createApp(prisma = new PrismaClient()): Promise<FastifyInstance> {
-  if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)
+  ) {
     throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
   }
 
@@ -80,15 +93,24 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     bodyLimit: 16 * 1024,
   });
 
-  const allowedOrigin = process.env.APP_ORIGIN ?? (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
+  const allowedOrigin =
+    process.env.APP_ORIGIN ??
+    (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
   let parsedOrigin: URL;
   try {
     parsedOrigin = new URL(allowedOrigin);
   } catch {
     throw new Error('APP_ORIGIN must be configured as an absolute origin URL.');
   }
-  if (!allowedOrigin || parsedOrigin.origin !== allowedOrigin || parsedOrigin.username || parsedOrigin.password) {
-    throw new Error('APP_ORIGIN must contain only the frontend origin, without a path or credentials.');
+  if (
+    !allowedOrigin ||
+    parsedOrigin.origin !== allowedOrigin ||
+    parsedOrigin.username ||
+    parsedOrigin.password
+  ) {
+    throw new Error(
+      'APP_ORIGIN must contain only the frontend origin, without a path or credentials.',
+    );
   }
   if (process.env.NODE_ENV === 'production' && parsedOrigin.protocol !== 'https:') {
     throw new Error('APP_ORIGIN must use HTTPS in production.');
@@ -119,9 +141,10 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   });
 
   app.setErrorHandler((error: FastifyError, request, reply) => {
-    const statusCode = error.statusCode && error.statusCode >= 400 && error.statusCode < 500
-      ? error.statusCode
-      : 500;
+    const statusCode =
+      error.statusCode && error.statusCode >= 400 && error.statusCode < 500
+        ? error.statusCode
+        : 500;
     if (statusCode === 500) request.log.error(error);
     return reply.code(statusCode).send({
       error: statusCode < 500 ? 'Invalid request.' : 'Internal server error.',
@@ -130,54 +153,67 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
 
   app.get('/api/health', async () => ({ status: 'ok' }));
 
-  app.post('/api/auth/register', {
-    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
-  }, async (request, reply) => {
-    const credentials = parseCredentials(request.body);
-    if (!credentials) {
-      return reply.code(400).send({
-        error: 'Invalid input',
-        details: 'Provide a valid email and a password between 12 and 128 characters.',
-      });
-    }
-
-    const passwordHash = await argon2.hash(credentials.password, { type: argon2.argon2id });
-    try {
-      const user = await prisma.user.create({
-        data: { email: credentials.email, passwordHash },
-      });
-      await setSession(reply, prisma, user.id);
-      return reply.code(201).send({ user: publicUser(user) });
-    } catch (error) {
-      // A concurrent registration may win the unique-email race.
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: unknown }).code === 'P2002') {
-        return reply.code(400).send({ error: 'Unable to create account with these details.' });
+  app.post(
+    '/api/auth/register',
+    {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+    },
+    async (request, reply) => {
+      const credentials = parseCredentials(request.body);
+      if (!credentials) {
+        return reply.code(400).send({
+          error: 'Invalid input',
+          details: 'Provide a valid email and a password between 12 and 128 characters.',
+        });
       }
-      throw error;
-    }
-  });
 
-  app.post('/api/auth/login', {
-    config: { rateLimit: { max: 8, timeWindow: '1 minute' } },
-  }, async (request, reply) => {
-    const body = request.body;
-    const credentials = credentialsSchema.safeParse(body);
-    if (!credentials.success) {
-      return reply.code(400).send({ error: 'Invalid email or password.' });
-    }
+      const passwordHash = await argon2.hash(credentials.password, { type: argon2.argon2id });
+      try {
+        const user = await prisma.user.create({
+          data: { email: credentials.email, passwordHash },
+        });
+        await setSession(reply, prisma, user.id);
+        return reply.code(201).send({ user: publicUser(user) });
+      } catch (error) {
+        // A concurrent registration may win the unique-email race.
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          (error as { code?: unknown }).code === 'P2002'
+        ) {
+          return reply.code(400).send({ error: 'Unable to create account with these details.' });
+        }
+        throw error;
+      }
+    },
+  );
 
-    const user = await prisma.user.findUnique({ where: { email: credentials.data.email } });
-    const validPassword = user
-      ? await argon2.verify(user.passwordHash, credentials.data.password).catch(() => false)
-      : false;
+  app.post(
+    '/api/auth/login',
+    {
+      config: { rateLimit: { max: 8, timeWindow: '1 minute' } },
+    },
+    async (request, reply) => {
+      const body = request.body;
+      const credentials = credentialsSchema.safeParse(body);
+      if (!credentials.success) {
+        return reply.code(400).send({ error: 'Invalid email or password.' });
+      }
 
-    if (!user || !validPassword) {
-      return reply.code(401).send({ error: 'Invalid email or password.' });
-    }
+      const user = await prisma.user.findUnique({ where: { email: credentials.data.email } });
+      const validPassword = user
+        ? await argon2.verify(user.passwordHash, credentials.data.password).catch(() => false)
+        : false;
 
-    await setSession(reply, prisma, user.id);
-    return reply.send({ user: publicUser(user) });
-  });
+      if (!user || !validPassword) {
+        return reply.code(401).send({ error: 'Invalid email or password.' });
+      }
+
+      await setSession(reply, prisma, user.id);
+      return reply.send({ user: publicUser(user) });
+    },
+  );
 
   app.get('/api/auth/me', async (request, reply) => {
     const user = await currentUser(request, prisma);
@@ -190,8 +226,10 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     if (token) {
       await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
     }
-    return reply.clearCookie(SESSION_COOKIE, { path: '/api/auth', httpOnly: true, sameSite: 'lax' })
-      .code(204).send();
+    return reply
+      .clearCookie(SESSION_COOKIE, { path: '/api/auth', httpOnly: true, sameSite: 'lax' })
+      .code(204)
+      .send();
   });
 
   app.addHook('onClose', async () => prisma.$disconnect());

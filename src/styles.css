@@ -1,5 +1,12 @@
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   color: #e8edf5;
   background: #0b1020;
   font-synthesis: none;
@@ -57,8 +64,7 @@ a:focus-visible {
   overflow: clip;
   background:
     radial-gradient(ellipse at 82% 17%, rgba(92, 83, 220, 0.2), transparent 38%),
-    radial-gradient(ellipse at 13% 86%, rgba(25, 183, 166, 0.1), transparent 32%),
-    #0b1020;
+    radial-gradient(ellipse at 13% 86%, rgba(25, 183, 166, 0.1), transparent 32%), #0b1020;
 }
 
 .topbar,
@@ -208,7 +214,9 @@ h1 span {
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 160ms ease, transform 160ms ease;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
 }
 
 .primary-button:hover {
@@ -350,7 +358,6 @@ code {
   }
 }
 
-
 .topbar-actions {
   display: flex;
   align-items: center;
@@ -364,7 +371,7 @@ code {
   flex: 0 0 auto;
   gap: 3px;
   padding: 3px;
-  border: 1px solid rgba(190, 203, 229,  0.16);
+  border: 1px solid rgba(190, 203, 229, 0.16);
   border-radius: 10px;
   background: rgba(11, 16, 32, 0.65);
 }
@@ -385,7 +392,7 @@ code {
   cursor: pointer;
 }
 
-.language-button[aria-pressed="true"] {
+.language-button[aria-pressed='true'] {
   background: #a5b4fc;
   color: #141b32;
 }
@@ -411,7 +418,6 @@ code {
     justify-content: space-between;
   }
 }
-
 
 .auth-card {
   display: grid;

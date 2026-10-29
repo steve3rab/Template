@@ -11,7 +11,9 @@ export function App() {
     <main className="page-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label={t('home')}>
-          <span className="brand-mark" aria-hidden="true">R</span>
+          <span className="brand-mark" aria-hidden="true">
+            R
+          </span>
           <span>Template React</span>
         </a>
         <div className="topbar-actions">
@@ -37,22 +39,32 @@ export function App() {
       <section className="hero" aria-labelledby="page-title">
         <p className="eyebrow">{t('eyebrow')}</p>
         <h1 id="page-title">
-          {t('headingStart')}<br /><span>{t('headingEnd')}</span>
+          {t('headingStart')}
+          <br />
+          <span>{t('headingEnd')}</span>
         </h1>
         <p className="intro">{t('intro')}</p>
         <div className="demo-card">
           <div className="demo-card-copy">
             <span className="card-label">{t('counterLabel')}</span>
-            <p className="count-value" aria-live="polite" data-testid="counter-value">{count}</p>
+            <p className="count-value" aria-live="polite" data-testid="counter-value">
+              {count}
+            </p>
             <p className="count-description">{t('counterDescription')}</p>
           </div>
-          <button className="primary-button" type="button" onClick={() => setCount((value: number) => value + 1)}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => setCount((value: number) => value + 1)}
+          >
             {t('increment')} <span aria-hidden="true">↗</span>
           </button>
         </div>
         <AuthPanel language={language} />
         <div className="next-steps">
-          <div className="step-number" aria-hidden="true">01</div>
+          <div className="step-number" aria-hidden="true">
+            01
+          </div>
           <div>
             <h2>{t('nextTitle')}</h2>
             <p>

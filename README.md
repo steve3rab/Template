@@ -3,6 +3,7 @@
 Socle full-stack construit avec React, TypeScript strict, Vite, Fastify et Prisma. Le frontend utilise une API HTTP typée et un backend modulaire. SQLite est configuré pour le démarrage local ; Prisma permet d'évoluer vers PostgreSQL, MySQL et d'autres moteurs pris en charge en adaptant le provider et la migration.
 
 ## Prérequis
+
 - Node.js 22.12+
 - npm 10.9+
 - Docker (optionnel)
@@ -18,12 +19,14 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 Le frontend est disponible sur http://localhost:5173 et l'API sur http://localhost:3001. Le proxy Vite transmet automatiquement les requêtes `/api` vers le backend.
 
 Pour démarrer séparément :
+
 ```powershell
 .\scripts\dev.ps1
 .\scripts\backend.ps1
 ```
 
 ## Authentification
+
 - Inscription et connexion par e-mail/mot de passe.
 - Mots de passe hachés avec Argon2id ; aucun mot de passe en clair n'est stocké.
 - Sessions opaques persistées en base, jetons stockés sous forme de hash.
@@ -66,6 +69,7 @@ npm run check
 ```
 
 Installer les navigateurs Playwright lors de la première utilisation E2E :
+
 ```bash
 npx playwright install chromium
 ```
@@ -105,4 +109,5 @@ scripts/                 # commandes PowerShell
 ```
 
 ## Sécurité et production
+
 Le projet fournit une base sécurisée, pas une certification de sécurité. Les limites à traiter avant une exposition publique sont : vérification/récupération d'e-mail, MFA si le risque le justifie, autorisations métier explicites, limitation de débit distribuée (le stockage mémoire est local à chaque instance), journalisation/alerting, sauvegardes et tests de charge. En production, `APP_ORIGIN` doit être une origine HTTPS exacte et `SESSION_SECRET` doit être un secret aléatoire d'au moins 32 caractères. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.

@@ -10,7 +10,9 @@ describe('App', () => {
 
   it('renders the application heading in the active language', () => {
     render(<App />);
-    expect(screen.getByRole('heading', { name: /une base solide|a solid foundation/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /une base solide|a solid foundation/i }),
+    ).toBeInTheDocument();
   });
 
   it('switches the interface language and updates the document language', async () => {
