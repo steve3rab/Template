@@ -73,9 +73,16 @@ function makePrisma() {
         }
         return { id: where.id };
       }),
-      deleteMany: vi.fn(async ({ where }: { where: { tokenHash: string } }) => ({
-        count: Number(sessions.delete(where.tokenHash)),
-      })),
+      deleteMany: vi.fn(async ({ where }: { where: { tokenHash?: string; id?: string } }) => {
+        let count = 0;
+        for (const [key, session] of sessions.entries()) {
+          if ((where.tokenHash && key === where.tokenHash) || (where.id && session.id === where.id)) {
+            sessions.delete(key);
+            count += 1;
+          }
+        }
+        return { count };
+      }),
     },
     $disconnect: vi.fn(async () => undefined),
   };
@@ -149,6 +156,7 @@ describe('authentication API', () => {
     expect(response.json().user.id).toBeTruthy();
     expect(store.users.size).toBe(1);
     expect(store.sessions.size).toBe(1);
+    expect([...store.users.values()][0]?.passwordHash).not.toBe('correct-horse-battery');
 
     const cookie = sessionCookie(response);
     const current = await app.inject({
@@ -173,6 +181,23 @@ describe('authentication API', () => {
       headers: { cookie },
     });
     expect(afterLogout.statusCode).toBe(401);
+  });
+
+  it('expires old sessions and removes them from storage', async () => {
+    const response = await register();
+    const cookie = sessionCookie(response);
+    const session = [...store.sessions.values()][0];
+    expect(session).toBeDefined();
+    if (!session) throw new Error('Expected a stored session');
+    session.expiresAt = new Date(Date.now() - 1);
+
+    const current = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      headers: { cookie },
+    });
+    expect(current.statusCode).toBe(401);
+    expect(store.sessions.size).toBe(0);
   });
 
   it('normalizes email addresses and avoids disclosing duplicate registrations', async () => {
