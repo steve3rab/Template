@@ -1,0 +1,72 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AuthPanel } from './AuthPanel';
+
+const registeredUser = {
+  id: 'user-1',
+  email: 'test@example.com',
+  createdAt: '2026-10-29T00:00:00.000Z',
+};
+
+function response(ok: boolean, body?: unknown, status = ok ? 200 : 401) {
+  return {
+    ok,
+    status,
+    json: async () => body,
+  } as Response;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('AuthPanel', () => {
+  it('registers a user, sends credentials to the API and supports logout', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(false))
+      .mockResolvedValueOnce(response(true, { user: registeredUser }, 201))
+      .mockResolvedValueOnce(response(true, undefined, 204));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="fr" />);
+    await waitFor(() => expect(screen.queryByText('Chargement du compte…')).not.toBeInTheDocument());
+
+    await user.type(screen.getByLabelText(/adresse e-mail/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/mot de passe/i), 'correct-horse-battery');
+    await user.click(screen.getByRole('button', { name: 'Créer un compte' }));
+
+    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Compte créé et connecté.');
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/auth/register', expect.objectContaining({
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com', password: 'correct-horse-battery' }),
+    }));
+
+    await user.click(screen.getByRole('button', { name: 'Se déconnecter' }));
+    expect(await screen.findByLabelText(/adresse e-mail/i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/auth/logout', expect.objectContaining({
+      method: 'POST',
+      credentials: 'include',
+    }));
+  });
+
+  it('shows a useful message when the API rejects registration', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(false))
+      .mockResolvedValueOnce(response(false, { error: 'Unable to create account with these details.' }, 400));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="en" />);
+    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'correct-horse-battery');
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to create account with these details.');
+  });
+});
