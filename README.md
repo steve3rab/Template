@@ -55,8 +55,15 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 # Exécuter les contrôles qualité (types, lint, format, tests et build)
 .\scripts\check.ps1
 
-# Construire puis prévisualiser le build
-.\scripts\build.ps1 -Preview
+# Prévisualiser le build de production (construit d'abord l'application)
+.\scripts\preview.ps1
+
+# Choisir le port ou exposer sur le réseau local
+.\scripts\preview.ps1 -Port 5000
+.\scripts\preview.ps1 -Expose
+
+# Prévisualiser sans reconstruire si dist/ est déjà à jour
+.\scripts\preview.ps1 -SkipBuild
 
 # Construire une image Docker, puis la lancer dans un autre terminal
 .\scripts\docker.ps1 -Action Build
