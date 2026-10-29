@@ -37,6 +37,10 @@ docker run --rm -p 8080:8080 template-react
 ```
 L'image finale sert les fichiers statiques avec Nginx, tourne sans privilèges root, définit des en-têtes de sécurité et expose un endpoint de santé sur `/health`.
 
+## Internationalisation
+
+L’interface propose le français et l’anglais. Le sélecteur de langue est accessible au clavier, la préférence est conservée dans `localStorage`, et l’attribut `lang` du document est mis à jour. La langue du navigateur est utilisée au premier chargement lorsque le français ou l’anglais est détecté ; le français reste la langue de repli. Les traductions typées sont centralisées dans `src/shared/i18n.ts`.
+
 ## Architecture
 ```text
 src/
