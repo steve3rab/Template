@@ -1,28 +1,66 @@
-# Template React — socle professionnel
+# Template React — socle full-stack TypeScript
 
-Socle frontend orienté production, construit avec React, TypeScript strict et Vite. Le domaine métier n'est volontairement pas préjugé : les fonctionnalités et dépendances métier seront ajoutées lorsque l'objectif du produit sera défini.
+Socle full-stack construit avec React, TypeScript strict, Vite, Fastify et Prisma. Le frontend utilise une API HTTP typée et un backend modulaire. SQLite est configuré pour le démarrage local ; Prisma permet d'évoluer vers PostgreSQL, MySQL et d'autres moteurs pris en charge en adaptant le provider et la migration.
 
 ## Prérequis
 - Node.js 22.12+
-- npm 10+
+- npm 10.9+
 - Docker (optionnel)
 
-## Démarrage local
-```bash
-npm install
-npm run dev
+## Installation et démarrage
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\setup.ps1
+.\scripts\dev-all.ps1
 ```
 
+Le frontend est disponible sur http://localhost:5173 et l'API sur http://localhost:3001. Le proxy Vite transmet automatiquement les requêtes `/api` vers le backend.
+
+Pour démarrer séparément :
+```powershell
+.\scripts\dev.ps1
+.\scripts\backend.ps1
+```
+
+## Authentification
+- Inscription et connexion par e-mail/mot de passe.
+- Mots de passe hachés avec Argon2id ; aucun mot de passe en clair n'est stocké.
+- Sessions opaques persistées en base, jetons stockés sous forme de hash.
+- Cookie de session HttpOnly, SameSite=Lax et Secure en production.
+- Validation d'entrée avec Zod, limitation de débit sur les routes d'authentification, CORS limité à l'origine configurée et vérification de l'origine des requêtes mutantes.
+- Routes : `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+
+Les réponses d'authentification ne révèlent pas si un e-mail existe déjà. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. Les flux de réinitialisation de mot de passe, vérification d'e-mail, MFA et gestion des rôles métier restent à ajouter selon les besoins du produit.
+
+## Base de données Prisma + SQLite
+
+Le fichier SQLite local est créé dans `server/prisma/dev.db` par défaut. Les migrations versionnées sont sous `server/prisma/migrations`.
+
+```powershell
+npm run db:generate
+npm run db:migrate
+npm run db:deploy
+```
+
+- `db:migrate` crée/applique une migration en développement.
+- `db:deploy` applique les migrations existantes, notamment en déploiement.
+- `DATABASE_URL=file:./dev.db` est relatif au fichier de schéma Prisma.
+
+SQLite convient au développement et aux déploiements simples sur disque persistant. Pour une API multi-instance ou une forte concurrence d'écritures, préférez PostgreSQL et configurez le provider Prisma correspondant ; le code d'accès aux données reste isolé dans Prisma.
+
 ## Contrôles qualité
+
 ```bash
-npm run typecheck       # TypeScript strict
-npm run lint            # ESLint
-npm run format:check    # Prettier
-npm run test            # tests unitaires / composants
-npm run test:coverage   # couverture avec seuils
-npm run test:e2e        # tests navigateur Playwright
-npm run build           # contrôle types + build production
-npm run check           # typecheck, lint, format, tests et build
+npm run typecheck
+npm run lint
+npm run format:check
+npm run test
+npm run test:coverage
+npm run test:e2e
+npm run build
+npm run build:server
+npm run check
 ```
 
 Installer les navigateurs Playwright lors de la première utilisation E2E :
@@ -32,101 +70,37 @@ npx playwright install chromium
 
 ## Scripts PowerShell (Windows)
 
-Les scripts du dossier `scripts/` simplifient les tâches courantes. Depuis la racine du dépôt, ouvrez PowerShell et lancez :
-
 ```powershell
-# Si nécessaire, autoriser les scripts pour cette session uniquement
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-# Installer les dépendances
 .\scripts\setup.ps1
-
-# Démarrer le serveur de développement
-.\scripts\dev.ps1
-
-# Construire l'application pour la production
-.\scripts\build.ps1
-
-# Exécuter les tests unitaires, avec couverture ou E2E
+.\scripts\dev-all.ps1
+.\scripts\dev.ps1 -Port 5173
+.\scripts\backend.ps1 -Port 3001
+.\scripts\preview.ps1
 .\scripts\test.ps1
 .\scripts\test.ps1 -Coverage
 .\scripts\test.ps1 -E2E -InstallBrowser
-
-# Exécuter les contrôles qualité (types, lint, format, tests et build)
 .\scripts\check.ps1
-
-# Prévisualiser le build de production (construit d'abord l'application)
-.\scripts\preview.ps1
-
-# Choisir le port ou exposer sur le réseau local
-.\scripts\preview.ps1 -Port 5000
-.\scripts\preview.ps1 -Expose
-
-# Prévisualiser sans reconstruire si dist/ est déjà à jour
-.\scripts\preview.ps1 -SkipBuild
-
-# Construire une image Docker, puis la lancer dans un autre terminal
 .\scripts\docker.ps1 -Action Build
-.\scripts\docker.ps1 -Action Run
-
-# Nettoyer les fichiers générés ; ajouter -Dependencies pour supprimer node_modules
 .\scripts\clean.ps1
-.\scripts\clean.ps1 -Dependencies
 ```
 
-Pour ouvrir le menu interactif regroupant les commandes, exécutez `.\scripts\menu.ps1`.
-
-Options utiles :
-- `.\scripts\dev.ps1 -Port 3000` choisit un autre port pour le serveur de développement.
-- `.\scripts\dev.ps1 -Expose` rend le serveur accessible depuis le réseau local.
-- `.\scripts\build.ps1 -Preview -Port 5000` prévisualise le build sur un autre port.
-- `.\scripts\docker.ps1 -Action Stop` arrête le conteneur nommé `template-react-local`.
-- `.\scripts\docker.ps1 -Action Logs` suit ses journaux.
-
-Les commandes Docker nécessitent Docker Desktop (ou un moteur Docker compatible). Les scripts utilisent les commandes npm déjà définies dans `package.json` et s'arrêtent lorsqu'une commande échoue.
-
-## Docker
-```bash
-docker build -t template-react .
-docker run --rm -p 8080:8080 template-react
-```
-L'image finale sert les fichiers statiques avec Nginx, tourne sans privilèges root, définit des en-têtes de sécurité et expose un endpoint de santé sur `/health`.
-
-## Internationalisation
-
-L’interface propose le français et l’anglais. Le sélecteur de langue est accessible au clavier, la préférence est conservée dans `localStorage`, et l’attribut `lang` du document est mis à jour. La langue du navigateur est utilisée au premier chargement lorsque le français ou l’anglais est détecté ; le français reste la langue de repli. Les traductions typées sont centralisées dans `src/shared/i18n.ts`.
+Le menu interactif est disponible via `.\scripts\menu.ps1`.
 
 ## Architecture
+
 ```text
 src/
-  app/                 # composition et composants racine
-  features/            # domaines fonctionnels isolés
-  shared/
-    components/        # composants UI réutilisables
-    lib/               # utilitaires transverses
-  test/                # configuration des tests
-  main.tsx             # point d'entrée
-  styles.css           # styles globaux
-e2e/                   # scénarios navigateur Playwright
-.github/workflows/     # CI
+  app/
+  features/auth/        # interface d'authentification
+  shared/               # i18n et composants partagés
+server/
+  prisma/               # schéma et migrations
+  src/
+    app.ts               # routes et plugins HTTP
+    index.ts             # démarrage du serveur
+scripts/                 # commandes PowerShell
+.github/workflows/       # CI
 ```
 
-### Principes
-- **TypeScript strict** : `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, pas de `any` explicite dans le lint.
-- **Architecture par fonctionnalité** : placer chaque domaine dans `src/features/<domaine>`, avec composants, modèles, services et tests. Éviter les imports circulaires.
-- **Frontières explicites** : isoler les accès réseau, la configuration et la validation des données externes. Ne jamais considérer les données serveur comme fiables sans validation.
-- **Sécurité** : pas de secrets dans le bundle client ; CSP et en-têtes HTTP via Nginx ; dépendances suivies par Dependabot ; permissions minimales dans la CI.
-- **Performance** : build optimisé, assets statiques cachables, découpage par route/feature lorsque nécessaire et mesure avant optimisation.
-- **Résilience** : tests des comportements critiques, endpoint de santé et échecs CI bloquants.
-
-## Stratégie de tests
-- **Unitaires / composants** : Vitest, Testing Library et user-event.
-- **Couverture** : seuils initiaux de 80 % lignes/instructions/fonctions et 75 % branches.
-- **End-to-end** : Playwright sur Chromium, avec traces et captures sur échec.
-- **Anti-régression** : contrôles exécutés en CI sur pull requests et pushs vers `main`.
-
-## Avant une mise en production réelle
-Le niveau de sécurité final dépend du produit et de son contexte. Ajouter avant production : validation de schémas pour toutes les entrées externes, stratégie d'authentification/autorisation adaptée, gestion des secrets, scans SAST et de dépendances, sauvegardes/restauration si des données sont persistées, supervision/alerting et tests de charge. Une application frontend seule ne remplace jamais les contrôles de sécurité du backend.
-
-## Reproductibilité des dépendances
-Le dépôt ne contient pas encore de lockfile npm. Après installation et validation de l'environnement, générer et committer `package-lock.json`, puis remplacer `npm install` par `npm ci` dans CI et Docker pour des builds reproductibles.
+## Sécurité et production
+Le projet fournit une base sécurisée, pas une certification de sécurité. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.
