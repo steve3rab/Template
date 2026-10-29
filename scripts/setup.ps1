@@ -15,7 +15,7 @@ Write-Host 'Installation des dépendances du projet...' -ForegroundColor Cyan
 Invoke-Npm -Arguments @('install', '--legacy-peer-deps', '--no-audit', '--no-fund')
 
 if ($InstallPlaywrightBrowsers) {
-    Invoke-Npm -Arguments @('exec', 'playwright', 'install', 'chromium')
+    Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
 }
 
 Write-Host 'Installation terminée.' -ForegroundColor Green
