@@ -29,7 +29,8 @@ export function CustomerAccountData() {
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const response = await fetch('/api/customer/addresses', {
       method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -39,7 +40,7 @@ export function CustomerAccountData() {
       }),
     });
     if (!response.ok) { setMessage('Adresse non enregistrée. Vérifiez les champs.'); return; }
-    event.currentTarget.reset();
+    formElement.reset();
     setMessage('Adresse enregistrée.');
     await load();
   }
