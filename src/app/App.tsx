@@ -184,6 +184,19 @@ export function App() {
     if (!favoritesHydrated) return;
     window.localStorage.setItem('atelier-favorites', JSON.stringify(favorites));
   }, [favorites, favoritesHydrated]);
+  useEffect(() => {
+    const syncGuestData = () => {
+      void fetch('/api/customer/cart', {
+        method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }),
+      }).catch(() => undefined);
+      for (const productId of favorites) {
+        void fetch('/api/customer/favorites/' + productId, { method: 'POST', credentials: 'include' }).catch(() => undefined);
+      }
+    };
+    window.addEventListener('template-auth-changed', syncGuestData);
+    return () => window.removeEventListener('template-auth-changed', syncGuestData);
+  }, [cart, favorites]);
   async function openSeller() {
     try {
       const response = await fetch('/api/seller/me', { credentials: 'include' });
@@ -225,6 +238,8 @@ export function App() {
     try {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
+        const payload = await response.json() as { user?: { email: string } };
+        setOrderEmail(payload.user?.email ?? '');
         setCheckoutPending(false);
         setView('checkout');
         return;
