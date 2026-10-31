@@ -19,7 +19,7 @@ function isFavorites(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
+type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires' | 'Maison';
 type Product = {
   id: string;
   name: string;
@@ -372,6 +372,15 @@ export function App() {
           >
             Accessoires
           </button>
+          <button
+            className="nav-link"
+            onClick={() => {
+              setView('shop');
+              setCategory('Maison');
+            }}
+          >
+            Maison
+          </button>
         </nav>
         <div className="header-actions">
           <div className="language-switcher" role="group" aria-label="Langue">
@@ -473,7 +482,7 @@ export function App() {
             </div>
             <div className="catalogue-toolbar">
               <div className="category-filters" role="group" aria-label="Filtrer par catégorie">
-                {(['Tout', 'Vêtements', 'Chaussures', 'Accessoires'] as const).map((item) => (
+                {(['Tout', 'Vêtements', 'Chaussures', 'Accessoires', 'Maison'] as const).map((item) => (
                   <button
                     key={item}
                     className={category === item ? 'filter-chip selected' : 'filter-chip'}
