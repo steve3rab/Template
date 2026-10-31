@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { formatCents } from '../../shared/utils/formatCurrency';
 
 type Product = {
   id: string;
@@ -28,9 +29,6 @@ type Dashboard = {
   lowStockProducts: number;
   currency: string;
 };
-
-const money = (cents: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 
 export function SellerWorkspace({ range }: { range: string }) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -153,7 +151,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       </div>
       {message && <p role="status" className="auth-message">{message}</p>}
       <div className="kpi-grid">
-        <article className="kpi-card"><div className="kpi-label">Chiffre d’affaires payé</div><strong>{dashboard ? money(dashboard.revenueCents) : '—'}</strong><p>{dashboard?.paidOrders ?? 0} commandes payées sur {dashboard?.periodDays ?? Number(range)} jours</p></article>
+        <article className="kpi-card"><div className="kpi-label">Chiffre d’affaires payé</div><strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong><p>{dashboard?.paidOrders ?? 0} commandes payées sur {dashboard?.periodDays ?? Number(range)} jours</p></article>
         <article className="kpi-card"><div className="kpi-label">Commandes</div><strong>{dashboard?.orders ?? '—'}</strong><p>Commandes sur la période sélectionnée</p></article>
         <article className="kpi-card"><div className="kpi-label">Unités vendues</div><strong>{dashboard?.unitsSold ?? '—'}</strong><p>Basé sur les lignes de commande</p></article>
         <article className="kpi-card"><div className="kpi-label">Catalogue</div><strong>{dashboard?.products ?? '—'}</strong><p>{dashboard?.lowStockProducts ?? 0} produit(s) avec stock inférieur ou égal à 5</p></article>
@@ -175,7 +173,7 @@ export function SellerWorkspace({ range }: { range: string }) {
         <div className="panel-heading"><div><h2>Mes produits</h2><p>{products.length} produit(s) géré(s) par ce compte</p></div></div>
         {products.length === 0 ? <p>Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.</p> : products.map((product) => (
           <div className="best-seller-row" key={product.id}>
-            <div className="best-seller-name"><strong>{product.name}</strong><span>{money(product.priceCents)} · {product.active ? 'Publié' : 'Masqué'}</span></div>
+            <div className="best-seller-name"><strong>{product.name}</strong><span>{formatCents(product.priceCents)} · {product.active ? 'Publié' : 'Masqué'}</span></div>
             <label>Nom <input aria-label={`Nom ${product.name}`} defaultValue={product.name} maxLength={120} onBlur={(event) => { const value = event.target.value.trim(); if (value.length >= 2 && value !== product.name) void updateProduct(product, { name: value }); }} /></label>
             <label>Prix (€) <input aria-label={`Prix ${product.name}`} type="number" min="0.01" max="1000000" step="0.01" defaultValue={(product.priceCents / 100).toFixed(2)} onBlur={(event) => { const value = Number(event.target.value); const cents = Math.round(value * 100); if (Number.isFinite(value) && cents > 0 && cents !== product.priceCents) void updateProduct(product, { priceCents: cents }); }} /></label>
             <label>Stock <input aria-label={`Stock ${product.name}`} type="number" min="0" max="1000000" defaultValue={product.stock} onBlur={(event) => { const value = Number(event.target.value); if (Number.isInteger(value) && value >= 0 && value !== product.stock) void updateProduct(product, { stock: value }); }} /></label>
@@ -188,7 +186,7 @@ export function SellerWorkspace({ range }: { range: string }) {
         {orders.length === 0 ? <p>Aucune commande enregistrée pour le moment.</p> : orders.map((order) => (
           <div className="best-seller-row" key={order.id}>
             <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{order.customer.email} · {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement : {order.paymentStatus}</span></div>
-            <strong>{money(order.totalCents)}</strong>
+            <strong>{formatCents(order.totalCents)}</strong>
             <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => void updateOrder(order.id, event.target.value)}><option value="PENDING">En attente</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>En préparation</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>Expédiée</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>Livrée</option><option value="CANCELLED">Annulée</option></select></label>
           </div>
         ))}
