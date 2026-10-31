@@ -143,7 +143,7 @@ export function App() {
   function changeQuantity(id: number, amount: number) {
     setCart((current) => {
       const next = { ...current, [id]: (current[id] ?? 0) + amount };
-      if (next[id] <= 0) delete next[id];
+      if ((next[id] ?? 0) <= 0) delete next[id];
       return next;
     });
   }
