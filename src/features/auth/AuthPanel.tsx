@@ -67,6 +67,7 @@ export function AuthPanel({
       }
       if (!('user' in payload)) throw new Error(t.authError);
       setUser(payload.user);
+      window.dispatchEvent(new Event('template-auth-changed'));
       onAuthenticated?.();
       setPassword('');
       setMessage(mode === 'register' ? t.authSuccess : '');
@@ -85,6 +86,7 @@ export function AuthPanel({
       const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
       if (!response.ok) throw new Error(t.authError);
       setUser(null);
+      window.dispatchEvent(new Event('template-auth-changed'));
       setPassword('');
     } catch {
       setIsError(true);
