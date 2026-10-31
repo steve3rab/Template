@@ -16,9 +16,9 @@ export async function registerCommerceRoutes(
   prisma: PrismaClient,
   resolveUser: ResolveUser,
 ): Promise<void> {
-  await registerCatalogRoutes(app, prisma, resolveUser);
+  registerCatalogRoutes(app, prisma);
   await registerAdminRoutes(app, prisma, resolveUser);
   await registerSellerRoutes(app, prisma, resolveUser);
   await registerCustomerRoutes(app, prisma, resolveUser);
-  await registerPasswordResetRoutes(app, prisma, resolveUser);
+  registerPasswordResetRoutes(app, prisma);
 }
