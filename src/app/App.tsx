@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
+import { ResetPassword } from '../features/auth/ResetPassword';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
 import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { CustomerAccountData } from '../features/account/CustomerAccountData';
@@ -104,11 +105,11 @@ const money = (value: number) =>
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(value);
-type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal';
+type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
   const { language, setLanguage } = useTranslation();
-  const [view, setView] = useState<View>('shop');
+  const [view, setView] = useState<View>(() => window.location.pathname === '/reset-password' ? 'reset' : 'shop');
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
@@ -699,6 +700,7 @@ export function App() {
         </>
       )}
       {view === 'legal' && <LegalPage page={legalPage} onBack={() => setView('shop')} />}
+      {view === 'reset' && <ResetPassword onDone={() => { window.history.replaceState({}, '', '/'); setView('account'); }} />}
       <footer className="store-footer">
         <a
           className="store-brand"
