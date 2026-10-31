@@ -6,7 +6,7 @@ type User = { id: string; email: string; createdAt: string };
 type AuthResponse = { user: User };
 type Mode = 'login' | 'register';
 
-export function AuthPanel({ language }: { language: Language }) {
+export function AuthPanel({ language, onAuthenticated }: { language: Language; onAuthenticated?: () => void }) {
   const t = translations[language];
   const [mode, setMode] = useState<Mode>('register');
   const [email, setEmail] = useState('');
@@ -54,6 +54,7 @@ export function AuthPanel({ language }: { language: Language }) {
         throw new Error('error' in payload && payload.error ? payload.error : t.authError);
       }
       setUser(payload.user);
+      onAuthenticated?.();
       setPassword('');
       setMessage(mode === 'register' ? t.authSuccess : '');
     } catch (error) {
