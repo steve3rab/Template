@@ -287,10 +287,15 @@ export function App() {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ addressId: addressPayload.address.id }),
       });
-      const orderPayload = await orderResponse.json() as { order?: { id: string }; error?: string };
+      const orderPayload = await orderResponse.json() as { order?: { id: string }; orders?: { id: string }[]; error?: string };
       if (!orderResponse.ok || !orderPayload.order) throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
-      setCheckoutDone(true);
+      const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
+      const checkoutPayload = await apiRequest('/api/customer/checkout', apiSchemas.checkoutSession, {
+        method: 'POST',
+        body: JSON.stringify({ orderIds }),
+      });
+      window.location.assign(checkoutPayload.checkoutUrl);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.');
     }
