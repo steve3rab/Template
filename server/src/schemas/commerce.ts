@@ -57,6 +57,10 @@ export const createOrderInputSchema = z.object({
   addressId: z.string().min(1),
 });
 
+export const checkoutInputSchema = z.object({
+  orderIds: z.array(z.string().min(1).max(128)).min(1).max(20),
+}).refine((value) => new Set(value.orderIds).size === value.orderIds.length, 'Duplicate order ids are not allowed.');
+
 export const sellerOrderStatusSchema = z.object({
   status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
