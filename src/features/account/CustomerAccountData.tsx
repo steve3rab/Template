@@ -14,6 +14,7 @@ export function CustomerAccountData() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
   const [message, setMessage] = useState('');
+  const [checkoutPending, setCheckoutPending] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -37,6 +38,25 @@ export function CustomerAccountData() {
     window.addEventListener('template-auth-changed', refresh);
     return () => window.removeEventListener('template-auth-changed', refresh);
   }, [load]);
+
+  async function payUnpaidOrders() {
+    const orderIds = orders
+      .filter((order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING')
+      .map((order) => order.id);
+    if (orderIds.length === 0) return;
+    setCheckoutPending(true);
+    setMessage('');
+    try {
+      const checkout = await apiRequest('/api/customer/checkout', apiSchemas.checkoutSession, {
+        method: 'POST',
+        body: JSON.stringify({ orderIds }),
+      });
+      window.location.assign(checkout.checkoutUrl);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Impossible de préparer le paiement.');
+      setCheckoutPending(false);
+    }
+  }
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,6 +95,11 @@ export function CustomerAccountData() {
       {!available ? <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p> : (
         <>
           <h3>Historique des commandes</h3>
+          {orders.some((order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING') && (
+            <button className="dark-button" type="button" disabled={checkoutPending} onClick={() => void payUnpaidOrders()}>
+              {checkoutPending ? 'Préparation du paiement…' : 'Payer mes commandes en attente'}
+            </button>
+          )}
           {orders.length === 0 ? <p>Vous n’avez pas encore de commande.</p> : orders.map((order) => (
             <article className="best-seller-row" key={order.id}>
               <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · {order.status} · Paiement : {order.paymentStatus}</span><span>{order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}</span></div>
