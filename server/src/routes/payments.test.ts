@@ -10,7 +10,9 @@ const customer = { id: 'customer-1', role: 'CUSTOMER' } as User;
 const order = {
   id: 'order-1',
   userId: customer.id,
+  status: 'PENDING',
   paymentStatus: 'UNPAID',
+  totalCents: 5000,
   currency: 'EUR',
   items: [{ productId: 'product-1', productName: 'Test product', unitPriceCents: 2500, quantity: 2 }],
 };
