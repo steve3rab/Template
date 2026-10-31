@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
+import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
 
@@ -102,7 +103,7 @@ const money = (value: number) =>
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(value);
-type View = 'shop' | 'account' | 'seller' | 'checkout';
+type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal';
 
 export function App() {
   const { language, setLanguage } = useTranslation();
@@ -118,6 +119,7 @@ export function App() {
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
+  const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   const filteredProducts = useMemo(() => {
     const result = products.filter(
       (product) =>
@@ -624,7 +626,15 @@ export function App() {
           )}
         </section>
       )}
-      {view === 'seller' && <SellerWorkspace range={sellerRange} />}
+      {view === 'seller' && (
+        <>
+          <div className="seller-range-control">
+            <label>Période <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}><option value="7">7 jours</option><option value="30">30 jours</option><option value="90">90 jours</option></select></label>
+          </div>
+          <SellerWorkspace range={sellerRange} />
+        </>
+      )}
+      {view === 'legal' && <LegalPage page={legalPage} onBack={() => setView('shop')} />}
       <footer className="store-footer">
         <a
           className="store-brand"
@@ -645,13 +655,9 @@ export function App() {
           <button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>
             Aide & contact
           </button>
-          <button
-            onClick={() =>
-              setNotice('Les mentions légales seront ajoutées avant la mise en production.')
-            }
-          >
-            Informations légales
-          </button>
+          <button onClick={() => { setLegalPage('terms'); setView('legal'); }}>Conditions générales de vente</button>
+          <button onClick={() => { setLegalPage('privacy'); setView('legal'); }}>Confidentialité</button>
+          <button onClick={() => { setLegalPage('returns'); setView('legal'); }}>Retours et remboursements</button>
         </div>
         <span className="copyright">© 2026 atelier. · Démonstration</span>
       </footer>
