@@ -176,6 +176,8 @@ export function SellerWorkspace({ range }: { range: string }) {
         {products.length === 0 ? <p>Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.</p> : products.map((product) => (
           <div className="best-seller-row" key={product.id}>
             <div className="best-seller-name"><strong>{product.name}</strong><span>{money(product.priceCents)} · {product.active ? 'Publié' : 'Masqué'}</span></div>
+            <label>Nom <input aria-label={`Nom ${product.name}`} defaultValue={product.name} maxLength={120} onBlur={(event) => { const value = event.target.value.trim(); if (value.length >= 2 && value !== product.name) void updateProduct(product, { name: value }); }} /></label>
+            <label>Prix (€) <input aria-label={`Prix ${product.name}`} type="number" min="0.01" max="1000000" step="0.01" defaultValue={(product.priceCents / 100).toFixed(2)} onBlur={(event) => { const value = Number(event.target.value); const cents = Math.round(value * 100); if (Number.isFinite(value) && cents > 0 && cents !== product.priceCents) void updateProduct(product, { priceCents: cents }); }} /></label>
             <label>Stock <input aria-label={`Stock ${product.name}`} type="number" min="0" max="1000000" defaultValue={product.stock} onBlur={(event) => { const value = Number(event.target.value); if (Number.isInteger(value) && value >= 0 && value !== product.stock) void updateProduct(product, { stock: value }); }} /></label>
             <button className="text-action" onClick={() => void updateProduct(product, { active: !product.active })}>{product.active ? 'Masquer' : 'Publier'}</button>
           </div>
