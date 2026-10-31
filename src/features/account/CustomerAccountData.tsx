@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 
 import {
@@ -15,20 +15,26 @@ export function CustomerAccountData() {
   const [available, setAvailable] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutPending, setCheckoutPending] = useState(false);
+  const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
+    const version = ++loadVersion.current;
     try {
       const [addressPayload, orderPayload] = await Promise.all([
         apiRequest('/api/customer/addresses', apiSchemas.customerAddresses),
         apiRequest('/api/customer/orders', apiSchemas.customerOrders),
       ]);
+      if (version !== loadVersion.current) return;
       setAddresses(addressPayload.addresses);
       setOrders(orderPayload.orders);
       setAvailable(true);
+      setMessage('');
     } catch {
-      setAddresses([]);
-      setOrders([]);
-      setAvailable(false);
+      // A temporary API/database failure is not an empty account. Preserve the
+      // last known data and show a recoverable error instead of erasing the UI.
+      if (version !== loadVersion.current) return;
+      setMessage('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.');
+      setAvailable((current) => current);
     }
   }, []);
 
@@ -44,9 +50,11 @@ export function CustomerAccountData() {
             if (!active) return;
             if (response.ok) void load();
             else {
+              loadVersion.current += 1;
               setAddresses([]);
               setOrders([]);
               setAvailable(false);
+              setMessage('');
             }
           })
           .catch(() => {
@@ -54,11 +62,13 @@ export function CustomerAccountData() {
           });
         return;
       }
+      loadVersion.current += 1;
       if (authenticated) void load();
       else {
         setAddresses([]);
         setOrders([]);
         setAvailable(false);
+        setMessage('');
       }
     };
     refresh();
