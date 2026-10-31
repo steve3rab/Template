@@ -22,8 +22,6 @@ export function AuthPanel({
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
 
   function showToast(message: string, type: 'info' | 'success' | 'error' = 'info') {
     window.dispatchEvent(new CustomEvent('template-toast', { detail: { message, type } }));
@@ -56,8 +54,6 @@ export function AuthPanel({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setMessage('');
-    setIsError(false);
     try {
       const endpoint = mode === 'reset' ? '/api/auth/password-reset/request' : `/api/auth/${mode}`;
       const response = await fetch(endpoint, {
@@ -69,7 +65,6 @@ export function AuthPanel({
       });
       const payload = (await response.json()) as AuthResponse | { error?: string };
       if (!response.ok) {
-        setIsError(true);
         showToast(mode === 'register' ? t.authRegisterError : mode === 'login' ? t.authLoginError : t.authError, 'error');
         return;
       }
@@ -85,7 +80,6 @@ export function AuthPanel({
       setPassword('');
       if (mode === 'register') showToast(t.authSuccess, 'success');
     } catch {
-      setIsError(true);
       showToast(t.authError, 'error');
     } finally {
       setBusy(false);
@@ -94,7 +88,6 @@ export function AuthPanel({
 
   async function logout() {
     setBusy(true);
-    setMessage('');
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
       if (!response.ok) throw new Error(t.authError);
@@ -163,7 +156,7 @@ export function AuthPanel({
               onChange={(event) => setPassword(event.target.value)}
             />
           </label>}
-          <button className="primary-button" type="submit" disabled={busy}>
+          <button className="primary-button" type="submit" disabled={busy || checkingSession}>
             {busy ? '…' : mode === 'reset' ? 'Envoyer le lien' : mode === 'register' ? t.authRegister : t.authLogin}
           </button>
           <button
@@ -171,12 +164,11 @@ export function AuthPanel({
             type="button"
             onClick={() => {
               setMode(mode === 'reset' ? 'login' : mode === 'register' ? 'login' : 'register');
-              setMessage('');
             }}
           >
             {mode === 'reset' ? 'Retour à la connexion' : mode === 'register' ? t.authSwitchLogin : t.authSwitchRegister}
           </button>
-          {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => { setMode('reset'); setMessage(''); setIsError(false); }}>Mot de passe oublié ?</button>}
+          {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => setMode('reset')}>Mot de passe oublié ?</button>}
         </form>
       )}
     </section>
