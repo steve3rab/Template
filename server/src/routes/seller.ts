@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ResolveUser } from '../auth/requireUser.js';
 import { productInputSchema, resourceIdParamsSchema, sellerOrderStatusSchema } from '../schemas/commerce.js';
 import { requireUser } from '../auth/requireUser.js';
@@ -24,8 +24,11 @@ export function registerSellerRoutes(
     if (!seller) return;
     const body = productInputSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid product data.' });
+    const productData = Object.fromEntries(
+      Object.entries(body.data).filter(([, value]) => value !== undefined),
+    ) as Prisma.ProductUncheckedCreateInput;
     const product = await prisma.product.create({
-      data: { ...body.data, sellerId: seller.id },
+      data: { ...productData, sellerId: seller.id },
     });
     return reply.code(201).send({ product });
   });
@@ -42,7 +45,10 @@ export function registerSellerRoutes(
       where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
     });
     if (!existing) return reply.code(404).send({ error: 'Product not found.' });
-    const product = await prisma.product.update({ where: { id: existing.id }, data: body.data });
+    const productData = Object.fromEntries(
+      Object.entries(body.data).filter(([, value]) => value !== undefined),
+    ) as Prisma.ProductUpdateInput;
+    const product = await prisma.product.update({ where: { id: existing.id }, data: productData });
     return { product };
   });
 
