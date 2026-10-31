@@ -33,7 +33,7 @@ const addressInput = z.object({
 const roleInput = z.object({ role: z.enum(['CUSTOMER', 'SELLER']) });
 const cartInput = z.object({
   items: z.array(z.object({ productId: z.string().min(1), quantity: z.number().int().min(0).max(100) })).max(100),
-});
+}).refine((value) => new Set(value.items.map((item) => item.productId)).size === value.items.length, 'Duplicate product ids are not allowed.');
 
 async function requireUser(
   request: FastifyRequest,
@@ -310,6 +310,9 @@ export async function registerCommerceRoutes(
       SHIPPED: ['DELIVERED'],
     };
     if (!transitions[order.status]?.includes(body.data.status)) return reply.code(409).send({ error: 'Invalid order status transition.' });
+    if (['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(body.data.status) && order.paymentStatus !== 'PAID') {
+      return reply.code(409).send({ error: 'A confirmed payment is required before fulfillment.' });
+    }
     if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
       return reply.code(409).send({ error: 'Paid orders require a refund workflow before cancellation.' });
     }
