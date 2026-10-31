@@ -45,7 +45,9 @@ export function SellerWorkspace({ range }: { range: string }) {
   }, [range]);
 
   useEffect(() => {
-    void load().catch(() => setMessage('Erreur réseau pendant le chargement du tableau de bord.'));
+    void Promise.resolve()
+      .then(() => load())
+      .catch(() => setMessage('Erreur réseau pendant le chargement du tableau de bord.'));
   }, [load]);
 
   async function createProduct(event: FormEvent<HTMLFormElement>) {
