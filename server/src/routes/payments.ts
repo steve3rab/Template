@@ -28,7 +28,7 @@ const stripeCheckoutCompletedSchema = z.object({
   metadata: z.object({ orderIds: z.string().min(1) }).nullable().optional(),
 }).passthrough();
 
-function verifyStripeSignature(
+export function verifyStripeSignature(
   rawBody: Buffer,
   signatureHeader: string,
   secret: string,
@@ -90,6 +90,9 @@ export function registerPaymentRoutes(
     const origin = process.env.APP_ORIGIN;
     if (!origin) return reply.code(503).send({ error: 'Checkout origin is not configured.' });
 
+    const totalLineItems = orders.reduce((sum, order) => sum + order.items.length, 0);
+    if (totalLineItems > 100) return reply.code(400).send({ error: 'Too many line items for one checkout.' });
+
     const orderIds = orders.map((order) => order.id).sort();
     const params = new URLSearchParams({
       mode: 'payment',
@@ -112,7 +115,6 @@ export function registerPaymentRoutes(
         lineIndex += 1;
       }
     }
-    if (lineIndex > 100) return reply.code(400).send({ error: 'Too many line items for one checkout.' });
 
     const idempotencyKey = createHmac('sha256', secretKey).update(orderIds.join(':')).digest('hex');
     let response: Response;
