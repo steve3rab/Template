@@ -162,14 +162,14 @@ export function App() {
           for (const item of payload.items) {
             next[item.productId] = item.quantity;
           }
-          setCart(next);
+          setCart((current) => ({ ...next, ...current }));
         }
       })
       .catch(() => undefined)
       .finally(() => { if (active) setCartHydrated(true); });
     fetch('/api/customer/favorites', { credentials: 'include' })
       .then(async (response) => response.ok ? await response.json() as { favorites: { productId: string }[] } : null)
-      .then((payload) => { if (active && payload) setFavorites(payload.favorites.map((item) => item.productId)); })
+      .then((payload) => { if (active && payload) setFavorites((current) => [...new Set([...payload.favorites.map((item) => item.productId), ...current])]); })
       .catch(() => undefined)
       .finally(() => { if (active) setFavoritesHydrated(true); });
     return () => { active = false; };
