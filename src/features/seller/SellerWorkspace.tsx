@@ -1,34 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 
-type Product = {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  priceCents: number;
-  stock: number;
-  active: boolean;
-};
-type Order = {
-  id: string;
-  status: string;
-  paymentStatus: string;
-  totalCents: number;
-  createdAt: string;
-  customer: { email: string };
-  items: { id: string; productName: string; quantity: number }[];
-};
-type Dashboard = {
-  periodDays: number;
-  revenueCents: number;
-  orders: number;
-  paidOrders: number;
-  unitsSold: number;
-  products: number;
-  lowStockProducts: number;
-  currency: string;
-};
+import {
+  apiRequest,
+  apiSchemas,
+  type SellerDashboard as Dashboard,
+  type SellerOrder as Order,
+  type SellerProduct as Product,
+} from '../../shared/api/client';
 
 export function SellerWorkspace({ range }: { range: string }) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -43,27 +22,23 @@ export function SellerWorkspace({ range }: { range: string }) {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const [statsResponse, productResponse, orderResponse] = await Promise.all([
-      fetch(`/api/seller/dashboard?days=${range}`, { credentials: 'include' }),
-      fetch('/api/seller/products', { credentials: 'include' }),
-      fetch('/api/seller/orders', { credentials: 'include' }),
-    ]);
-    if ([statsResponse, productResponse, orderResponse].some((response) => response.status === 401 || response.status === 403)) {
-      setMessage('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.');
-      return;
+    try {
+      const [stats, productPayload, orderPayload] = await Promise.all([
+        apiRequest(`/api/seller/dashboard?days=${range}`, apiSchemas.sellerDashboard),
+        apiRequest('/api/seller/products', apiSchemas.products),
+        apiRequest('/api/seller/orders', apiSchemas.sellerOrders),
+      ]);
+      setDashboard(stats);
+      setProducts(productPayload.products);
+      setOrders(orderPayload.orders);
+      setMessage('');
+    } catch (error) {
+      if (error instanceof Error && 'status' in error && (error.status === 401 || error.status === 403)) {
+        setMessage('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.');
+        return;
+      }
+      setMessage(error instanceof Error ? error.message : 'Impossible de charger les données du vendeur.');
     }
-    if (![statsResponse, productResponse, orderResponse].every((response) => response.ok)) {
-      setMessage('Impossible de charger les données du vendeur.');
-      return;
-    }
-    const [stats, productPayload, orderPayload] = await Promise.all([
-      statsResponse.json() as Promise<Dashboard>,
-      productResponse.json() as Promise<{ products: Product[] }>,
-      orderResponse.json() as Promise<{ orders: Order[] }>,
-    ]);
-    setDashboard(stats);
-    setProducts(productPayload.products);
-    setOrders(orderPayload.orders);
   }, [range]);
 
   useEffect(() => {
@@ -75,10 +50,8 @@ export function SellerWorkspace({ range }: { range: string }) {
     setBusy(true);
     setMessage('');
     try {
-      const response = await fetch('/api/seller/products', {
+      await apiRequest('/api/seller/products', apiSchemas.productResult, {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           description,
@@ -88,7 +61,6 @@ export function SellerWorkspace({ range }: { range: string }) {
           active: true,
         }),
       });
-      if (!response.ok) throw new Error('Produit non créé. Vérifiez les champs et vos droits.');
       setName('');
       setDescription('');
       setPrice('29.90');
@@ -105,10 +77,8 @@ export function SellerWorkspace({ range }: { range: string }) {
   async function updateProduct(product: Product, changes: Partial<Product>) {
     setMessage('');
     try {
-      const response = await fetch(`/api/seller/products/${product.id}`, {
+      await apiRequest(`/api/seller/products/${product.id}`, apiSchemas.productResult, {
         method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: product.name,
           description: product.description,
@@ -119,7 +89,6 @@ export function SellerWorkspace({ range }: { range: string }) {
           ...changes,
         }),
       });
-      if (!response.ok) throw new Error('Mise à jour du produit refusée.');
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erreur réseau.');
@@ -127,17 +96,16 @@ export function SellerWorkspace({ range }: { range: string }) {
   }
 
   async function updateOrder(orderId: string, status: string) {
-    const response = await fetch(`/api/seller/orders/${orderId}/status`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    if (!response.ok) {
-      setMessage('Impossible de modifier le statut de cette commande.');
-      return;
+    setMessage('');
+    try {
+      await apiRequest(`/api/seller/orders/${orderId}/status`, apiSchemas.orderResult, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut de cette commande.');
     }
-    await load();
   }
 
   return (
@@ -185,7 +153,7 @@ export function SellerWorkspace({ range }: { range: string }) {
         <div className="panel-heading"><div><h2>Commandes clients</h2><p>Suivez la préparation et l’expédition des commandes contenant vos produits.</p></div></div>
         {orders.length === 0 ? <p>Aucune commande enregistrée pour le moment.</p> : orders.map((order) => (
           <div className="best-seller-row" key={order.id}>
-            <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{order.customer.email} · {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement : {order.paymentStatus}</span></div>
+            <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{order.customer?.email ?? 'Client'} · {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement : {order.paymentStatus}</span></div>
             <strong>{formatCents(order.totalCents)}</strong>
             <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => void updateOrder(order.id, event.target.value)}><option value="PENDING">En attente</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>En préparation</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>Expédiée</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>Livrée</option><option value="CANCELLED">Annulée</option></select></label>
           </div>
