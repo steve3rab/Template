@@ -10,7 +10,9 @@ describe('Fashion storefront', () => {
 
   it('renders the public catalogue and product categories', () => {
     render(<App />);
-    expect(screen.getByRole('heading', { name: /le style, en toute simplicité/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /le style, en toute simplicité/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /les pièces du moment/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Veste Studio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Espace vendeur' })).toBeInTheDocument();
@@ -45,7 +47,9 @@ describe('Fashion storefront', () => {
     render(<App />);
     const favorite = screen.getByRole('button', { name: 'Ajouter Veste Studio aux favoris' });
     await user.click(favorite);
-    expect(screen.getByRole('button', { name: 'Retirer Veste Studio des favoris' })).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Retirer Veste Studio des favoris' }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('opens the seller dashboard with demo KPIs', async () => {

@@ -4,18 +4,103 @@ import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
 
 type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
-type Product = { id: number; name: string; category: Exclude<Category, 'Tout'>; price: number; oldPrice?: number; color: string; icon: string; tag?: string; description: string };
+type Product = {
+  id: number;
+  name: string;
+  category: Exclude<Category, 'Tout'>;
+  price: number;
+  oldPrice?: number;
+  color: string;
+  icon: string;
+  tag?: string;
+  description: string;
+};
 const products: Product[] = [
-  { id: 1, name: 'Veste Studio', category: 'Vêtements', price: 89, oldPrice: 120, color: 'sand', icon: '🧥', tag: 'BEST-SELLER', description: 'Une coupe structurée, facile à porter du matin au soir.' },
-  { id: 2, name: 'Sneakers Everyday', category: 'Chaussures', price: 74, color: 'mint', icon: '👟', tag: 'NOUVEAU', description: 'Le confort au quotidien, avec une silhouette minimaliste.' },
-  { id: 3, name: 'Sac Épure', category: 'Accessoires', price: 59, color: 'rose', icon: '👜', description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.' },
-  { id: 4, name: 'Pull Essentiel', category: 'Vêtements', price: 65, color: 'lavender', icon: '🧶', description: 'Une maille douce et une coupe décontractée.' },
-  { id: 5, name: 'Lunettes Soleil', category: 'Accessoires', price: 35, oldPrice: 45, color: 'blue', icon: '🕶️', tag: '-22 %', description: 'Une touche graphique pour les journées ensoleillées.' },
-  { id: 6, name: 'Baskets City', category: 'Chaussures', price: 92, color: 'peach', icon: '👞', description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.' },
-  { id: 7, name: 'Chemise Relax', category: 'Vêtements', price: 48, color: 'blue', icon: '👔', description: 'Une chemise légère pensée pour les superpositions.' },
-  { id: 8, name: 'Casquette Club', category: 'Accessoires', price: 25, color: 'sand', icon: '🧢', tag: 'ESSENTIEL', description: 'La finition simple qui change un look.' },
+  {
+    id: 1,
+    name: 'Veste Studio',
+    category: 'Vêtements',
+    price: 89,
+    oldPrice: 120,
+    color: 'sand',
+    icon: '🧥',
+    tag: 'BEST-SELLER',
+    description: 'Une coupe structurée, facile à porter du matin au soir.',
+  },
+  {
+    id: 2,
+    name: 'Sneakers Everyday',
+    category: 'Chaussures',
+    price: 74,
+    color: 'mint',
+    icon: '👟',
+    tag: 'NOUVEAU',
+    description: 'Le confort au quotidien, avec une silhouette minimaliste.',
+  },
+  {
+    id: 3,
+    name: 'Sac Épure',
+    category: 'Accessoires',
+    price: 59,
+    color: 'rose',
+    icon: '👜',
+    description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
+  },
+  {
+    id: 4,
+    name: 'Pull Essentiel',
+    category: 'Vêtements',
+    price: 65,
+    color: 'lavender',
+    icon: '🧶',
+    description: 'Une maille douce et une coupe décontractée.',
+  },
+  {
+    id: 5,
+    name: 'Lunettes Soleil',
+    category: 'Accessoires',
+    price: 35,
+    oldPrice: 45,
+    color: 'blue',
+    icon: '🕶️',
+    tag: '-22 %',
+    description: 'Une touche graphique pour les journées ensoleillées.',
+  },
+  {
+    id: 6,
+    name: 'Baskets City',
+    category: 'Chaussures',
+    price: 92,
+    color: 'peach',
+    icon: '👞',
+    description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
+  },
+  {
+    id: 7,
+    name: 'Chemise Relax',
+    category: 'Vêtements',
+    price: 48,
+    color: 'blue',
+    icon: '👔',
+    description: 'Une chemise légère pensée pour les superpositions.',
+  },
+  {
+    id: 8,
+    name: 'Casquette Club',
+    category: 'Accessoires',
+    price: 25,
+    color: 'sand',
+    icon: '🧢',
+    tag: 'ESSENTIEL',
+    description: 'La finition simple qui change un look.',
+  },
 ];
-const money = (value: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+const money = (value: number) =>
+  new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value);
 type View = 'shop' | 'account' | 'seller' | 'checkout';
 
 export function App() {
@@ -32,14 +117,23 @@ export function App() {
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const filteredProducts = useMemo(() => {
-    const result = products.filter((product) => (category === 'Tout' || product.category === category) && `${product.name} ${product.category} ${product.description}`.toLowerCase().includes(query.toLowerCase()));
+    const result = products.filter(
+      (product) =>
+        (category === 'Tout' || product.category === category) &&
+        `${product.name} ${product.category} ${product.description}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+    );
     if (sort === 'price-up') result.sort((a, b) => a.price - b.price);
     if (sort === 'price-down') result.sort((a, b) => b.price - a.price);
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
   }, [category, query, sort]);
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-  const cartTotal = products.reduce((sum, product) => sum + product.price * (cart[product.id] ?? 0), 0);
+  const cartTotal = products.reduce(
+    (sum, product) => sum + product.price * (cart[product.id] ?? 0),
+    0,
+  );
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
     setNotice(`${product.name} ajouté au panier`);
@@ -53,7 +147,9 @@ export function App() {
     });
   }
   function toggleFavorite(id: number) {
-    setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    setFavorites((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
   }
   function completeDemoOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,40 +160,761 @@ export function App() {
     <main className="store-app">
       <div className="announcement">LIVRAISON OFFERTE DÈS 80 € · RETOURS SOUS 30 JOURS</div>
       <header className="store-header">
-        <a className="store-brand" href="#home" onClick={(event) => { event.preventDefault(); setView('shop'); }} aria-label="Atelier, accueil"><span className="store-brand-icon">a.</span><span>atelier<span className="brand-period">.</span></span></a>
+        <a
+          className="store-brand"
+          href="#home"
+          onClick={(event) => {
+            event.preventDefault();
+            setView('shop');
+          }}
+          aria-label="Atelier, accueil"
+        >
+          <span className="store-brand-icon">a.</span>
+          <span>
+            atelier<span className="brand-period">.</span>
+          </span>
+        </a>
         <nav className="main-nav" aria-label="Navigation principale">
-          <button className={view === 'shop' && category === 'Tout' ? 'nav-link active' : 'nav-link'} onClick={() => { setView('shop'); setCategory('Tout'); }}>Nouveautés</button>
-          <button className="nav-link" onClick={() => { setView('shop'); setCategory('Vêtements'); }}>Vêtements</button>
-          <button className="nav-link" onClick={() => { setView('shop'); setCategory('Chaussures'); }}>Chaussures</button>
-          <button className="nav-link" onClick={() => { setView('shop'); setCategory('Accessoires'); }}>Accessoires</button>
+          <button
+            className={view === 'shop' && category === 'Tout' ? 'nav-link active' : 'nav-link'}
+            onClick={() => {
+              setView('shop');
+              setCategory('Tout');
+            }}
+          >
+            Nouveautés
+          </button>
+          <button
+            className="nav-link"
+            onClick={() => {
+              setView('shop');
+              setCategory('Vêtements');
+            }}
+          >
+            Vêtements
+          </button>
+          <button
+            className="nav-link"
+            onClick={() => {
+              setView('shop');
+              setCategory('Chaussures');
+            }}
+          >
+            Chaussures
+          </button>
+          <button
+            className="nav-link"
+            onClick={() => {
+              setView('shop');
+              setCategory('Accessoires');
+            }}
+          >
+            Accessoires
+          </button>
         </nav>
         <div className="header-actions">
-          <div className="language-switcher" role="group" aria-label="Langue">{(['fr', 'en'] as const).map((option: Language) => <button className="language-button" type="button" key={option} aria-pressed={language === option} aria-label={option === 'fr' ? 'French' : 'English'} onClick={() => setLanguage(option)}>{option.toUpperCase()}</button>)}</div>
-          <button className="icon-button" aria-label="Compte client" onClick={() => setView('account')}>♙</button>
-          <button className="cart-button" onClick={() => setCartOpen((open) => !open)} aria-label={`Panier, ${cartCount} article(s)`}>Panier <span className="cart-count">{cartCount}</span></button>
+          <div className="language-switcher" role="group" aria-label="Langue">
+            {(['fr', 'en'] as const).map((option: Language) => (
+              <button
+                className="language-button"
+                type="button"
+                key={option}
+                aria-pressed={language === option}
+                aria-label={option === 'fr' ? 'French' : 'English'}
+                onClick={() => setLanguage(option)}
+              >
+                {option.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button
+            className="icon-button"
+            aria-label="Compte client"
+            onClick={() => setView('account')}
+          >
+            ♙
+          </button>
+          <button
+            className="cart-button"
+            onClick={() => setCartOpen((open) => !open)}
+            aria-label={`Panier, ${cartCount} article(s)`}
+          >
+            Panier <span className="cart-count">{cartCount}</span>
+          </button>
         </div>
       </header>
-      {notice && <div className="toast" role="status">{notice}<button aria-label="Fermer le message" onClick={() => setNotice('')}>×</button></div>}
-      {view === 'shop' && <>
-        <section className="hero-banner" aria-labelledby="hero-title">
-          <div className="hero-copy"><span className="eyebrow">LA SÉLECTION DE LA SAISON</span><h1 id="hero-title">Le style, en<br /><em>toute simplicité.</em></h1><p>Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui vous ressemble.</p><button className="dark-button" onClick={() => { setCategory('Tout'); document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' }); }}>Découvrir la collection <span>↗</span></button><div className="hero-note"><span className="note-star">✳</span><span>Une mode à porter<br />et à reporter.</span></div></div>
-          <div className="hero-art" aria-label="Illustration de pièces mode"><div className="hero-shape shape-one" /><div className="hero-shape shape-two" /><div className="hero-product">🧥</div><div className="hero-sticker">NOUVELLE<br />COLLECTION <span>✳</span></div><div className="hero-caption">LES PETITS DÉTAILS<br />FONT LE STYLE.</div></div>
+      {notice && (
+        <div className="toast" role="status">
+          {notice}
+          <button aria-label="Fermer le message" onClick={() => setNotice('')}>
+            ×
+          </button>
+        </div>
+      )}
+      {view === 'shop' && (
+        <>
+          <section className="hero-banner" aria-labelledby="hero-title">
+            <div className="hero-copy">
+              <span className="eyebrow">LA SÉLECTION DE LA SAISON</span>
+              <h1 id="hero-title">
+                Le style, en
+                <br />
+                <em>toute simplicité.</em>
+              </h1>
+              <p>
+                Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui
+                vous ressemble.
+              </p>
+              <button
+                className="dark-button"
+                onClick={() => {
+                  setCategory('Tout');
+                  document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Découvrir la collection <span>↗</span>
+              </button>
+              <div className="hero-note">
+                <span className="note-star">✳</span>
+                <span>
+                  Une mode à porter
+                  <br />
+                  et à reporter.
+                </span>
+              </div>
+            </div>
+            <div className="hero-art" aria-label="Illustration de pièces mode">
+              <div className="hero-shape shape-one" />
+              <div className="hero-shape shape-two" />
+              <div className="hero-product">🧥</div>
+              <div className="hero-sticker">
+                NOUVELLE
+                <br />
+                COLLECTION <span>✳</span>
+              </div>
+              <div className="hero-caption">
+                LES PETITS DÉTAILS
+                <br />
+                FONT LE STYLE.
+              </div>
+            </div>
+          </section>
+          <section className="catalogue-section" id="catalogue">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">À VOUS DE CHOISIR</span>
+                <h2>
+                  Les pièces du moment<span className="brand-period">.</span>
+                </h2>
+                <p>Des favoris à adopter sans hésiter.</p>
+              </div>
+              <span className="product-count">{filteredProducts.length} articles</span>
+            </div>
+            <div className="catalogue-toolbar">
+              <div className="category-filters" role="group" aria-label="Filtrer par catégorie">
+                {(['Tout', 'Vêtements', 'Chaussures', 'Accessoires'] as const).map((item) => (
+                  <button
+                    key={item}
+                    className={category === item ? 'filter-chip selected' : 'filter-chip'}
+                    aria-pressed={category === item}
+                    onClick={() => setCategory(item)}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <div className="catalogue-tools">
+                <label className="search-box">
+                  <span aria-hidden="true">⌕</span>
+                  <input
+                    aria-label="Rechercher un produit"
+                    placeholder="Rechercher..."
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </label>
+                <label className="sort-label">
+                  <span className="visually-hidden">Trier les produits</span>
+                  <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                    <option value="featured">À la une</option>
+                    <option value="price-up">Prix croissant</option>
+                    <option value="price-down">Prix décroissant</option>
+                    <option value="name">Nom A–Z</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div className="product-grid">
+              {filteredProducts.map((product, index) => (
+                <article className="product-card" key={product.id}>
+                  <div className={`product-visual ${product.color}`}>
+                    {product.tag && <span className="product-tag">{product.tag}</span>}
+                    <button
+                      className={
+                        favorites.includes(product.id)
+                          ? 'favorite-button favorited'
+                          : 'favorite-button'
+                      }
+                      aria-label={
+                        favorites.includes(product.id)
+                          ? `Retirer ${product.name} des favoris`
+                          : `Ajouter ${product.name} aux favoris`
+                      }
+                      aria-pressed={favorites.includes(product.id)}
+                      onClick={() => toggleFavorite(product.id)}
+                    >
+                      {favorites.includes(product.id) ? '♥' : '♡'}
+                    </button>
+                    <span className={`product-emoji product-emoji-${index % 4}`} aria-hidden="true">
+                      {product.icon}
+                    </span>
+                    <span className="visual-label">{product.category.toUpperCase()}</span>
+                    <button className="quick-add" onClick={() => addToCart(product)}>
+                      Ajouter au panier <span>＋</span>
+                    </button>
+                  </div>
+                  <div className="product-meta">
+                    <div>
+                      <h3>{product.name}</h3>
+                      <p>{product.category}</p>
+                    </div>
+                    <div className="product-price">
+                      {product.oldPrice && <del>{money(product.oldPrice)}</del>}
+                      <strong>{money(product.price)}</strong>
+                    </div>
+                  </div>
+                  <p className="product-description">{product.description}</p>
+                </article>
+              ))}
+            </div>
+            {filteredProducts.length === 0 && (
+              <div className="empty-state">
+                <span>⌕</span>
+                <h3>Aucun article trouvé</h3>
+                <p>Essayez une autre recherche ou une autre catégorie.</p>
+                <button
+                  className="outline-button"
+                  onClick={() => {
+                    setQuery('');
+                    setCategory('Tout');
+                  }}
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            )}
+          </section>
+          <section className="benefits-strip">
+            <div>
+              <span>✳</span>
+              <strong>Des essentiels durables</strong>
+              <p>Des pièces pensées pour durer.</p>
+            </div>
+            <div>
+              <span>↗</span>
+              <strong>Livraison offerte</strong>
+              <p>Dès 80 € d’achat en France.</p>
+            </div>
+            <div>
+              <span>↺</span>
+              <strong>Retours faciles</strong>
+              <p>Vous avez 30 jours pour changer d’avis.</p>
+            </div>
+            <div>
+              <span>♡</span>
+              <strong>À votre écoute</strong>
+              <p>Une équipe là pour vous aider.</p>
+            </div>
+          </section>
+        </>
+      )}
+      {view === 'account' && (
+        <section className="workspace-page">
+          <button className="back-link" onClick={() => setView('shop')}>
+            ← Retour à la boutique
+          </button>
+          <span className="eyebrow">VOTRE ESPACE PERSONNEL</span>
+          <h1 className="workspace-title">
+            Bonjour, bienvenue<span className="brand-period">.</span>
+          </h1>
+          <p className="workspace-intro">
+            Connectez-vous pour retrouver vos commandes, vos favoris et vos informations de
+            livraison.
+          </p>
+          <div className="account-benefits">
+            <div>
+              <span>01</span>
+              <strong>Vos commandes</strong>
+              <p>Consultez le suivi et l’historique de vos achats.</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>Vos favoris</strong>
+              <p>Gardez vos pièces préférées à portée de main.</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>Vos informations</strong>
+              <p>Retrouvez vos coordonnées et adresses.</p>
+            </div>
+          </div>
+          <AuthPanel language={language} />
+          <p className="fine-print">
+            La création de compte et la connexion utilisent le service d’authentification existant.
+          </p>
         </section>
-        <section className="catalogue-section" id="catalogue">
-          <div className="section-heading"><div><span className="eyebrow">À VOUS DE CHOISIR</span><h2>Les pièces du moment<span className="brand-period">.</span></h2><p>Des favoris à adopter sans hésiter.</p></div><span className="product-count">{filteredProducts.length} articles</span></div>
-          <div className="catalogue-toolbar"><div className="category-filters" role="group" aria-label="Filtrer par catégorie">{(['Tout', 'Vêtements', 'Chaussures', 'Accessoires'] as const).map((item) => <button key={item} className={category === item ? 'filter-chip selected' : 'filter-chip'} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div><div className="catalogue-tools"><label className="search-box"><span aria-hidden="true">⌕</span><input aria-label="Rechercher un produit" placeholder="Rechercher..." value={query} onChange={(event) => setQuery(event.target.value)} /></label><label className="sort-label"><span className="visually-hidden">Trier les produits</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">À la une</option><option value="price-up">Prix croissant</option><option value="price-down">Prix décroissant</option><option value="name">Nom A–Z</option></select></label></div></div>
-          <div className="product-grid">{filteredProducts.map((product, index) => <article className="product-card" key={product.id}><div className={`product-visual ${product.color}`}>{product.tag && <span className="product-tag">{product.tag}</span>}<button className={favorites.includes(product.id) ? 'favorite-button favorited' : 'favorite-button'} aria-label={favorites.includes(product.id) ? `Retirer ${product.name} des favoris` : `Ajouter ${product.name} aux favoris`} aria-pressed={favorites.includes(product.id)} onClick={() => toggleFavorite(product.id)}>{favorites.includes(product.id) ? '♥' : '♡'}</button><span className={`product-emoji product-emoji-${index % 4}`} aria-hidden="true">{product.icon}</span><span className="visual-label">{product.category.toUpperCase()}</span><button className="quick-add" onClick={() => addToCart(product)}>Ajouter au panier <span>＋</span></button></div><div className="product-meta"><div><h3>{product.name}</h3><p>{product.category}</p></div><div className="product-price">{product.oldPrice && <del>{money(product.oldPrice)}</del>}<strong>{money(product.price)}</strong></div></div><p className="product-description">{product.description}</p></article>)}</div>
-          {filteredProducts.length === 0 && <div className="empty-state"><span>⌕</span><h3>Aucun article trouvé</h3><p>Essayez une autre recherche ou une autre catégorie.</p><button className="outline-button" onClick={() => { setQuery(''); setCategory('Tout'); }}>Réinitialiser les filtres</button></div>}
+      )}
+      {view === 'checkout' && (
+        <section className="workspace-page checkout-page">
+          <button className="back-link" onClick={() => setView('shop')}>
+            ← Continuer mes achats
+          </button>
+          {checkoutDone ? (
+            <div className="success-panel">
+              <span className="success-icon">✓</span>
+              <span className="eyebrow">PARCOURS DE DÉMONSTRATION</span>
+              <h1>
+                Merci pour votre commande<span className="brand-period">.</span>
+              </h1>
+              <p>
+                Une confirmation de démonstration a été préparée pour {orderEmail}. Aucun paiement
+                n’a été effectué et aucune commande réelle n’a été enregistrée.
+              </p>
+              <button
+                className="dark-button"
+                onClick={() => {
+                  setView('shop');
+                  setCheckoutDone(false);
+                }}
+              >
+                Retour à la boutique ↗
+              </button>
+            </div>
+          ) : (
+            <>
+              <span className="eyebrow">DERNIÈRE ÉTAPE</span>
+              <h1 className="workspace-title">
+                Finaliser ma commande<span className="brand-period">.</span>
+              </h1>
+              <p className="workspace-intro">
+                Parcours de commande de démonstration — le paiement en ligne n’est pas encore
+                connecté.
+              </p>
+              <div className="checkout-layout">
+                <form className="checkout-form" onSubmit={completeDemoOrder}>
+                  <h2>Informations de livraison</h2>
+                  <label>
+                    Adresse e-mail
+                    <input
+                      required
+                      type="email"
+                      autoComplete="email"
+                      value={orderEmail}
+                      onChange={(event) => setOrderEmail(event.target.value)}
+                      placeholder="vous@exemple.fr"
+                    />
+                  </label>
+                  <div className="form-two-col">
+                    <label>
+                      Prénom
+                      <input required autoComplete="given-name" placeholder="Votre prénom" />
+                    </label>
+                    <label>
+                      Nom
+                      <input required autoComplete="family-name" placeholder="Votre nom" />
+                    </label>
+                  </div>
+                  <label>
+                    Adresse
+                    <input required autoComplete="street-address" placeholder="Numéro et rue" />
+                  </label>
+                  <div className="form-two-col">
+                    <label>
+                      Code postal
+                      <input required autoComplete="postal-code" placeholder="75000" />
+                    </label>
+                    <label>
+                      Ville
+                      <input required autoComplete="address-level2" placeholder="Paris" />
+                    </label>
+                  </div>
+                  <label className="checkbox-line">
+                    <input type="checkbox" required /> Je confirme les informations saisies pour
+                    cette démonstration.
+                  </label>
+                  <button className="dark-button full-button" type="submit">
+                    Simuler la confirmation ↗
+                  </button>
+                  <p className="fine-print">
+                    Aucune donnée bancaire n’est demandée. Cette étape ne déclenche ni paiement ni
+                    expédition.
+                  </p>
+                </form>
+                <aside className="order-summary">
+                  <h2>Votre panier</h2>
+                  {products
+                    .filter((product) => cart[product.id])
+                    .map((product) => (
+                      <div className="summary-item" key={product.id}>
+                        <span className={`summary-thumb ${product.color}`}>{product.icon}</span>
+                        <div>
+                          <strong>{product.name}</strong>
+                          <p>Quantité : {cart[product.id]}</p>
+                        </div>
+                        <strong>{money(product.price * cart[product.id])}</strong>
+                      </div>
+                    ))}
+                  {cartCount === 0 && (
+                    <p>Votre panier est vide. Retournez au catalogue pour ajouter des articles.</p>
+                  )}
+                  <div className="summary-total">
+                    <span>Sous-total</span>
+                    <strong>{money(cartTotal)}</strong>
+                  </div>
+                  <p className="summary-note">
+                    Livraison calculée à l’étape suivante (simulation).
+                  </p>
+                </aside>
+              </div>
+            </>
+          )}
         </section>
-        <section className="benefits-strip"><div><span>✳</span><strong>Des essentiels durables</strong><p>Des pièces pensées pour durer.</p></div><div><span>↗</span><strong>Livraison offerte</strong><p>Dès 80 € d’achat en France.</p></div><div><span>↺</span><strong>Retours faciles</strong><p>Vous avez 30 jours pour changer d’avis.</p></div><div><span>♡</span><strong>À votre écoute</strong><p>Une équipe là pour vous aider.</p></div></section>
-      </>}
-      {view === 'account' && <section className="workspace-page"><button className="back-link" onClick={() => setView('shop')}>← Retour à la boutique</button><span className="eyebrow">VOTRE ESPACE PERSONNEL</span><h1 className="workspace-title">Bonjour, bienvenue<span className="brand-period">.</span></h1><p className="workspace-intro">Connectez-vous pour retrouver vos commandes, vos favoris et vos informations de livraison.</p><div className="account-benefits"><div><span>01</span><strong>Vos commandes</strong><p>Consultez le suivi et l’historique de vos achats.</p></div><div><span>02</span><strong>Vos favoris</strong><p>Gardez vos pièces préférées à portée de main.</p></div><div><span>03</span><strong>Vos informations</strong><p>Retrouvez vos coordonnées et adresses.</p></div></div><AuthPanel language={language} /><p className="fine-print">La création de compte et la connexion utilisent le service d’authentification existant.</p></section>}
-      {view === 'checkout' && <section className="workspace-page checkout-page"><button className="back-link" onClick={() => setView('shop')}>← Continuer mes achats</button>{checkoutDone ? <div className="success-panel"><span className="success-icon">✓</span><span className="eyebrow">PARCOURS DE DÉMONSTRATION</span><h1>Merci pour votre commande<span className="brand-period">.</span></h1><p>Une confirmation de démonstration a été préparée pour {orderEmail}. Aucun paiement n’a été effectué et aucune commande réelle n’a été enregistrée.</p><button className="dark-button" onClick={() => { setView('shop'); setCheckoutDone(false); }}>Retour à la boutique ↗</button></div> : <><span className="eyebrow">DERNIÈRE ÉTAPE</span><h1 className="workspace-title">Finaliser ma commande<span className="brand-period">.</span></h1><p className="workspace-intro">Parcours de commande de démonstration — le paiement en ligne n’est pas encore connecté.</p><div className="checkout-layout"><form className="checkout-form" onSubmit={completeDemoOrder}><h2>Informations de livraison</h2><label>Adresse e-mail<input required type="email" autoComplete="email" value={orderEmail} onChange={(event) => setOrderEmail(event.target.value)} placeholder="vous@exemple.fr" /></label><div className="form-two-col"><label>Prénom<input required autoComplete="given-name" placeholder="Votre prénom" /></label><label>Nom<input required autoComplete="family-name" placeholder="Votre nom" /></label></div><label>Adresse<input required autoComplete="street-address" placeholder="Numéro et rue" /></label><div className="form-two-col"><label>Code postal<input required autoComplete="postal-code" placeholder="75000" /></label><label>Ville<input required autoComplete="address-level2" placeholder="Paris" /></label></div><label className="checkbox-line"><input type="checkbox" required /> Je confirme les informations saisies pour cette démonstration.</label><button className="dark-button full-button" type="submit">Simuler la confirmation ↗</button><p className="fine-print">Aucune donnée bancaire n’est demandée. Cette étape ne déclenche ni paiement ni expédition.</p></form><aside className="order-summary"><h2>Votre panier</h2>{products.filter((product) => cart[product.id]).map((product) => <div className="summary-item" key={product.id}><span className={`summary-thumb ${product.color}`}>{product.icon}</span><div><strong>{product.name}</strong><p>Quantité : {cart[product.id]}</p></div><strong>{money(product.price * cart[product.id])}</strong></div>)}{cartCount === 0 && <p>Votre panier est vide. Retournez au catalogue pour ajouter des articles.</p>}<div className="summary-total"><span>Sous-total</span><strong>{money(cartTotal)}</strong></div><p className="summary-note">Livraison calculée à l’étape suivante (simulation).</p></aside></div></>}</section>}
-      {view === 'seller' && <section className="seller-page"><div className="seller-topline"><div><span className="eyebrow">ATELIER · ESPACE VENDEUR</span><h1>Vue d’ensemble<span className="brand-period">.</span></h1><p>Suivez les performances de votre boutique en un coup d’œil.</p></div><div className="seller-controls"><label className="range-select">Période <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option><option value="90">90 derniers jours</option></select></label><button className="dark-button" onClick={() => setNotice('Export KPI : disponible après connexion aux données de vente.')}>Exporter le rapport ↓</button></div></div><div className="demo-banner">APERÇU AVEC DONNÉES FICTIVES <span>Connectez les commandes réelles pour activer le suivi en production.</span></div><div className="kpi-grid"><article className="kpi-card"><div className="kpi-label">Chiffre d’affaires <span>↗</span></div><strong>{sellerRange === '7' ? '2 480 €' : sellerRange === '90' ? '31 820 €' : '12 840 €'}</strong><p><span className="positive">+12,8 %</span> vs période précédente</p><div className="sparkline">{[34,49,40,67,52,78,60,94,76,100].map((height, i) => <i key={i} style={{ height: `${height}%` }} />)}</div></article><article className="kpi-card"><div className="kpi-label">Commandes <span>▤</span></div><strong>{sellerRange === '7' ? '38' : sellerRange === '90' ? '482' : '164'}</strong><p><span className="positive">+8,4 %</span> vs période précédente</p><div className="kpi-bottom"><span>En préparation</span><strong>12</strong></div></article><article className="kpi-card"><div className="kpi-label">Panier moyen <span>◈</span></div><strong>78,30 €</strong><p><span className="positive">+3,2 %</span> vs période précédente</p><div className="kpi-bottom"><span>Objectif mensuel</span><strong>85 €</strong></div></article><article className="kpi-card"><div className="kpi-label">Taux de conversion <span>◎</span></div><strong>3,6 %</strong><p><span className="positive">+0,6 pt</span> vs période précédente</p><div className="conversion-track"><span /></div><div className="kpi-bottom"><span>Visites : 4 560</span><strong>3,6 %</strong></div></article></div><div className="seller-content-grid"><section className="seller-panel sales-panel"><div className="panel-heading"><div><h2>Ventes dans le temps</h2><p>Évolution du chiffre d’affaires</p></div><span className="legend-dot">● CA</span></div><div className="chart-bars" aria-label="Graphique illustratif des ventes"><div className="chart-gridline"><span>3 000 €</span></div><div className="chart-gridline"><span>2 000 €</span></div><div className="chart-gridline"><span>1 000 €</span></div><div className="chart-columns">{[38,52,45,72,58,84,66,93,76,100,70,87].map((height, i) => <div className="chart-column-wrap" key={i}><div className="chart-column" style={{ height: `${height}%` }} /><span>{['1','3','5','7','9','11','13','15','17','19','21','23'][i]}</span></div>)}</div></div></section><section className="seller-panel"><div className="panel-heading"><div><h2>Meilleures ventes</h2><p>Produits les plus vendus</p></div><button className="text-action" onClick={() => setNotice('Le catalogue détaillé sera relié à la gestion des produits.')}>Voir tout ↗</button></div>{products.slice(0, 4).map((product, i) => <div className="best-seller-row" key={product.id}><span className={`best-seller-icon ${product.color}`}>{product.icon}</span><div className="best-seller-name"><strong>{product.name}</strong><span>{[42,36,29,24][i]} ventes</span></div><strong>{money([3738,2664,1711,1560][i])}</strong></div>)}</section></div><section className="seller-panel inventory-panel"><div className="panel-heading"><div><h2>État du catalogue</h2><p>Indicateurs de stock à surveiller</p></div><button className="text-action" onClick={() => setNotice('La gestion de stock sera connectée à la base de données.')}>Gérer le catalogue ↗</button></div><div className="inventory-stats"><div><span className="inventory-dot green" /><div><strong>124</strong><span>Produits actifs</span></div></div><div><span className="inventory-dot orange" /><div><strong>8</strong><span>Stock faible</span></div></div><div><span className="inventory-dot red" /><div><strong>3</strong><span>Ruptures de stock</span></div></div><div><span className="inventory-dot blue-dot" /><div><strong>6</strong><span>À publier</span></div></div></div></section></section>}
-      <footer className="store-footer"><a className="store-brand" href="#home" onClick={(event) => { event.preventDefault(); setView('shop'); }}><span className="store-brand-icon">a.</span><span>atelier<span className="brand-period">.</span></span></a><p>Des essentiels pour votre quotidien.</p><div className="footer-links"><button onClick={() => setView('account')}>Mon compte</button><button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>Aide & contact</button><button onClick={() => setNotice('Les mentions légales seront ajoutées avant la mise en production.')}>Informations légales</button></div><span className="copyright">© 2026 atelier. · Démonstration</span></footer>
-      {view !== 'seller' && <button className="seller-entry" onClick={() => setView('seller')}><span>▦</span> Espace vendeur</button>}
-      {view === 'seller' && <button className="seller-exit" onClick={() => setView('shop')}>← Retour à la boutique</button>}
-      {cartOpen && <div className="drawer-backdrop" onClick={() => setCartOpen(false)}><aside className="cart-drawer" aria-label="Votre panier" onClick={(event) => event.stopPropagation()}><div className="drawer-heading"><div><span className="eyebrow">VOTRE SÉLECTION</span><h2>Mon panier <span>({cartCount})</span></h2></div><button className="close-drawer" aria-label="Fermer le panier" onClick={() => setCartOpen(false)}>×</button></div>{cartCount === 0 ? <div className="empty-cart"><span>♡</span><h3>Votre panier est vide</h3><p>Vos prochains coups de cœur sont ici.</p><button className="dark-button" onClick={() => setCartOpen(false)}>Continuer mes achats</button></div> : <><div className="drawer-items">{products.filter((product) => cart[product.id]).map((product) => <div className="drawer-item" key={product.id}><span className={`drawer-product-icon ${product.color}`}>{product.icon}</span><div className="drawer-product-info"><strong>{product.name}</strong><span>{money(product.price)}</span><div className="quantity-control"><button aria-label={`Retirer un ${product.name}`} onClick={() => changeQuantity(product.id, -1)}>−</button><span>{cart[product.id]}</span><button aria-label={`Ajouter un ${product.name}`} onClick={() => changeQuantity(product.id, 1)}>＋</button></div></div><strong>{money(product.price * cart[product.id])}</strong></div>)}</div><div className="drawer-total"><div><span>Sous-total</span><strong>{money(cartTotal)}</strong></div><p>{cartTotal >= 80 ? 'La livraison est offerte !' : `Plus que ${money(80 - cartTotal)} pour la livraison offerte.`}</p><button className="dark-button full-button" onClick={() => { setCartOpen(false); setCheckoutDone(false); setView('checkout'); }}>Passer à la commande ↗</button><button className="continue-link" onClick={() => setCartOpen(false)}>Continuer mes achats</button></div></>}</aside></div>}
+      )}
+      {view === 'seller' && (
+        <section className="seller-page">
+          <div className="seller-topline">
+            <div>
+              <span className="eyebrow">ATELIER · ESPACE VENDEUR</span>
+              <h1>
+                Vue d’ensemble<span className="brand-period">.</span>
+              </h1>
+              <p>Suivez les performances de votre boutique en un coup d’œil.</p>
+            </div>
+            <div className="seller-controls">
+              <label className="range-select">
+                Période{' '}
+                <select
+                  value={sellerRange}
+                  onChange={(event) => setSellerRange(event.target.value)}
+                >
+                  <option value="7">7 derniers jours</option>
+                  <option value="30">30 derniers jours</option>
+                  <option value="90">90 derniers jours</option>
+                </select>
+              </label>
+              <button
+                className="dark-button"
+                onClick={() =>
+                  setNotice('Export KPI : disponible après connexion aux données de vente.')
+                }
+              >
+                Exporter le rapport ↓
+              </button>
+            </div>
+          </div>
+          <div className="demo-banner">
+            APERÇU AVEC DONNÉES FICTIVES{' '}
+            <span>Connectez les commandes réelles pour activer le suivi en production.</span>
+          </div>
+          <div className="kpi-grid">
+            <article className="kpi-card">
+              <div className="kpi-label">
+                Chiffre d’affaires <span>↗</span>
+              </div>
+              <strong>
+                {sellerRange === '7' ? '2 480 €' : sellerRange === '90' ? '31 820 €' : '12 840 €'}
+              </strong>
+              <p>
+                <span className="positive">+12,8 %</span> vs période précédente
+              </p>
+              <div className="sparkline">
+                {[34, 49, 40, 67, 52, 78, 60, 94, 76, 100].map((height, i) => (
+                  <i key={i} style={{ height: `${height}%` }} />
+                ))}
+              </div>
+            </article>
+            <article className="kpi-card">
+              <div className="kpi-label">
+                Commandes <span>▤</span>
+              </div>
+              <strong>{sellerRange === '7' ? '38' : sellerRange === '90' ? '482' : '164'}</strong>
+              <p>
+                <span className="positive">+8,4 %</span> vs période précédente
+              </p>
+              <div className="kpi-bottom">
+                <span>En préparation</span>
+                <strong>12</strong>
+              </div>
+            </article>
+            <article className="kpi-card">
+              <div className="kpi-label">
+                Panier moyen <span>◈</span>
+              </div>
+              <strong>78,30 €</strong>
+              <p>
+                <span className="positive">+3,2 %</span> vs période précédente
+              </p>
+              <div className="kpi-bottom">
+                <span>Objectif mensuel</span>
+                <strong>85 €</strong>
+              </div>
+            </article>
+            <article className="kpi-card">
+              <div className="kpi-label">
+                Taux de conversion <span>◎</span>
+              </div>
+              <strong>3,6 %</strong>
+              <p>
+                <span className="positive">+0,6 pt</span> vs période précédente
+              </p>
+              <div className="conversion-track">
+                <span />
+              </div>
+              <div className="kpi-bottom">
+                <span>Visites : 4 560</span>
+                <strong>3,6 %</strong>
+              </div>
+            </article>
+          </div>
+          <div className="seller-content-grid">
+            <section className="seller-panel sales-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Ventes dans le temps</h2>
+                  <p>Évolution du chiffre d’affaires</p>
+                </div>
+                <span className="legend-dot">● CA</span>
+              </div>
+              <div className="chart-bars" aria-label="Graphique illustratif des ventes">
+                <div className="chart-gridline">
+                  <span>3 000 €</span>
+                </div>
+                <div className="chart-gridline">
+                  <span>2 000 €</span>
+                </div>
+                <div className="chart-gridline">
+                  <span>1 000 €</span>
+                </div>
+                <div className="chart-columns">
+                  {[38, 52, 45, 72, 58, 84, 66, 93, 76, 100, 70, 87].map((height, i) => (
+                    <div className="chart-column-wrap" key={i}>
+                      <div className="chart-column" style={{ height: `${height}%` }} />
+                      <span>
+                        {['1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23'][i]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+            <section className="seller-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Meilleures ventes</h2>
+                  <p>Produits les plus vendus</p>
+                </div>
+                <button
+                  className="text-action"
+                  onClick={() =>
+                    setNotice('Le catalogue détaillé sera relié à la gestion des produits.')
+                  }
+                >
+                  Voir tout ↗
+                </button>
+              </div>
+              {products.slice(0, 4).map((product, i) => (
+                <div className="best-seller-row" key={product.id}>
+                  <span className={`best-seller-icon ${product.color}`}>{product.icon}</span>
+                  <div className="best-seller-name">
+                    <strong>{product.name}</strong>
+                    <span>{[42, 36, 29, 24][i]} ventes</span>
+                  </div>
+                  <strong>{money([3738, 2664, 1711, 1560][i])}</strong>
+                </div>
+              ))}
+            </section>
+          </div>
+          <section className="seller-panel inventory-panel">
+            <div className="panel-heading">
+              <div>
+                <h2>État du catalogue</h2>
+                <p>Indicateurs de stock à surveiller</p>
+              </div>
+              <button
+                className="text-action"
+                onClick={() =>
+                  setNotice('La gestion de stock sera connectée à la base de données.')
+                }
+              >
+                Gérer le catalogue ↗
+              </button>
+            </div>
+            <div className="inventory-stats">
+              <div>
+                <span className="inventory-dot green" />
+                <div>
+                  <strong>124</strong>
+                  <span>Produits actifs</span>
+                </div>
+              </div>
+              <div>
+                <span className="inventory-dot orange" />
+                <div>
+                  <strong>8</strong>
+                  <span>Stock faible</span>
+                </div>
+              </div>
+              <div>
+                <span className="inventory-dot red" />
+                <div>
+                  <strong>3</strong>
+                  <span>Ruptures de stock</span>
+                </div>
+              </div>
+              <div>
+                <span className="inventory-dot blue-dot" />
+                <div>
+                  <strong>6</strong>
+                  <span>À publier</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      )}
+      <footer className="store-footer">
+        <a
+          className="store-brand"
+          href="#home"
+          onClick={(event) => {
+            event.preventDefault();
+            setView('shop');
+          }}
+        >
+          <span className="store-brand-icon">a.</span>
+          <span>
+            atelier<span className="brand-period">.</span>
+          </span>
+        </a>
+        <p>Des essentiels pour votre quotidien.</p>
+        <div className="footer-links">
+          <button onClick={() => setView('account')}>Mon compte</button>
+          <button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>
+            Aide & contact
+          </button>
+          <button
+            onClick={() =>
+              setNotice('Les mentions légales seront ajoutées avant la mise en production.')
+            }
+          >
+            Informations légales
+          </button>
+        </div>
+        <span className="copyright">© 2026 atelier. · Démonstration</span>
+      </footer>
+      {view !== 'seller' && (
+        <button className="seller-entry" onClick={() => setView('seller')}>
+          <span>▦</span> Espace vendeur
+        </button>
+      )}
+      {view === 'seller' && (
+        <button className="seller-exit" onClick={() => setView('shop')}>
+          ← Retour à la boutique
+        </button>
+      )}
+      {cartOpen && (
+        <div className="drawer-backdrop" onClick={() => setCartOpen(false)}>
+          <aside
+            className="cart-drawer"
+            aria-label="Votre panier"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="drawer-heading">
+              <div>
+                <span className="eyebrow">VOTRE SÉLECTION</span>
+                <h2>
+                  Mon panier <span>({cartCount})</span>
+                </h2>
+              </div>
+              <button
+                className="close-drawer"
+                aria-label="Fermer le panier"
+                onClick={() => setCartOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            {cartCount === 0 ? (
+              <div className="empty-cart">
+                <span>♡</span>
+                <h3>Votre panier est vide</h3>
+                <p>Vos prochains coups de cœur sont ici.</p>
+                <button className="dark-button" onClick={() => setCartOpen(false)}>
+                  Continuer mes achats
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="drawer-items">
+                  {products
+                    .filter((product) => cart[product.id])
+                    .map((product) => (
+                      <div className="drawer-item" key={product.id}>
+                        <span className={`drawer-product-icon ${product.color}`}>
+                          {product.icon}
+                        </span>
+                        <div className="drawer-product-info">
+                          <strong>{product.name}</strong>
+                          <span>{money(product.price)}</span>
+                          <div className="quantity-control">
+                            <button
+                              aria-label={`Retirer un ${product.name}`}
+                              onClick={() => changeQuantity(product.id, -1)}
+                            >
+                              −
+                            </button>
+                            <span>{cart[product.id]}</span>
+                            <button
+                              aria-label={`Ajouter un ${product.name}`}
+                              onClick={() => changeQuantity(product.id, 1)}
+                            >
+                              ＋
+                            </button>
+                          </div>
+                        </div>
+                        <strong>{money(product.price * cart[product.id])}</strong>
+                      </div>
+                    ))}
+                </div>
+                <div className="drawer-total">
+                  <div>
+                    <span>Sous-total</span>
+                    <strong>{money(cartTotal)}</strong>
+                  </div>
+                  <p>
+                    {cartTotal >= 80
+                      ? 'La livraison est offerte !'
+                      : `Plus que ${money(80 - cartTotal)} pour la livraison offerte.`}
+                  </p>
+                  <button
+                    className="dark-button full-button"
+                    onClick={() => {
+                      setCartOpen(false);
+                      setCheckoutDone(false);
+                      setView('checkout');
+                    }}
+                  >
+                    Passer à la commande ↗
+                  </button>
+                  <button className="continue-link" onClick={() => setCartOpen(false)}>
+                    Continuer mes achats
+                  </button>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
+      )}
     </main>
   );
 }
