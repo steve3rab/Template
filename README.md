@@ -111,3 +111,27 @@ scripts/                 # commandes PowerShell
 ## Sécurité et production
 
 Le projet fournit une base sécurisée, pas une certification de sécurité. Les limites à traiter avant une exposition publique sont : vérification/récupération d'e-mail, MFA si le risque le justifie, autorisations métier explicites, limitation de débit distribuée (le stockage mémoire est local à chaque instance), journalisation/alerting, sauvegardes et tests de charge. En production, `APP_ORIGIN` doit être une origine HTTPS exacte et `SESSION_SECRET` doit être un secret aléatoire d'au moins 32 caractères. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.
+
+
+## Boutique, clients et vendeurs
+
+Les données de catalogue, panier client authentifié, favoris, adresses et commandes sont maintenant persistées via Prisma. Le catalogue de démonstration est inséré par migration. Les clients peuvent consulter l'historique et le statut de leurs commandes ; les vendeurs autorisés disposent d'un tableau de bord calculé à partir des commandes, peuvent créer/modifier/masquer leurs produits et mettre à jour les statuts de commande. Les commandes multi-vendeurs sont séparées par vendeur pour éviter d'exposer les articles d'un autre vendeur.
+
+Principales routes :
+- Public : `GET /api/products`
+- Administration : `POST /api/admin/users/:id/role` (ADMIN uniquement, rôles CUSTOMER/SELLER)
+- Vendeur : `GET /api/seller/dashboard?days=7|30|90`, `GET/POST /api/seller/products`, `PATCH/DELETE /api/seller/products/:id`, `GET /api/seller/orders`, `PATCH /api/seller/orders/:id/status`
+- Client connecté : `GET/PUT /api/customer/cart`, `GET/POST/DELETE /api/customer/favorites`, `GET/POST /api/customer/addresses`, `GET/POST /api/customer/orders`
+- Mot de passe oublié : `POST /api/auth/password-reset/request` puis `POST /api/auth/password-reset/complete`
+
+Les comptes publics sont toujours créés en CUSTOMER. Pour attribuer un rôle depuis un environnement opérateur, utilisez `npx tsx server/scripts/set-user-role.ts adresse@example.com SELLER`. Pour initialiser le premier administrateur, exécutez la même commande avec le rôle ADMIN. Ce script ne doit jamais être exposé sur le web ; il invalide les sessions existantes.
+
+## Configuration de production et tests commerciaux
+
+Voir [docs/PRODUCTION.md](docs/PRODUCTION.md) et [server/.env.production.example](server/.env.production.example). En production, l’application exige une origine HTTPS, un secret de session fort et un webhook de livraison de réinitialisation de mot de passe en HTTPS. Le cookie de session couvre désormais les routes API d'authentification et de commerce.
+
+Les pages CGV, confidentialité et retours/remboursements sont des **modèles à compléter et faire valider** avant toute vente. Les coordonnées de l'entreprise, du médiateur, les durées de conservation, les prestataires et les modalités de livraison doivent être exacts.
+
+**Non encore prêt pour encaisser des commandes réelles :** le prestataire de paiement, les webhooks de paiement signés, les remboursements, le suivi transporteur et les e-mails transactionnels de commande ne sont pas implémentés. Les commandes sont enregistrées avec le statut de paiement UNPAID ; le tableau de bord ne compte que les commandes explicitement marquées PAID. N'exposez pas le site à des clients payants avant d'avoir intégré et testé ces flux.
+
+Un smoke test de charge k6 est disponible dans `tests/load/k6-smoke.js`. Il nécessite k6 et doit être exécuté contre une préproduction isolée, par exemple `BASE_URL=https://staging.example.com k6 run tests/load/k6-smoke.js`. Ce script n'est pas une preuve qu'un test de charge ou un audit de sécurité a déjà été exécuté.
