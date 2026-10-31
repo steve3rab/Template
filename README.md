@@ -58,7 +58,7 @@ Les conventions d'architecture, de TypeScript strict, de validation des entrées
 
 - `src/shared/api/client.ts` centralise les requêtes HTTP, les erreurs API et la validation Zod des réponses. Les écrans ne doivent pas faire confiance à `response.json()` avec une simple assertion TypeScript.
 - `src/shared/utils/` contient les utilitaires transverses testés, comme le formatage des montants et le stockage local défensif.
-- `server/src/commerce.ts` est le point de composition des routes. Les implémentations sont séparées dans `server/src/routes/` par domaine : catalogue, administration, vendeur, client et réinitialisation du mot de passe.
+- `server/src/commerce.ts` est le point de composition des routes. Les implémentations sont séparées dans `server/src/routes/` par domaine : catalogue, administration, vendeur, panier, favoris, adresses, commandes et réinitialisation du mot de passe.
 - `server/src/auth/requireUser.ts` centralise la vérification de session et des rôles ; les schémas Zod de requête sont définis dans `server/src/schemas/commerce.ts`.
 
 Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
