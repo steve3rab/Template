@@ -40,6 +40,7 @@ const addressSchema = z.object({
 
 export const apiSchemas = {
   products: z.object({ products: z.array(productSchema) }),
+  productResult: z.object({ product: productSchema }),
   sellerDashboard: z.object({
     periodDays: z.number().int(),
     revenueCents: z.number().int(),
