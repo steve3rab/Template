@@ -15,7 +15,12 @@ export function CustomerAccountData() {
       fetch('/api/customer/addresses', { credentials: 'include' }),
       fetch('/api/customer/orders', { credentials: 'include' }),
     ]);
-    if (!addressResponse.ok || !orderResponse.ok) return;
+    if (!addressResponse.ok || !orderResponse.ok) {
+      setAddresses([]);
+      setOrders([]);
+      setAvailable(false);
+      return;
+    }
     const [addressPayload, orderPayload] = await Promise.all([
       addressResponse.json() as Promise<{ addresses: Address[] }>,
       orderResponse.json() as Promise<{ orders: Order[] }>,
