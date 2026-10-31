@@ -5,6 +5,8 @@ import {
   apiRequest,
   ApiError,
   apiSchemas,
+  orderStatusSchema,
+  type OrderStatus,
   type SellerDashboard as Dashboard,
   type SellerOrder as Order,
   type SellerProduct as Product,
@@ -96,7 +98,7 @@ export function SellerWorkspace({ range }: { range: string }) {
     }
   }
 
-  async function updateOrder(orderId: string, status: string) {
+  async function updateOrder(orderId: string, status: OrderStatus) {
     setMessage('');
     try {
       await apiRequest(`/api/seller/orders/${orderId}/status`, apiSchemas.orderResult, {
@@ -156,7 +158,10 @@ export function SellerWorkspace({ range }: { range: string }) {
           <div className="best-seller-row" key={order.id}>
             <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{order.customer?.email ?? 'Client'} · {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement : {order.paymentStatus}</span></div>
             <strong>{formatCents(order.totalCents)}</strong>
-            <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => void updateOrder(order.id, event.target.value)}><option value="PENDING">En attente</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>En préparation</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>Expédiée</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>Livrée</option><option value="CANCELLED">Annulée</option></select></label>
+            <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => {
+                const parsedStatus = orderStatusSchema.safeParse(event.target.value);
+                if (parsedStatus.success) void updateOrder(order.id, parsedStatus.data);
+              }}><option value="PENDING">En attente</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>En préparation</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>Expédiée</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>Livrée</option><option value="CANCELLED">Annulée</option></select></label>
           </div>
         ))}
       </section>
