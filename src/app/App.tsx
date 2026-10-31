@@ -235,12 +235,29 @@ export function App() {
         setToastKind('error');
         setNotice('Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.');
       });
-    // Keep guest data local. Customer endpoints are only queried after a session is confirmed.
-    void fetch('/api/auth/me', { credentials: 'include' })
+    // Resolve authentication only from explicit session outcomes. A 5xx/network
+    // failure must not be interpreted as logout or overwrite a valid client state.
+    void fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
       .then((response) => {
-        if (active && response.ok) setIsAuthenticated(true);
+        if (!active) return;
+        if (response.ok) {
+          setIsAuthenticated(true);
+          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
+          return;
+        }
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: false } }));
+          return;
+        }
+        setToastKind('error');
+        setNotice('Impossible de vérifier votre session. Réessayez sans vous déconnecter.');
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!active) return;
+        setToastKind('error');
+        setNotice('Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.');
+      });
     return () => { active = false; };
   }, []);
   useEffect(() => {
