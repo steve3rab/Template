@@ -52,6 +52,10 @@ npm run db:deploy
 
 SQLite convient au développement et aux déploiements simples sur disque persistant. Pour une API multi-instance ou une forte concurrence d'écritures, préférez PostgreSQL et configurez le provider Prisma correspondant ; le code d'accès aux données reste isolé dans Prisma.
 
+## Standards de code
+
+Les conventions d'architecture, de TypeScript strict, de validation des entrées, de tests et de commits sont décrites dans [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md). La configuration ESLint, Prettier et `.editorconfig` fait partie du contrat du dépôt. Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
+
 ## Contrôles qualité
 
 Les tests couvrent les scénarios d'API (inscription, connexion, déconnexion, expiration de session, validation, cookies, origine, limitation de débit et erreurs internes) ainsi que les interactions du formulaire frontend. Les tests API utilisent un faux dépôt Prisma pour rester rapides et déterministes ; ajoutez en complément des tests d'intégration contre une base SQLite temporaire avant les déploiements majeurs.
@@ -96,13 +100,17 @@ Le menu interactif est disponible via `.\scripts\menu.ps1`.
 
 ```text
 src/
-  app/
-  features/auth/        # interface d'authentification
-  shared/               # i18n et composants partagés
+  app/                  # composition de l'application et navigation
+  features/             # écrans et logique propres à chaque domaine
+  shared/
+    utils/              # utilitaires transverses testés
+    i18n.ts             # traductions et langage
 server/
   prisma/               # schéma et migrations
   src/
-    app.ts               # routes et plugins HTTP
+    app.ts               # configuration Fastify et routes d'authentification
+    commerce.ts          # enregistrement des routes commerce
+    schemas/             # schémas Zod réutilisables des entrées API
     index.ts             # démarrage du serveur
 scripts/                 # commandes PowerShell
 .github/workflows/       # CI
