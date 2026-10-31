@@ -178,7 +178,7 @@ export function registerPaymentRoutes(
     }
 
     const orderIds = [...new Set(session.data.metadata.orderIds.split(',').filter(Boolean))];
-    if (orderIds.length === 0 || orderIds.length > 20) {
+    if (orderIds.length === 0 || orderIds.length > 15) {
       return reply.code(400).send({ error: 'Invalid order metadata.' });
     }
 
