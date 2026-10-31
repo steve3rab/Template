@@ -2,7 +2,6 @@ import { createHmac, randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { PrismaClient, User } from '@prisma/client';
-import { z } from 'zod';
 import {
   addressInputSchema,
   cartInputSchema,
