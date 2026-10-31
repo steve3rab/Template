@@ -585,9 +585,9 @@ export function App() {
                         <span className={`summary-thumb ${product.color}`}>{product.icon}</span>
                         <div>
                           <strong>{product.name}</strong>
-                          <p>Quantité : {cart[product.id]}</p>
+                          <p>Quantité : {cart[product.id] ?? 0}</p>
                         </div>
-                        <strong>{money(product.price * cart[product.id])}</strong>
+                        <strong>{money(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                   {cartCount === 0 && (
@@ -899,7 +899,7 @@ export function App() {
                             >
                               −
                             </button>
-                            <span>{cart[product.id]}</span>
+                            <span>{cart[product.id] ?? 0}</span>
                             <button
                               aria-label={`Ajouter un ${product.name}`}
                               onClick={() => changeQuantity(product.id, 1)}
@@ -908,7 +908,7 @@ export function App() {
                             </button>
                           </div>
                         </div>
-                        <strong>{money(product.price * cart[product.id])}</strong>
+                        <strong>{money(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                 </div>
