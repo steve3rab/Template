@@ -174,23 +174,30 @@ button:disabled {
   font-size: 1.2rem;
 }
 .cart-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   border: 0;
   background: transparent;
   color: #33372a;
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1;
 }
 .cart-count {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
+  padding: 0;
   border-radius: 50%;
   background: #dfe2d0;
   font-size: 0.7rem;
+  line-height: 1;
+  vertical-align: middle;
 }
 .hero-banner {
   display: grid;
