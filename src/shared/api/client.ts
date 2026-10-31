@@ -17,9 +17,11 @@ const orderItemSchema = z.object({
   unitPriceCents: z.number().int().optional(),
 });
 
+export const orderStatusSchema = z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']);
+
 const orderSchema = z.object({
   id: z.string(),
-  status: z.string(),
+  status: orderStatusSchema,
   paymentStatus: z.string(),
   totalCents: z.number().int(),
   createdAt: z.string(),
@@ -62,6 +64,7 @@ export const apiSchemas = {
 
 export type SellerProduct = z.infer<typeof productSchema>;
 export type SellerOrder = z.infer<typeof orderSchema>;
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
 export type CustomerAddress = z.infer<typeof addressSchema>;
 export type SellerDashboard = z.infer<typeof apiSchemas.sellerDashboard>;
 
