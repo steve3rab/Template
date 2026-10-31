@@ -4,16 +4,16 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { PrismaClient, User } from '@prisma/client';
 import { z } from 'zod';
 import {
-  addressInputSchemaSchema,
-  cartInputSchemaSchema,
+  addressInputSchema,
+  cartInputSchema,
   createOrderInputSchema,
   passwordResetCompleteSchema,
   passwordResetRequestSchema,
   productIdParamsSchema,
-  productInputSchemaSchema,
+  productInputSchema,
   productQuerySchema,
   resourceIdParamsSchema,
-  roleInputSchemaSchema,
+  roleInputSchema,
   sellerOrderStatusSchema,
 } from './schemas/commerce.js';
 
