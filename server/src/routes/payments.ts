@@ -78,7 +78,7 @@ export function registerPaymentRoutes(
     if (orders.length !== body.data.orderIds.length) {
       return reply.code(404).send({ error: 'One or more orders were not found.' });
     }
-    if (orders.some((order) => order.paymentStatus !== 'UNPAID' || order.items.length === 0)) {
+    if (orders.some((order) => order.paymentStatus !== 'UNPAID' || order.status !== 'PENDING' || order.items.length === 0)) {
       return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
     }
 
@@ -93,6 +93,24 @@ export function registerPaymentRoutes(
     const totalLineItems = orders.reduce((sum, order) => sum + order.items.length, 0);
     if (totalLineItems > 100) return reply.code(400).send({ error: 'Too many line items for one checkout.' });
 
+    for (const order of orders) {
+      let itemsTotal = 0;
+      for (const item of order.items) {
+        if (
+          !Number.isSafeInteger(item.unitPriceCents) ||
+          item.unitPriceCents < 1 ||
+          !Number.isSafeInteger(item.quantity) ||
+          item.quantity < 1
+        ) {
+          return reply.code(409).send({ error: 'Order contains invalid item pricing.' });
+        }
+        itemsTotal += item.unitPriceCents * item.quantity;
+      }
+      if (!Number.isSafeInteger(itemsTotal) || itemsTotal !== order.totalCents) {
+        return reply.code(409).send({ error: 'Order total does not match its items.' });
+      }
+    }
+
     const orderIds = orders.map((order) => order.id).sort();
     const params = new URLSearchParams({
       mode: 'payment',
@@ -106,9 +124,6 @@ export function registerPaymentRoutes(
     let lineIndex = 0;
     for (const order of orders) {
       for (const item of order.items) {
-        if (!Number.isSafeInteger(item.unitPriceCents) || item.unitPriceCents < 1 || item.quantity < 1) {
-          return reply.code(409).send({ error: 'Order contains invalid item pricing.' });
-        }
         params.set(`line_items[${lineIndex}][price_data][currency]`, currency);
         params.set(`line_items[${lineIndex}][price_data][unit_amount]`, String(item.unitPriceCents));
         params.set(`line_items[${lineIndex}][price_data][product_data][name]`, item.productName.slice(0, 250));
