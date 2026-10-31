@@ -79,6 +79,8 @@ describe('Fashion storefront', () => {
     await user.click(within(product).getByRole('button', { name: /ajouter au panier/i }));
     await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
     expect(screen.getByRole('heading', { name: /bonjour, bienvenue/i })).toBeInTheDocument();
-    expect(screen.getByText(/connectez-vous ou créez un compte pour finaliser votre commande/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/connectez-vous ou créez un compte pour finaliser votre commande/i),
+    ).toBeInTheDocument();
   });
 });

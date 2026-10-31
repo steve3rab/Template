@@ -922,10 +922,7 @@ export function App() {
                       ? 'La livraison est offerte !'
                       : `Plus que ${money(80 - cartTotal)} pour la livraison offerte.`}
                   </p>
-                  <button
-                    className="dark-button full-button"
-                    onClick={() => void beginCheckout()}
-                  >
+                  <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
                   </button>
                   <button className="continue-link" onClick={() => setCartOpen(false)}>

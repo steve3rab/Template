@@ -6,7 +6,13 @@ type User = { id: string; email: string; createdAt: string };
 type AuthResponse = { user: User };
 type Mode = 'login' | 'register';
 
-export function AuthPanel({ language, onAuthenticated }: { language: Language; onAuthenticated?: () => void }) {
+export function AuthPanel({
+  language,
+  onAuthenticated,
+}: {
+  language: Language;
+  onAuthenticated?: () => void;
+}) {
   const t = translations[language];
   const [mode, setMode] = useState<Mode>('register');
   const [email, setEmail] = useState('');
