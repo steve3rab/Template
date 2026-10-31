@@ -14,7 +14,7 @@ export function registerCustomerRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
   resolveUser: ResolveUser,
-): Promise<void> {
+): void {
   app.get('/api/customer/cart', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
