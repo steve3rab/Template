@@ -58,7 +58,9 @@ export function AuthPanel({
       });
       const payload = (await response.json()) as AuthResponse | { error?: string };
       if (!response.ok) {
-        throw new Error('error' in payload && payload.error ? payload.error : t.authError);
+        setIsError(true);
+        setMessage(mode === 'register' ? t.authRegisterError : mode === 'login' ? t.authLoginError : t.authError);
+        return;
       }
       if (mode === 'reset') {
         setPassword('');
@@ -71,9 +73,9 @@ export function AuthPanel({
       onAuthenticated?.();
       setPassword('');
       setMessage(mode === 'register' ? t.authSuccess : '');
-    } catch (error) {
+    } catch {
       setIsError(true);
-      setMessage(error instanceof Error ? error.message : t.authError);
+      setMessage(t.authError);
     } finally {
       setBusy(false);
     }
