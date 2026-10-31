@@ -186,7 +186,10 @@ export function App() {
   );
   useEffect(() => {
     const onAuthChanged = (event: Event) => {
-      if (event instanceof CustomEvent) setIsAuthenticated(event.detail?.authenticated === true);
+      if (!(event instanceof CustomEvent)) return;
+      const authenticated = event.detail?.authenticated === true;
+      setIsAuthenticated(authenticated);
+      if (!authenticated) setCartHydrated(false);
     };
     window.addEventListener('template-auth-changed', onAuthChanged);
     return () => window.removeEventListener('template-auth-changed', onAuthChanged);
@@ -229,10 +232,7 @@ export function App() {
     writeStoredJson('atelier-favorites', favorites);
   }, [favorites]);
   useEffect(() => {
-    if (!isAuthenticated) {
-      setCartHydrated(false);
-      return;
-    }
+    if (!isAuthenticated) return;
     let active = true;
     void apiRequest('/api/customer/cart', apiSchemas.customerCart)
       .then((payload) => {
