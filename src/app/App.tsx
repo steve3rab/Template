@@ -319,7 +319,7 @@ export function App() {
   }
   return (
     <main className="store-app">
-      <div className="announcement">LIVRAISON OFFERTE DÈS 80 € · RETOURS SOUS 30 JOURS</div>
+      <div className="announcement">LIVRAISON OFFERTE DÈS 80 € · DROIT DE RÉTRACTATION DE 14 JOURS</div>
       <header className="store-header">
         <a
           className="store-brand"
@@ -381,7 +381,7 @@ export function App() {
                 type="button"
                 key={option}
                 aria-pressed={language === option}
-                aria-label={option === 'fr' ? 'French' : 'English'}
+                aria-label={option === 'fr' ? 'Français' : 'English'}
                 onClick={() => setLanguage(option)}
               >
                 {option.toUpperCase()}
@@ -578,8 +578,8 @@ export function App() {
             </div>
             <div>
               <span>↺</span>
-              <strong>Retours faciles</strong>
-              <p>Vous avez 30 jours pour changer d’avis.</p>
+              <strong>Retours encadrés</strong>
+              <p>Le droit de rétractation légal s’applique, sous réserve des exceptions prévues.</p>
             </div>
             <div>
               <span>♡</span>
@@ -667,8 +667,7 @@ export function App() {
                 Finaliser ma commande<span className="brand-period">.</span>
               </h1>
               <p className="workspace-intro">
-                Parcours de commande de démonstration — le paiement en ligne n’est pas encore
-                connecté.
+                Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.
               </p>
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeDemoOrder}>
@@ -722,7 +721,7 @@ export function App() {
                 </form>
                 <aside className="order-summary">
                   <h2>Votre panier</h2>
-                  {products
+                  {catalog
                     .filter((product) => cart[product.id])
                     .map((product) => (
                       <div className="summary-item" key={product.id}>
@@ -830,7 +829,7 @@ export function App() {
             ) : (
               <>
                 <div className="drawer-items">
-                  {products
+                  {catalog
                     .filter((product) => cart[product.id])
                     .map((product) => (
                       <div className="drawer-item" key={product.id}>
