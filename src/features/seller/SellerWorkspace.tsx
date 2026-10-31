@@ -77,7 +77,6 @@ export function SellerWorkspace({ range }: { range: string }) {
   }
 
   async function updateProduct(product: Product, changes: Partial<Product>) {
-    setMessage('');
     try {
       await apiRequest(`/api/seller/products/${product.id}`, apiSchemas.productResult, {
         method: 'PATCH',
