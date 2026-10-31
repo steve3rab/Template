@@ -17,6 +17,12 @@ const stripeSessionSchema = z.object({
   url: z.string().url(),
 });
 
+const stripeSessionLookupSchema = z.object({
+  id: z.string().min(1),
+  url: z.string().url().nullable().optional(),
+  status: z.enum(['open', 'complete', 'expired']),
+});
+
 const stripeEventSchema = z.object({
   type: z.string(),
   data: z.object({ object: z.unknown() }),
@@ -80,6 +86,38 @@ export function registerPaymentRoutes(
     }
     if (orders.some((order) => order.paymentStatus !== 'UNPAID' || order.status !== 'PENDING' || order.items.length === 0)) {
       return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
+    }
+
+    const existingReferences = orders.map((order) => order.paymentReference).filter((value): value is string => Boolean(value));
+    if (existingReferences.length > 0) {
+      if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
+        return reply.code(409).send({ error: 'Orders are linked to different payment sessions.' });
+      }
+      let existingResponse: Response;
+      try {
+        existingResponse = await fetch(
+          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(existingReferences[0] ?? '')}`,
+          { headers: { Authorization: `Bearer ${secretKey}` }, signal: AbortSignal.timeout(10000) },
+        );
+      } catch {
+        request.log.error('Stripe Checkout session lookup failed.');
+        return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement. Réessayez.' });
+      }
+      if (!existingResponse.ok) {
+        request.log.error({ statusCode: existingResponse.status }, 'Stripe Checkout session lookup was rejected.');
+        return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement.' });
+      }
+      const existingSession = stripeSessionLookupSchema.safeParse(await existingResponse.json().catch(() => null));
+      if (!existingSession.success) {
+        return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
+      }
+      if (existingSession.data.status === 'open' && existingSession.data.url) {
+        return reply.send({ checkoutUrl: existingSession.data.url });
+      }
+      if (existingSession.data.status === 'complete') {
+        return reply.code(409).send({ error: 'Le paiement est en cours de confirmation. Actualisez votre compte dans quelques instants.' });
+      }
+      return reply.code(409).send({ error: 'Cette session de paiement a expiré. Créez une nouvelle commande pour réessayer.' });
     }
 
     const currency = orders[0]?.currency.toLowerCase();
@@ -166,10 +204,22 @@ export function registerPaymentRoutes(
     }
 
     const saved = await prisma.order.updateMany({
-      where: { id: { in: orderIds }, userId: user.id, paymentStatus: 'UNPAID' },
+      where: { id: { in: orderIds }, userId: user.id, paymentStatus: 'UNPAID', status: 'PENDING', paymentReference: null },
       data: { paymentReference: session.data.id },
     });
     if (saved.count !== orderIds.length) {
+      try {
+        await fetch(
+          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session.data.id)}/expire`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${secretKey}` },
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+      } catch {
+        request.log.error('Unable to expire an unlinked Stripe Checkout session.');
+      }
       return reply.code(409).send({ error: 'Orders changed while checkout was being prepared.' });
     }
 
