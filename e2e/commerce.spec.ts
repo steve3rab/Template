@@ -13,7 +13,7 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
 
   await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
   await page.getByLabel('Adresse e-mail').fill(email);
-  await page.getByLabel(/prénom et nom du destinataire/i).fill('Test Client');
+  await page.getByLabel(/destinataire/i).fill('Test Client');
   await page.getByLabel('Adresse', { exact: true }).fill('10 rue du Test');
   await page.getByLabel('Code postal').fill('75001');
   await page.getByLabel('Ville').fill('Paris');
