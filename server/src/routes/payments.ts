@@ -99,6 +99,7 @@ export function registerPaymentRoutes(
       client_reference_id: orderIds.join(','),
       success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?payment=cancelled`,
+      expires_at: String(Math.floor(Date.now() / 1000) + 60 * 60),
       'payment_method_types[0]': 'card',
       'metadata[orderIds]': orderIds.join(','),
     });
@@ -168,12 +169,12 @@ export function registerPaymentRoutes(
 
     const event = stripeEventSchema.safeParse(request.body);
     if (!event.success) return reply.code(400).send({ error: 'Invalid webhook payload.' });
-    if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.data.type)) {
+    if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired'].includes(event.data.type)) {
       return reply.send({ received: true });
     }
 
     const session = stripeCheckoutCompletedSchema.safeParse(event.data.data.object);
-    if (!session.success || session.data.payment_status !== 'paid' || !session.data.metadata?.orderIds) {
+    if (!session.success || !session.data.metadata?.orderIds) {
       return reply.send({ received: true });
     }
 
@@ -182,16 +183,54 @@ export function registerPaymentRoutes(
       return reply.code(400).send({ error: 'Invalid order metadata.' });
     }
 
-    // Updating only unpaid orders linked to this exact Checkout Session makes
-    // repeated delivery of the same successful event harmless.
-    await prisma.order.updateMany({
-      where: {
-        id: { in: orderIds },
-        paymentReference: session.data.id,
-        paymentStatus: 'UNPAID',
-      },
-      data: { paymentStatus: 'PAID' },
-    });
+    if (session.data.payment_status === 'paid') {
+      // Updating only pending orders linked to this exact Checkout Session makes
+      // repeated delivery of a successful event harmless.
+      await prisma.order.updateMany({
+        where: {
+          id: { in: orderIds },
+          paymentReference: session.data.id,
+          paymentStatus: 'UNPAID',
+          status: 'PENDING',
+        },
+        data: { paymentStatus: 'PAID' },
+      });
+      return reply.send({ received: true });
+    }
+
+    if (event.data.type === 'checkout.session.expired') {
+      const expiredOrders = await prisma.order.findMany({
+        where: {
+          id: { in: orderIds },
+          paymentReference: session.data.id,
+          paymentStatus: 'UNPAID',
+          status: 'PENDING',
+        },
+        include: { items: true },
+      });
+      await prisma.$transaction(async (tx) => {
+        for (const order of expiredOrders) {
+          const cancelled = await tx.order.updateMany({
+            where: {
+              id: order.id,
+              paymentReference: session.data.id,
+              paymentStatus: 'UNPAID',
+              status: 'PENDING',
+            },
+            data: { status: 'CANCELLED' },
+          });
+          if (cancelled.count !== 1) continue;
+          for (const item of order.items) {
+            if (item.productId) {
+              await tx.product.updateMany({
+                where: { id: item.productId },
+                data: { stock: { increment: item.quantity } },
+              });
+            }
+          }
+        }
+      });
+    }
     return reply.send({ received: true });
   });
 }
