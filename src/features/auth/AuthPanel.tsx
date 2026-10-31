@@ -4,7 +4,7 @@ import { translations } from '../../shared/i18n';
 
 type User = { id: string; email: string; createdAt: string };
 type AuthResponse = { user: User };
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'reset';
 
 export function AuthPanel({
   language,
@@ -49,16 +49,23 @@ export function AuthPanel({
     setMessage('');
     setIsError(false);
     try {
-      const response = await fetch(`/api/auth/${mode}`, {
+      const endpoint = mode === 'reset' ? '/api/auth/password-reset/request' : `/api/auth/${mode}`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(mode === 'reset' ? { email } : { email, password }),
       });
       const payload = (await response.json()) as AuthResponse | { error?: string };
-      if (!response.ok || !('user' in payload)) {
+      if (!response.ok) {
         throw new Error('error' in payload && payload.error ? payload.error : t.authError);
       }
+      if (mode === 'reset') {
+        setPassword('');
+        setMessage('Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.');
+        return;
+      }
+      if (!('user' in payload)) throw new Error(t.authError);
       setUser(payload.user);
       onAuthenticated?.();
       setPassword('');
@@ -126,7 +133,7 @@ export function AuthPanel({
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
-          <label>
+          {mode !== 'reset' && <label>
             {t.authPassword}
             <input
               autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
@@ -138,20 +145,21 @@ export function AuthPanel({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-          </label>
+          </label>}
           <button className="primary-button" type="submit" disabled={busy}>
-            {busy ? '…' : mode === 'register' ? t.authRegister : t.authLogin}
+            {busy ? '…' : mode === 'reset' ? 'Envoyer le lien' : mode === 'register' ? t.authRegister : t.authLogin}
           </button>
           <button
             className="auth-mode-button"
             type="button"
             onClick={() => {
-              setMode(mode === 'register' ? 'login' : 'register');
+              setMode(mode === 'reset' ? 'login' : mode === 'register' ? 'login' : 'register');
               setMessage('');
             }}
           >
-            {mode === 'register' ? t.authSwitchLogin : t.authSwitchRegister}
+            {mode === 'reset' ? 'Retour à la connexion' : mode === 'register' ? t.authSwitchLogin : t.authSwitchRegister}
           </button>
+          {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => { setMode('reset'); setMessage(''); setIsError(false); }}>Mot de passe oublié ?</button>}
         </form>
       )}
       {message ? (
