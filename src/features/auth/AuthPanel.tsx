@@ -111,11 +111,6 @@ export function AuthPanel({
         <h2 id="auth-title">{t.authTitle}</h2>
         <p>{t.authIntro}</p>
       </div>
-      {checkingSession && !user ? (
-        <p role="status" className="auth-message">
-          {t.authLoading}
-        </p>
-      ) : null}
       {user ? (
         <div className="auth-profile">
           <p>{t.authWelcome}</p>
@@ -131,6 +126,14 @@ export function AuthPanel({
         </div>
       ) : (
         <form className="auth-form" onSubmit={(event) => void submit(event)}>
+          <p
+            role="status"
+            className="auth-message auth-loading-slot"
+            aria-hidden={!checkingSession || Boolean(user)}
+            style={{ visibility: checkingSession && !user ? 'visible' : 'hidden', minHeight: '1.3em' }}
+          >
+            {checkingSession && !user ? t.authLoading : '\u00a0'}
+          </p>
           <label>
             {t.authEmail}
             <input
