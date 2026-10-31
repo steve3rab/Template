@@ -625,6 +625,7 @@ export function App() {
           </div>
           <AuthPanel
             language={language}
+            initialMode={checkoutPending ? 'login' : 'register'}
             onAuthenticated={() => {
               if (checkoutPending) {
                 setCheckoutPending(false);
