@@ -22,7 +22,19 @@ app.post('/api/customer/addresses', async (request, reply) => {
   if (!body.success) return reply.code(400).send({ error: 'Invalid address data.' });
   const address = await prisma.$transaction(async (tx) => {
     if (body.data.isDefault) await tx.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } });
-    return tx.address.create({ data: { ...body.data, userId: user.id } });
+    return tx.address.create({
+      data: {
+        userId: user.id,
+        label: body.data.label,
+        recipient: body.data.recipient,
+        line1: body.data.line1,
+        ...(body.data.line2 !== undefined ? { line2: body.data.line2 } : {}),
+        postalCode: body.data.postalCode,
+        city: body.data.city,
+        country: body.data.country,
+        isDefault: body.data.isDefault,
+      },
+    });
   });
   return reply.code(201).send({ address });
 });
