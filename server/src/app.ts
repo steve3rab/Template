@@ -35,8 +35,13 @@ function tokenHash(token: string): string {
   return createHmac('sha256', secret).update(token).digest('hex');
 }
 
-function publicUser(user: Pick<User, 'id' | 'email' | 'createdAt'>) {
-  return { id: user.id, email: user.email, createdAt: user.createdAt.toISOString() };
+function publicUser(user: Pick<User, 'id' | 'email' | 'createdAt' | 'role'>) {
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+  };
 }
 
 function cookieOptions() {
@@ -219,6 +224,15 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     const user = await currentUser(request, prisma);
     if (!user) return reply.code(401).send({ error: 'Not authenticated.' });
     return reply.send({ user: publicUser(user) });
+  });
+
+  app.get('/api/seller/me', async (request, reply) => {
+    const user = await currentUser(request, prisma);
+    if (!user) return reply.code(401).send({ error: 'Not authenticated.' });
+    if (user.role !== 'SELLER') {
+      return reply.code(403).send({ error: 'Seller access required.' });
+    }
+    return reply.send({ seller: { id: user.id, email: user.email, role: user.role } });
   });
 
   app.post('/api/auth/logout', async (request, reply) => {
