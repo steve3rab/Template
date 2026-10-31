@@ -30,7 +30,10 @@ export function AuthPanel({
         return (await response.json()) as AuthResponse;
       })
       .then((result) => {
-        if (active) setUser(result?.user ?? null);
+        if (active) {
+          setUser(result?.user ?? null);
+          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: Boolean(result?.user) } }));
+        }
       })
       .catch(() => {
         if (active) setMessage(t.authError);
@@ -69,7 +72,7 @@ export function AuthPanel({
       }
       if (!('user' in payload)) throw new Error(t.authError);
       setUser(payload.user);
-      window.dispatchEvent(new Event('template-auth-changed'));
+      window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
       onAuthenticated?.();
       setPassword('');
       setMessage(mode === 'register' ? t.authSuccess : '');
@@ -88,7 +91,7 @@ export function AuthPanel({
       const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
       if (!response.ok) throw new Error(t.authError);
       setUser(null);
-      window.dispatchEvent(new Event('template-auth-changed'));
+      window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: false } }));
       setPassword('');
     } catch {
       setIsError(true);
