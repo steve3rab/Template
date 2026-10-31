@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto';
+import argon2 from 'argon2';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { PrismaClient, User } from '@prisma/client';
 import { z } from 'zod';
@@ -146,18 +147,20 @@ export async function registerCommerceRoutes(
     if (!user) return;
     const body = cartInput.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid cart.' });
-    await prisma.$transaction(async (tx) => {
-      await tx.cartItem.deleteMany({ where: { userId: user.id } });
-      for (const item of body.data.items) {
-        if (item.quantity === 0) continue;
-        const product = await tx.product.findFirst({ where: { id: item.productId, active: true } });
-        if (!product) throw new Error('Product unavailable.');
-        await tx.cartItem.create({ data: { userId: user.id, productId: product.id, quantity: item.quantity } });
-      }
-    }).catch((error) => {
-      if (error instanceof Error && error.message === 'Product unavailable.') return;
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.cartItem.deleteMany({ where: { userId: user.id } });
+        for (const item of body.data.items) {
+          if (item.quantity === 0) continue;
+          const product = await tx.product.findFirst({ where: { id: item.productId, active: true } });
+          if (!product) throw new Error('Product unavailable.');
+          await tx.cartItem.create({ data: { userId: user.id, productId: product.id, quantity: item.quantity } });
+        }
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Product unavailable.') return reply.code(400).send({ error: 'One or more products are unavailable.' });
       throw error;
-    });
+    }
     const items = await prisma.cartItem.findMany({ where: { userId: user.id }, include: { product: true } });
     return { items };
   });
@@ -366,7 +369,7 @@ export async function registerCommerceRoutes(
     const reset = await prisma.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: true } });
     if (!reset || reset.usedAt || reset.expiresAt.getTime() <= Date.now()) return reply.code(400).send({ error: 'Reset token is invalid or expired.' });
     await prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: reset.userId }, data: { passwordHash: await (await import('argon2')).default.hash(body.data.password, { type: (await import('argon2')).default.argon2id }) } });
+      await tx.user.update({ where: { id: reset.userId }, data: { passwordHash: await argon2.hash(body.data.password, { type: argon2.argon2id }) } });
       await tx.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
       await tx.passwordResetToken.deleteMany({ where: { userId: reset.userId, id: { not: reset.id } } });
       await tx.session.deleteMany({ where: { userId: reset.userId } });
