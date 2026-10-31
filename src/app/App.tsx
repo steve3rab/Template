@@ -113,7 +113,11 @@ type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
   const language = 'fr' as const;
-  const [view, setView] = useState<View>(() => window.location.pathname === '/reset-password' ? 'reset' : 'shop');
+  const paymentState = new URLSearchParams(window.location.search).get('payment');
+  const [view, setView] = useState<View>(() => {
+    if (window.location.pathname === '/reset-password') return 'reset';
+    return paymentState === 'success' || paymentState === 'cancelled' ? 'account' : 'shop';
+  });
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
@@ -123,20 +127,24 @@ export function App() {
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(() => {
+    if (paymentState === 'success') {
+      return 'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.';
+    }
+    if (paymentState === 'cancelled') {
+      return 'Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.';
+    }
+    return '';
+  });
   const [checkoutDone, setCheckoutDone] = useState(false);
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   useEffect(() => {
-    const paymentState = new URLSearchParams(window.location.search).get('payment');
-    if (paymentState !== 'success' && paymentState !== 'cancelled') return;
-    setView('account');
-    setNotice(paymentState === 'success'
-      ? 'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.'
-      : 'Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.');
-    window.history.replaceState({}, '', window.location.pathname);
+    if (paymentState === 'success' || paymentState === 'cancelled') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
   const filteredProducts = useMemo(() => {
     const result = catalog.filter(
@@ -787,12 +795,14 @@ export function App() {
         </button>
       )}
       {cartOpen && (
-        <div className="drawer-backdrop" onClick={() => setCartOpen(false)}>
-          <aside
-            className="cart-drawer"
-            aria-label="Votre panier"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <div className="drawer-backdrop">
+          <button
+            type="button"
+            className="drawer-dismiss"
+            aria-label="Fermer le panier"
+            onClick={() => setCartOpen(false)}
+          />
+          <aside className="cart-drawer" aria-label="Votre panier">
             <div className="drawer-heading">
               <div>
                 <span className="eyebrow">VOTRE SÉLECTION</span>
