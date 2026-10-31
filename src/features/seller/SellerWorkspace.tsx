@@ -97,7 +97,6 @@ export function SellerWorkspace({ range }: { range: string }) {
   }
 
   async function updateOrder(orderId: string, status: OrderStatus) {
-    setMessage('');
     try {
       await apiRequest(`/api/seller/orders/${orderId}/status`, apiSchemas.orderResult, {
         method: 'PATCH',
