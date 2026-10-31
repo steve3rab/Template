@@ -114,6 +114,7 @@ export function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [checkoutDone, setCheckoutDone] = useState(false);
+  const [checkoutPending, setCheckoutPending] = useState(false);
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const filteredProducts = useMemo(() => {
@@ -150,6 +151,23 @@ export function App() {
     setFavorites((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  }
+  async function beginCheckout() {
+    setCartOpen(false);
+    setCheckoutDone(false);
+    try {
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (response.ok) {
+        setCheckoutPending(false);
+        setView('checkout');
+        return;
+      }
+    } catch {
+      // Continue to account sign-in if the session cannot be verified.
+    }
+    setCheckoutPending(true);
+    setView('account');
+    setNotice('Connectez-vous ou créez un compte pour finaliser votre commande.');
   }
   function completeDemoOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -458,7 +476,15 @@ export function App() {
               <p>Retrouvez vos coordonnées et adresses.</p>
             </div>
           </div>
-          <AuthPanel language={language} />
+          <AuthPanel
+            language={language}
+            onAuthenticated={() => {
+              if (checkoutPending) {
+                setCheckoutPending(false);
+                setView('checkout');
+              }
+            }}
+          />
           <p className="fine-print">
             La création de compte et la connexion utilisent le service d’authentification existant.
           </p>
@@ -898,11 +924,7 @@ export function App() {
                   </p>
                   <button
                     className="dark-button full-button"
-                    onClick={() => {
-                      setCartOpen(false);
-                      setCheckoutDone(false);
-                      setView('checkout');
-                    }}
+                    onClick={() => void beginCheckout()}
                   >
                     Passer à la commande ↗
                   </button>
