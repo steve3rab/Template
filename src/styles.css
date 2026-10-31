@@ -1379,13 +1379,19 @@ button:disabled {
   font-size: 0.9rem;
 }
 .close-drawer {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 35px;
   width: 35px;
   height: 35px;
+  padding: 0;
   border: 1px solid #e5e3da;
   border-radius: 50%;
   background: transparent;
   color: #505447;
   font-size: 1.35rem;
+  line-height: 1;
+  text-align: center;
 }
 .drawer-items {
   flex: 1;
