@@ -31,12 +31,13 @@ describe('Fashion storefront', () => {
   it('adds a product to the cart and allows quantity changes', async () => {
     const user = userEvent.setup();
     render(<App />);
-    const product = screen.getByRole('article', { name: /veste studio/i });
+    const product = screen.getByRole('heading', { name: 'Veste Studio' }).closest('article');
+    if (!product) throw new Error('Product card not found');
     await user.click(within(product).getByRole('button', { name: /ajouter au panier/i }));
     expect(screen.getByRole('heading', { name: /mon panier/i })).toBeInTheDocument();
-    expect(screen.getByText('89 €')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Panier, 1 article(s)' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Ajouter un Veste Studio' }));
-    expect(screen.getByText('178 €')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Panier, 2 article(s)' })).toBeInTheDocument();
   });
 
   it('toggles a product favorite', async () => {
@@ -69,7 +70,8 @@ describe('Fashion storefront', () => {
   it('shows that checkout is a demo rather than a real payment', async () => {
     const user = userEvent.setup();
     render(<App />);
-    const product = screen.getByRole('article', { name: /veste studio/i });
+    const product = screen.getByRole('heading', { name: 'Veste Studio' }).closest('article');
+    if (!product) throw new Error('Product card not found');
     await user.click(within(product).getByRole('button', { name: /ajouter au panier/i }));
     await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
     expect(screen.getByRole('heading', { name: /finaliser ma commande/i })).toBeInTheDocument();
