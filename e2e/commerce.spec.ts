@@ -6,6 +6,7 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByRole('button', { name: /passer à la commande/i }).click();
 
   await expect(page.getByRole('heading', { name: /bonjour, bienvenue/i })).toBeVisible();
+  await page.getByRole('button', { name: 'Pas encore de compte ? Inscrivez-vous' }).click();
   const email = `e2e-${Date.now()}@example.test`;
   await page.getByLabel('Adresse e-mail').fill(email);
   await page.getByLabel(/mot de passe/i).fill('correct-horse-battery');
