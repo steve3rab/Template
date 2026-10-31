@@ -12,19 +12,24 @@ const order = {
   userId: customer.id,
   paymentStatus: 'UNPAID',
   currency: 'EUR',
-  items: [{ productName: 'Test product', unitPriceCents: 2500, quantity: 2 }],
+  items: [{ productId: 'product-1', productName: 'Test product', unitPriceCents: 2500, quantity: 2 }],
 };
 
 let app: FastifyInstance;
 let updateMany: ReturnType<typeof vi.fn>;
+let productUpdateMany: ReturnType<typeof vi.fn>;
 
 function setup() {
   updateMany = vi.fn(async () => ({ count: 1 }));
+  productUpdateMany = vi.fn(async () => ({ count: 1 }));
+  const transaction = { order: { updateMany }, product: { updateMany: productUpdateMany } };
   const prisma = {
     order: {
       findMany: vi.fn(async () => [order]),
       updateMany,
     },
+    product: { updateMany: productUpdateMany },
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback(transaction)),
   };
   app = Fastify({ logger: false });
   app.removeContentTypeParser('application/json');
@@ -116,6 +121,45 @@ describe('Stripe payment routes', () => {
       data: { paymentStatus: 'PAID' },
     });
     expect(prisma.order.findMany).not.toHaveBeenCalled();
+  });
+
+  it('cancels an expired unpaid checkout and restores reserved stock once', async () => {
+    vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
+    setup();
+    await app.ready();
+    const rawBody = Buffer.from(JSON.stringify({
+      id: 'evt_expired_123',
+      type: 'checkout.session.expired',
+      data: { object: {
+        id: 'cs_test_123',
+        payment_status: 'unpaid',
+        metadata: { orderIds: 'order-1' },
+      } },
+    }));
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/webhooks/stripe',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
+      },
+      payload: rawBody,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'order-1',
+        paymentReference: 'cs_test_123',
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+      },
+      data: { status: 'CANCELLED' },
+    });
+    expect(productUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'product-1' },
+      data: { stock: { increment: 2 } },
+    });
   });
 
   it('rejects invalid and stale webhook signatures', async () => {
