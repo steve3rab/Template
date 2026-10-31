@@ -32,6 +32,7 @@
     "db:generate": "prisma generate --schema server/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
     "db:deploy": "prisma migrate deploy --schema server/prisma/schema.prisma",
+    "db:seed:test-users": "tsx server/scripts/seed-test-users.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run build:server"
   },
   "dependencies": {
