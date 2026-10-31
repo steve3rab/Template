@@ -12,7 +12,7 @@ const hashToken = (value: string) =>
 export function registerPasswordResetRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
-): Promise<void> {
+): void {
   app.post('/api/auth/password-reset/request', {
     config: { rateLimit: { max: 4, timeWindow: '1 hour' } },
   }, async (request, reply) => {
