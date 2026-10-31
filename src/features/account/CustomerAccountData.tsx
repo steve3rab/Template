@@ -25,7 +25,12 @@ export function CustomerAccountData() {
     setAvailable(true);
   }
 
-  useEffect(() => { void load().catch(() => undefined); }, []);
+  useEffect(() => {
+    const refresh = () => { void load().catch(() => undefined); };
+    refresh();
+    window.addEventListener('template-auth-changed', refresh);
+    return () => window.removeEventListener('template-auth-changed', refresh);
+  }, []);
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
