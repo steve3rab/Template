@@ -3,6 +3,19 @@ import argon2 from 'argon2';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { PrismaClient, User } from '@prisma/client';
 import { z } from 'zod';
+import {
+  addressInputSchemaSchema,
+  cartInputSchemaSchema,
+  createOrderInputSchema,
+  passwordResetCompleteSchema,
+  passwordResetRequestSchema,
+  productIdParamsSchema,
+  productInputSchemaSchema,
+  productQuerySchema,
+  resourceIdParamsSchema,
+  roleInputSchemaSchema,
+  sellerOrderStatusSchema,
+} from './schemas/commerce.js';
 
 const hashToken = (value: string) =>
   createHmac('sha256', process.env.SESSION_SECRET ?? 'local-development-only-change-this-secret')
@@ -11,29 +24,6 @@ const hashToken = (value: string) =>
 
 type ResolveUser = (request: FastifyRequest, prisma: PrismaClient) => Promise<User | null>;
 
-const productInput = z.object({
-  name: z.string().trim().min(2).max(120),
-  description: z.string().trim().max(4000).default(''),
-  category: z.string().trim().min(2).max(60),
-  priceCents: z.number().int().min(1).max(100_000_000),
-  stock: z.number().int().min(0).max(1_000_000),
-  imageUrl: z.string().url().max(2048).optional().nullable(),
-  active: z.boolean().default(true),
-});
-const addressInput = z.object({
-  label: z.string().trim().min(1).max(60).default('Domicile'),
-  recipient: z.string().trim().min(2).max(120),
-  line1: z.string().trim().min(3).max(180),
-  line2: z.string().trim().max(180).optional().nullable(),
-  postalCode: z.string().trim().min(2).max(20),
-  city: z.string().trim().min(2).max(100),
-  country: z.string().trim().length(2).default('FR'),
-  isDefault: z.boolean().default(false),
-});
-const roleInput = z.object({ role: z.enum(['CUSTOMER', 'SELLER']) });
-const cartInput = z.object({
-  items: z.array(z.object({ productId: z.string().min(1), quantity: z.number().int().min(0).max(100) })).max(100),
-}).refine((value) => new Set(value.items.map((item) => item.productId)).size === value.items.length, 'Duplicate product ids are not allowed.');
 
 async function requireUser(
   request: FastifyRequest,
@@ -60,7 +50,7 @@ export async function registerCommerceRoutes(
   resolveUser: ResolveUser,
 ) {
   app.get('/api/products', async (request) => {
-    const query = z.object({ category: z.string().max(60).optional() }).safeParse(request.query);
+    const query = productQuerySchema.safeParse(request.query);
     if (!query.success) return { products: [] };
     const products = await prisma.product.findMany({
       where: { active: true, ...(query.data.category ? { category: query.data.category } : {}) },
@@ -72,8 +62,8 @@ export async function registerCommerceRoutes(
   app.post('/api/admin/users/:id/role', async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
-    const params = z.object({ id: z.string().min(1) }).safeParse(request.params);
-    const body = roleInput.safeParse(request.body);
+    const params = resourceIdParamsSchema.safeParse(request.params);
+    const body = roleInputSchema.safeParse(request.body);
     if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid role update.' });
     if (params.data.id === admin.id) return reply.code(400).send({ error: 'Cannot change your own role.' });
     const target = await prisma.user.findUnique({ where: { id: params.data.id }, select: { id: true } });
@@ -100,7 +90,7 @@ export async function registerCommerceRoutes(
   app.post('/api/seller/products', async (request, reply) => {
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
-    const body = productInput.safeParse(request.body);
+    const body = productInputSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid product data.' });
     const product = await prisma.product.create({
       data: { ...body.data, sellerId: seller.id },
@@ -111,8 +101,8 @@ export async function registerCommerceRoutes(
   app.patch('/api/seller/products/:id', async (request, reply) => {
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
-    const params = z.object({ id: z.string().min(1) }).safeParse(request.params);
-    const body = productInput.partial().safeParse(request.body);
+    const params = resourceIdParamsSchema.safeParse(request.params);
+    const body = productInputSchema.partial().safeParse(request.body);
     if (!params.success || !body.success || Object.keys(body.data).length === 0) {
       return reply.code(400).send({ error: 'Invalid product update.' });
     }
@@ -127,7 +117,7 @@ export async function registerCommerceRoutes(
   app.delete('/api/seller/products/:id', async (request, reply) => {
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
-    const params = z.object({ id: z.string().min(1) }).safeParse(request.params);
+    const params = resourceIdParamsSchema.safeParse(request.params);
     if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
     const existing = await prisma.product.findFirst({
       where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
@@ -147,7 +137,7 @@ export async function registerCommerceRoutes(
   app.put('/api/customer/cart', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const body = cartInput.safeParse(request.body);
+    const body = cartInputSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid cart.' });
     try {
       await prisma.$transaction(async (tx) => {
@@ -177,7 +167,7 @@ export async function registerCommerceRoutes(
   app.post('/api/customer/favorites/:productId', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const params = z.object({ productId: z.string().min(1) }).safeParse(request.params);
+    const params = productIdParamsSchema.safeParse(request.params);
     if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
     const product = await prisma.product.findFirst({ where: { id: params.data.productId, active: true } });
     if (!product) return reply.code(404).send({ error: 'Product not found.' });
@@ -192,7 +182,7 @@ export async function registerCommerceRoutes(
   app.delete('/api/customer/favorites/:productId', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const params = z.object({ productId: z.string().min(1) }).safeParse(request.params);
+    const params = productIdParamsSchema.safeParse(request.params);
     if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
     await prisma.favorite.deleteMany({ where: { userId: user.id, productId: params.data.productId } });
     return reply.code(204).send();
@@ -207,7 +197,7 @@ export async function registerCommerceRoutes(
   app.post('/api/customer/addresses', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const body = addressInput.safeParse(request.body);
+    const body = addressInputSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid address data.' });
     const address = await prisma.$transaction(async (tx) => {
       if (body.data.isDefault) await tx.address.updateMany({ where: { userId: user.id }, data: { isDefault: false } });
@@ -219,7 +209,7 @@ export async function registerCommerceRoutes(
   app.delete('/api/customer/addresses/:id', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const params = z.object({ id: z.string().min(1) }).safeParse(request.params);
+    const params = resourceIdParamsSchema.safeParse(request.params);
     if (!params.success) return reply.code(400).send({ error: 'Invalid address id.' });
     const result = await prisma.address.deleteMany({ where: { id: params.data.id, userId: user.id } });
     if (!result.count) return reply.code(404).send({ error: 'Address not found.' });
@@ -229,7 +219,7 @@ export async function registerCommerceRoutes(
   app.post('/api/customer/orders', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
-    const body = z.object({ addressId: z.string().min(1) }).safeParse(request.body);
+    const body = createOrderInputSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'A saved shipping address is required.' });
     const address = await prisma.address.findFirst({ where: { id: body.data.addressId, userId: user.id } });
     if (!address) return reply.code(404).send({ error: 'Address not found.' });
@@ -298,8 +288,8 @@ export async function registerCommerceRoutes(
   app.patch('/api/seller/orders/:id/status', async (request, reply) => {
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
-    const params = z.object({ id: z.string().min(1) }).safeParse(request.params);
-    const body = z.object({ status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']) }).safeParse(request.body);
+    const params = resourceIdParamsSchema.safeParse(request.params);
+    const body = sellerOrderStatusSchema.safeParse(request.body);
     if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid order status.' });
     const order = await prisma.order.findFirst({
       where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
@@ -360,7 +350,7 @@ export async function registerCommerceRoutes(
   app.post('/api/auth/password-reset/request', {
     config: { rateLimit: { max: 4, timeWindow: '1 hour' } },
   }, async (request, reply) => {
-    const body = z.object({ email: z.string().email().max(254).transform((email) => email.toLowerCase()) }).safeParse(request.body);
+    const body = passwordResetRequestSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid email.' });
     const user = await prisma.user.findUnique({ where: { email: body.data.email } });
     if (user) {
@@ -388,7 +378,7 @@ export async function registerCommerceRoutes(
   });
 
   app.post('/api/auth/password-reset/complete', async (request, reply) => {
-    const body = z.object({ token: z.string().min(32).max(256), password: z.string().min(12).max(128) }).safeParse(request.body);
+    const body = passwordResetCompleteSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid reset request.' });
     const tokenHash = hashToken(body.data.token);
     const reset = await prisma.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: true } });
