@@ -49,12 +49,21 @@ export function registerPasswordResetRoutes(
     const tokenHash = hashToken(body.data.token);
     const reset = await prisma.passwordResetToken.findUnique({ where: { tokenHash }, include: { user: true } });
     if (!reset || reset.usedAt || reset.expiresAt.getTime() <= Date.now()) return reply.code(400).send({ error: 'Reset token is invalid or expired.' });
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: reset.userId }, data: { passwordHash: await argon2.hash(body.data.password, { type: argon2.argon2id }) } });
-      await tx.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: new Date() } });
+    const passwordHash = await argon2.hash(body.data.password, { type: argon2.argon2id });
+    const completed = await prisma.$transaction(async (tx) => {
+      const usedAt = new Date();
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: { id: reset.id, usedAt: null, expiresAt: { gt: usedAt } },
+        data: { usedAt },
+      });
+      if (claimed.count !== 1) return false;
+
+      await tx.user.update({ where: { id: reset.userId }, data: { passwordHash } });
       await tx.passwordResetToken.deleteMany({ where: { userId: reset.userId, id: { not: reset.id } } });
       await tx.session.deleteMany({ where: { userId: reset.userId } });
+      return true;
     });
+    if (!completed) return reply.code(400).send({ error: 'Reset token is invalid or expired.' });
     return reply.send({ message: 'Mot de passe modifié. Connectez-vous avec votre nouveau mot de passe.' });
   });
 }
