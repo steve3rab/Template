@@ -20,13 +20,14 @@ export function AuthPanel({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<User | null>(null);
-  const [busy, setBusy] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     let active = true;
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
       .then(async (response) => {
         if (!response.ok) return null;
         return (await response.json()) as AuthResponse;
@@ -41,7 +42,7 @@ export function AuthPanel({
         if (active) setMessage(t.authError);
       })
       .finally(() => {
-        if (active) setBusy(false);
+        if (active) setCheckingSession(false);
       });
     return () => {
       active = false;
@@ -56,6 +57,7 @@ export function AuthPanel({
     try {
       const endpoint = mode === 'reset' ? '/api/auth/password-reset/request' : `/api/auth/${mode}`;
       const response = await fetch(endpoint, {
+        signal: AbortSignal.timeout(15000),
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -109,7 +111,7 @@ export function AuthPanel({
         <h2 id="auth-title">{t.authTitle}</h2>
         <p>{t.authIntro}</p>
       </div>
-      {busy && !user ? (
+      {checkingSession && !user ? (
         <p role="status" className="auth-message">
           {t.authLoading}
         </p>
