@@ -96,8 +96,8 @@ foreach ($result in $testResults) {
     if ($result.Failed) {
         Write-Host ""
         Write-Host "ÉCHEC — $($result.Label) (code $($result.ExitCode))" -ForegroundColor Red
-        foreach ($detail in $result.Details) {
-            Write-Host "  $detail" -ForegroundColor Red
+        @($result.Details) | ForEach-Object {
+            Write-Host "  $_" -ForegroundColor Red
         }
     } else {
         Write-Host "OK — $($result.Label)" -ForegroundColor Green
