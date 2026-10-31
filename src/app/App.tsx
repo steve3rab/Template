@@ -4,8 +4,6 @@ import { ResetPassword } from '../features/auth/ResetPassword';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
 import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { CustomerAccountData } from '../features/account/CustomerAccountData';
-import { useTranslation } from '../shared/i18n';
-import type { Language } from '../shared/i18n';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas } from '../shared/api/client';
@@ -114,7 +112,7 @@ const products: Product[] = [
 type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
-  const { language, setLanguage } = useTranslation();
+  const language = 'fr' as const;
   const [view, setView] = useState<View>(() => window.location.pathname === '/reset-password' ? 'reset' : 'shop');
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
@@ -383,20 +381,6 @@ export function App() {
           </button>
         </nav>
         <div className="header-actions">
-          <div className="language-switcher" role="group" aria-label="Langue">
-            {(['fr', 'en'] as const).map((option: Language) => (
-              <button
-                className="language-button"
-                type="button"
-                key={option}
-                aria-pressed={language === option}
-                aria-label={option === 'fr' ? 'Français' : 'English'}
-                onClick={() => setLanguage(option)}
-              >
-                {option.toUpperCase()}
-              </button>
-            ))}
-          </div>
           <button
             className="icon-button"
             aria-label="Compte client"
