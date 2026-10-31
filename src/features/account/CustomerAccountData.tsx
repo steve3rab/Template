@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 type Address = { id: string; label: string; recipient: string; line1: string; postalCode: string; city: string; country: string; isDefault: boolean };
 type Order = { id: string; status: string; paymentStatus: string; totalCents: number; createdAt: string; items: { id: string; productName: string; quantity: number; unitPriceCents: number }[] };
@@ -10,7 +10,7 @@ export function CustomerAccountData() {
   const [available, setAvailable] = useState(false);
   const [message, setMessage] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     const [addressResponse, orderResponse] = await Promise.all([
       fetch('/api/customer/addresses', { credentials: 'include' }),
       fetch('/api/customer/orders', { credentials: 'include' }),
@@ -23,14 +23,14 @@ export function CustomerAccountData() {
     setAddresses(addressPayload.addresses);
     setOrders(orderPayload.orders);
     setAvailable(true);
-  }
+  }, []);
 
   useEffect(() => {
     const refresh = () => { void load().catch(() => undefined); };
     refresh();
     window.addEventListener('template-auth-changed', refresh);
     return () => window.removeEventListener('template-auth-changed', refresh);
-  }, []);
+  }, [load]);
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
