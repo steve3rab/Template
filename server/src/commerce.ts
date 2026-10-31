@@ -76,12 +76,14 @@ export async function registerCommerceRoutes(
     const body = roleInput.safeParse(request.body);
     if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid role update.' });
     if (params.data.id === admin.id) return reply.code(400).send({ error: 'Cannot change your own role.' });
+    const target = await prisma.user.findUnique({ where: { id: params.data.id }, select: { id: true } });
+    if (!target) return reply.code(404).send({ error: 'User not found.' });
     const user = await prisma.user.update({
-      where: { id: params.data.id },
+      where: { id: target.id },
       data: { role: body.data.role },
       select: { id: true, email: true, role: true },
-    }).catch(() => null);
-    if (!user) return reply.code(404).send({ error: 'User not found.' });
+    });
+    await prisma.session.deleteMany({ where: { userId: user.id } });
     return { user };
   });
 
