@@ -60,6 +60,7 @@ export const apiSchemas = {
   customerOrders: z.object({ orders: z.array(orderSchema) }),
   customerAddresses: z.object({ addresses: z.array(addressSchema) }),
   addressCreated: z.object({ address: addressSchema }),
+  checkoutSession: z.object({ checkoutUrl: z.string().url() }),
 };
 
 export type SellerProduct = z.infer<typeof productSchema>;
