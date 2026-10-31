@@ -602,13 +602,13 @@ export function App() {
             </div>
             <div>
               <span>02</span>
-              <strong>Vos coordonnées</strong>
-              <p>Gardez vos informations de livraison à jour.
+              <strong>Vos adresses</strong>
+              <p>Ajoutez ou supprimez vos adresses de livraison.</p>
             </div>
             <div>
               <span>03</span>
-              <strong>Votre historique</strong>
-              <p>Consultez les informations de vos commandes.
+              <strong>Votre compte</strong>
+              <p>Gérez votre connexion et vos informations personnelles.</p>
             </div>
           </div>
           <AuthPanel
