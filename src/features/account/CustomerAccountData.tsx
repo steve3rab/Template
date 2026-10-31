@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 
-type Address = { id: string; label: string; recipient: string; line1: string; postalCode: string; city: string; country: string; isDefault: boolean };
-type Order = { id: string; status: string; paymentStatus: string; totalCents: number; createdAt: string; items: { id: string; productName: string; quantity: number; unitPriceCents: number }[] };
+import {
+  apiRequest,
+  apiRequestVoid,
+  apiSchemas,
+  type CustomerAddress as Address,
+  type SellerOrder as Order,
+} from '../../shared/api/client';
 
 export function CustomerAccountData() {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -11,23 +16,19 @@ export function CustomerAccountData() {
   const [message, setMessage] = useState('');
 
   const load = useCallback(async () => {
-    const [addressResponse, orderResponse] = await Promise.all([
-      fetch('/api/customer/addresses', { credentials: 'include' }),
-      fetch('/api/customer/orders', { credentials: 'include' }),
-    ]);
-    if (!addressResponse.ok || !orderResponse.ok) {
+    try {
+      const [addressPayload, orderPayload] = await Promise.all([
+        apiRequest('/api/customer/addresses', apiSchemas.customerAddresses),
+        apiRequest('/api/customer/orders', apiSchemas.customerOrders),
+      ]);
+      setAddresses(addressPayload.addresses);
+      setOrders(orderPayload.orders);
+      setAvailable(true);
+    } catch {
       setAddresses([]);
       setOrders([]);
       setAvailable(false);
-      return;
     }
-    const [addressPayload, orderPayload] = await Promise.all([
-      addressResponse.json() as Promise<{ addresses: Address[] }>,
-      orderResponse.json() as Promise<{ orders: Order[] }>,
-    ]);
-    setAddresses(addressPayload.addresses);
-    setOrders(orderPayload.orders);
-    setAvailable(true);
   }, []);
 
   useEffect(() => {
@@ -41,24 +42,31 @@ export function CustomerAccountData() {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const response = await fetch('/api/customer/addresses', {
-      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        label: String(form.get('label') ?? 'Domicile'), recipient: String(form.get('recipient') ?? ''),
-        line1: String(form.get('line1') ?? ''), postalCode: String(form.get('postalCode') ?? ''),
-        city: String(form.get('city') ?? ''), country: 'FR', isDefault: addresses.length === 0,
-      }),
-    });
-    if (!response.ok) { setMessage('Adresse non enregistrée. Vérifiez les champs.'); return; }
+    try {
+      await apiRequest('/api/customer/addresses', apiSchemas.addressCreated, {
+        method: 'POST',
+        body: JSON.stringify({
+          label: String(form.get('label') ?? 'Domicile'), recipient: String(form.get('recipient') ?? ''),
+          line1: String(form.get('line1') ?? ''), postalCode: String(form.get('postalCode') ?? ''),
+          city: String(form.get('city') ?? ''), country: 'FR', isDefault: addresses.length === 0,
+        }),
+      });
+    } catch {
+      setMessage('Adresse non enregistrée. Vérifiez les champs.');
+      return;
+    }
     formElement.reset();
     setMessage('Adresse enregistrée.');
     await load();
   }
 
   async function removeAddress(id: string) {
-    const response = await fetch('/api/customer/addresses/' + id, { method: 'DELETE', credentials: 'include' });
-    if (!response.ok) { setMessage('Impossible de supprimer cette adresse.'); return; }
-    await load();
+    try {
+      await apiRequestVoid(`/api/customer/addresses/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await load();
+    } catch {
+      setMessage('Impossible de supprimer cette adresse.');
+    }
   }
 
   return (
