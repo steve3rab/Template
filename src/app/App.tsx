@@ -191,8 +191,16 @@ export function App() {
     const onAuthChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
       const authenticated = event.detail?.authenticated === true;
+      // Every account transition requires a fresh server hydration before cart writes.
+      setCartHydrated(false);
       setIsAuthenticated(authenticated);
-      if (!authenticated) setCartHydrated(false);
+      if (!authenticated) {
+        // Never carry a previous account's private cart/favorites into a guest or another account.
+        setCart({});
+        setFavorites([]);
+        setCheckoutDone(false);
+        setCheckoutPending(false);
+      }
     };
     window.addEventListener('template-auth-changed', onAuthChanged);
     return () => window.removeEventListener('template-auth-changed', onAuthChanged);
@@ -262,20 +270,27 @@ export function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
     let active = true;
-    void apiRequest('/api/customer/cart', apiSchemas.customerCart)
-      .then((payload) => {
+    setCartHydrated(false);
+    void Promise.all([
+      apiRequest('/api/customer/cart', apiSchemas.customerCart),
+      apiRequest('/api/customer/favorites', apiSchemas.customerFavorites),
+    ])
+      .then(([cartPayload, favoritePayload]) => {
         if (!active) return;
+        // The authenticated account is the source of truth. Do not merge data left in
+        // localStorage by a guest or a previous account.
         const serverCart: Record<string, number> = {};
-        for (const item of payload.items) serverCart[item.productId] = item.quantity;
-        setCart((current) => ({ ...serverCart, ...current }));
+        for (const item of cartPayload.items) serverCart[item.productId] = item.quantity;
+        setCart(serverCart);
+        setFavorites([...new Set(favoritePayload.favorites.map((item) => item.productId))]);
+        setCartHydrated(true);
       })
-      .catch(() => undefined)
-      .finally(() => { if (active) setCartHydrated(true); });
-    void apiRequest('/api/customer/favorites', apiSchemas.customerFavorites)
-      .then((payload) => {
-        if (active) setFavorites((current) => [...new Set([...payload.favorites.map((item) => item.productId), ...current])]);
-      })
-      .catch(() => undefined)
+      .catch(() => {
+        if (!active) return;
+        setCartHydrated(false);
+        setToastKind('error');
+        setNotice('Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.');
+      });
     return () => { active = false; };
   }, [isAuthenticated]);
   async function openSeller() {
