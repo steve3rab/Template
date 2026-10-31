@@ -163,6 +163,7 @@ describe('Stripe payment routes', () => {
   });
 
   it('rejects invalid and stale webhook signatures', async () => {
+    setup();
     const rawBody = Buffer.from('{"type":"checkout.session.completed"}');
     expect(verifyStripeSignature(rawBody, 't=1,v1=deadbeef', 'whsec_test_example')).toBe(false);
     expect(verifyStripeSignature(
