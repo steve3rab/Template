@@ -26,7 +26,7 @@ export function registerSellerRoutes(
     if (!body.success) return reply.code(400).send({ error: 'Invalid product data.' });
     const productData = Object.fromEntries(
       Object.entries(body.data).filter(([, value]) => value !== undefined),
-    ) as Prisma.ProductUncheckedCreateInput;
+    ) as unknown as Prisma.ProductUncheckedCreateInput;
     const product = await prisma.product.create({
       data: { ...productData, sellerId: seller.id },
     });
