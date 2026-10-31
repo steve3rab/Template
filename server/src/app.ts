@@ -14,6 +14,7 @@ import { PrismaClient } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { z } from 'zod';
 import { registerCommerceRoutes } from './commerce.js';
+import { registerPaymentRoutes } from './routes/payments.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -107,6 +108,17 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     logger: process.env.NODE_ENV !== 'test',
     trustProxy: process.env.TRUST_PROXY === 'true',
     bodyLimit: 16 * 1024,
+  });
+
+  // Keep the exact JSON bytes for Stripe's webhook signature verification.
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
+    request.rawBody = body;
+    try {
+      done(null, JSON.parse(body.toString('utf8')));
+    } catch (error) {
+      done(error instanceof Error ? error : new Error('Invalid JSON body'));
+    }
   });
 
   const allowedOrigin =
@@ -257,7 +269,8 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
       .send();
   });
 
-  await registerCommerceRoutes(app, prisma, currentUser);
+  registerCommerceRoutes(app, prisma, currentUser);
+  registerPaymentRoutes(app, prisma, currentUser);
 
   app.addHook('onClose', async () => prisma.$disconnect());
   return app;
