@@ -78,7 +78,7 @@ describe('Fashion storefront', () => {
     if (!product) throw new Error('Product card not found');
     await user.click(within(product).getByRole('button', { name: /ajouter au panier/i }));
     await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
-    expect(screen.getByRole('heading', { name: /finaliser ma commande/i })).toBeInTheDocument();
-    expect(screen.getByText(/le paiement en ligne n’est pas encore connecté/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /bonjour, bienvenue/i })).toBeInTheDocument();
+    expect(screen.getByText(/connectez-vous ou créez un compte pour finaliser votre commande/i)).toBeInTheDocument();
   });
 });
