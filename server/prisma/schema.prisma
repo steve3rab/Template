@@ -17,6 +17,7 @@ model User {
   sessions          Session[]
   addresses         Address[]
   favorites         Favorite[]
+  cartItems         CartItem[]
   customerOrders    Order[]              @relation("CustomerOrders")
   sellerProducts    Product[]            @relation("SellerProducts")
   passwordResets    PasswordResetToken[]
