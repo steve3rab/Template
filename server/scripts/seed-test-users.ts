@@ -30,9 +30,9 @@ try {
       where: { email: user.email },
       create: { ...user, passwordHash },
       update: { role: user.role, passwordHash },
-      select: { email: true, role: true },
+      select: { id: true, email: true, role: true },
     });
-    await prisma.session.deleteMany({ where: { userId: (await prisma.user.findUniqueOrThrow({ where: { email: user.email }, select: { id: true } })).id } });
+    await prisma.session.deleteMany({ where: { userId: savedUser.id } });
     console.info(`Ready: ${savedUser.email} (${savedUser.role})`);
   }
   console.info('Test users created/updated. Existing sessions were revoked.');
