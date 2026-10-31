@@ -6,7 +6,7 @@ test('storefront renders the Atelier catalogue and filters products', async ({ p
   await expect(page.getByRole('heading', { name: /les pièces du moment/i })).toBeVisible();
   await expect(page.locator('.product-card').first()).toBeVisible();
 
-  await page.locator('.category-filters').getByRole('button', { name: 'Chaussures' }).click();
+  await page.locator('.main-nav').getByRole('button', { name: 'Chaussures', exact: true }).click();
   await expect(page.locator('.product-card')).toHaveCount(2);
   await expect(page.locator('.product-meta h3', { hasText: /sneakers everyday|baskets city/i }).first()).toBeVisible();
 });
@@ -35,6 +35,6 @@ test('storefront stays usable without horizontal overflow at common viewport wid
       dimensions.documentWidth,
       `Expected no horizontal overflow at viewport width ${width}px`,
     ).toBeLessThanOrEqual(dimensions.viewportWidth);
-    await expect(page.getByRole('button', { name: /panier/i })).toBeVisible();
+    await expect(page.locator('.cart-button')).toBeVisible();
   }
 });
