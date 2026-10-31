@@ -242,7 +242,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
       await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
     }
     return reply
-      .clearCookie(SESSION_COOKIE, { path: '/api/auth', httpOnly: true, sameSite: 'lax' })
+      .clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'lax' })
       .code(204)
       .send();
   });
