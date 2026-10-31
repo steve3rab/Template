@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: 'server/.env' });
 import { PrismaClient } from '@prisma/client';
 
 const [emailArg, roleArg] = process.argv.slice(2);
