@@ -217,7 +217,13 @@ export function App() {
           };
         }));
       })
-      .catch(() => undefined);
+      .catch(() => {
+        // Never present hard-coded demo products as if they came from the live catalogue.
+        if (!active) return;
+        setCatalog([]);
+        setToastKind('error');
+        setNotice('Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.');
+      });
     // Keep guest data local. Customer endpoints are only queried after a session is confirmed.
     void fetch('/api/auth/me', { credentials: 'include' })
       .then((response) => {
