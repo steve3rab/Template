@@ -164,8 +164,8 @@ export function App() {
             price: item.priceCents / 100,
             color: fallback?.color ?? 'sand',
             icon: fallback?.icon ?? '📦',
-            oldPrice: fallback?.oldPrice,
-            tag: fallback?.tag,
+            ...(fallback?.oldPrice !== undefined ? { oldPrice: fallback.oldPrice } : {}),
+            ...(fallback?.tag !== undefined ? { tag: fallback.tag } : {}),
           };
         }));
       })
@@ -518,7 +518,7 @@ export function App() {
                       <p>{product.category}</p>
                     </div>
                     <div className="product-price">
-                      {product.oldPrice && <del>{money(product.oldPrice)}</del>}
+                      {product.oldPrice && <del>{formatCurrency(product.oldPrice)}</del>}
                       <strong>{formatCurrency(product.price)}</strong>
                     </div>
                   </div>
@@ -709,7 +709,7 @@ export function App() {
                           <strong>{product.name}</strong>
                           <p>Quantité : {cart[product.id] ?? 0}</p>
                         </div>
-                        <strong>{money(product.price * (cart[product.id] ?? 0))}</strong>
+                        <strong>{formatCurrency(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                   {cartCount === 0 && (
@@ -717,7 +717,7 @@ export function App() {
                   )}
                   <div className="summary-total">
                     <span>Sous-total</span>
-                    <strong>{money(cartTotal)}</strong>
+                    <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p className="summary-note">
                     Livraison calculée à l’étape suivante (simulation).
@@ -817,7 +817,7 @@ export function App() {
                         </span>
                         <div className="drawer-product-info">
                           <strong>{product.name}</strong>
-                          <span>{money(product.price)}</span>
+                          <span>{formatCurrency(product.price)}</span>
                           <div className="quantity-control">
                             <button
                               aria-label={`Retirer un ${product.name}`}
@@ -834,19 +834,19 @@ export function App() {
                             </button>
                           </div>
                         </div>
-                        <strong>{money(product.price * (cart[product.id] ?? 0))}</strong>
+                        <strong>{formatCurrency(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                 </div>
                 <div className="drawer-total">
                   <div>
                     <span>Sous-total</span>
-                    <strong>{money(cartTotal)}</strong>
+                    <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p>
                     {cartTotal >= 80
                       ? 'La livraison est offerte !'
-                      : `Plus que ${money(80 - cartTotal)} pour la livraison offerte.`}
+                      : `Plus que ${formatCurrency(80 - cartTotal)} pour la livraison offerte.`}
                   </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
