@@ -2099,6 +2099,40 @@ button {
   border-color: #dfe1d6;
 }
 
+
+.favorite-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 39px;
+  padding: 0 12px;
+  border: 1px solid #dfe1d6;
+  border-radius: 5px;
+  background: #fff;
+  color: #5c5f52;
+  font-size: 0.73rem;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.favorite-filter span {
+  color: #a35d60;
+  font-size: 1rem;
+}
+
+.favorite-filter:hover,
+.favorite-filter.selected {
+  border-color: #c9d0b9;
+  background: #e9ecdf;
+  color: #3a422f;
+}
+
+.favorite-filter:focus-visible {
+  outline: 2px solid #7d8969;
+  outline-offset: 2px;
+}
+
 .search-box:focus-within {
   border-color: #9ca887;
   box-shadow: 0 0 0 3px rgb(156 168 135 / 16%);
