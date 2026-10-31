@@ -96,7 +96,7 @@ export function registerPaymentRoutes(
     const orderIds = orders.map((order) => order.id).sort();
     const params = new URLSearchParams({
       mode: 'payment',
-      client_reference_id: orderIds.join(','),
+      client_reference_id: orderIds[0] ?? '',
       success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?payment=cancelled`,
       expires_at: String(Math.floor(Date.now() / 1000) + 60 * 60),
