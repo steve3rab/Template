@@ -10,6 +10,9 @@
   "workspaces": [
     "server"
   ],
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
+  },
   "scripts": {
     "dev": "vite",
     "dev:server": "npm --workspace @template/api run dev",
