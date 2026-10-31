@@ -92,6 +92,16 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   ) {
     throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
   }
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.PASSWORD_RESET_WEBHOOK_URL || !process.env.PASSWORD_RESET_WEBHOOK_TOKEN) {
+      throw new Error('PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.');
+    }
+    let resetWebhook: URL;
+    try { resetWebhook = new URL(process.env.PASSWORD_RESET_WEBHOOK_URL); } catch {
+      throw new Error('PASSWORD_RESET_WEBHOOK_URL must be an absolute HTTPS URL.');
+    }
+    if (resetWebhook.protocol !== 'https:') throw new Error('PASSWORD_RESET_WEBHOOK_URL must use HTTPS.');
+  }
 
   const app = Fastify({
     logger: process.env.NODE_ENV !== 'test',
