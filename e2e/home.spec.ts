@@ -11,7 +11,8 @@ test('storefront renders the Atelier catalogue and filters products', async ({ p
   await expect(page.locator('.product-meta h3', { hasText: /sneakers everyday|baskets city/i }).first()).toBeVisible();
 });
 
-test('language preference is applied to the account panel and persists', async ({ page }) => {
+test('language preference is applied to the account panel and persists', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'The language switcher is intentionally hidden on narrow screens.');
   await page.goto('/');
   await page.getByRole('button', { name: 'Compte client' }).click();
   await page.getByRole('button', { name: 'English' }).click();
