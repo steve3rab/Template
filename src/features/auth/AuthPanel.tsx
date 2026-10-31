@@ -95,7 +95,6 @@ export function AuthPanel({
       window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: false } }));
       setPassword('');
     } catch {
-      setIsError(true);
       showToast(t.authError, 'error');
     } finally {
       setBusy(false);
