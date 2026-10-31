@@ -9,9 +9,9 @@ import type { Language } from '../shared/i18n';
 
 type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
 type Product = {
-  id: number;
+  id: string;
   name: string;
-  category: Exclude<Category, 'Tout'>;
+  category: string;
   price: number;
   oldPrice?: number;
   color: string;
@@ -21,7 +21,7 @@ type Product = {
 };
 const products: Product[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Veste Studio',
     category: 'Vêtements',
     price: 89,
@@ -32,7 +32,7 @@ const products: Product[] = [
     description: 'Une coupe structurée, facile à porter du matin au soir.',
   },
   {
-    id: 2,
+    id: '2',
     name: 'Sneakers Everyday',
     category: 'Chaussures',
     price: 74,
@@ -42,7 +42,7 @@ const products: Product[] = [
     description: 'Le confort au quotidien, avec une silhouette minimaliste.',
   },
   {
-    id: 3,
+    id: '3',
     name: 'Sac Épure',
     category: 'Accessoires',
     price: 59,
@@ -51,7 +51,7 @@ const products: Product[] = [
     description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
   },
   {
-    id: 4,
+    id: '4',
     name: 'Pull Essentiel',
     category: 'Vêtements',
     price: 65,
@@ -60,7 +60,7 @@ const products: Product[] = [
     description: 'Une maille douce et une coupe décontractée.',
   },
   {
-    id: 5,
+    id: '5',
     name: 'Lunettes Soleil',
     category: 'Accessoires',
     price: 35,
@@ -71,7 +71,7 @@ const products: Product[] = [
     description: 'Une touche graphique pour les journées ensoleillées.',
   },
   {
-    id: 6,
+    id: '6',
     name: 'Baskets City',
     category: 'Chaussures',
     price: 92,
@@ -80,7 +80,7 @@ const products: Product[] = [
     description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
   },
   {
-    id: 7,
+    id: '7',
     name: 'Chemise Relax',
     category: 'Vêtements',
     price: 48,
@@ -89,7 +89,7 @@ const products: Product[] = [
     description: 'Une chemise légère pensée pour les superpositions.',
   },
   {
-    id: 8,
+    id: '8',
     name: 'Casquette Club',
     category: 'Accessoires',
     price: 25,
@@ -113,10 +113,11 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
-  const [cart, setCart] = useState<Record<number, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<number, number>; } catch { return {}; } });
+  const [cart, setCart] = useState<Record<string, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<number, number>; } catch { return {}; } });
   const [favorites, setFavorites] = useState<string[]>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-favorites') ?? '[]') as string[]; } catch { return []; } });
   const [cartHydrated, setCartHydrated] = useState(false);
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
+  const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [checkoutDone, setCheckoutDone] = useState(false);
@@ -125,7 +126,7 @@ export function App() {
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   const filteredProducts = useMemo(() => {
-    const result = products.filter(
+    const result = catalog.filter(
       (product) =>
         (category === 'Tout' || product.category === category) &&
         `${product.name} ${product.category} ${product.description}`
@@ -136,22 +137,30 @@ export function App() {
     if (sort === 'price-down') result.sort((a, b) => b.price - a.price);
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
-  }, [category, query, sort]);
+  }, [catalog, category, query, sort]);
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-  const cartTotal = products.reduce(
+  const cartTotal = catalog.reduce(
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
     0,
   );
   useEffect(() => {
     let active = true;
+    fetch('/api/products')
+      .then(async (response) => response.ok ? await response.json() as { products: { id: string; name: string; description: string; category: string; priceCents: number }[] } : null)
+      .then((payload) => {
+        if (!active || !payload) return;
+        setCatalog(payload.products.map((item) => {
+          const fallback = products.find((product) => product.id === item.id);
+          return { id: item.id, name: item.name, description: item.description, category: item.category, price: item.priceCents / 100, color: fallback?.color ?? 'sand', icon: fallback?.icon ?? '📦', oldPrice: fallback?.oldPrice, tag: fallback?.tag };
+        }));
+      }).catch(() => undefined);
     fetch('/api/customer/cart', { credentials: 'include' })
       .then(async (response) => response.ok ? await response.json() as { items: { productId: string; quantity: number }[] } : null)
       .then((payload) => {
         if (active && payload) {
-          const next: Record<number, number> = {};
+          const next: Record<string, number> = {};
           for (const item of payload.items) {
-            const id = Number(item.productId);
-            if (Number.isSafeInteger(id)) next[id] = item.quantity;
+            next[item.productId] = item.quantity;
           }
           setCart(next);
         }
@@ -196,15 +205,15 @@ export function App() {
     setNotice(`${product.name} ajouté au panier`);
     setCartOpen(true);
   }
-  function changeQuantity(id: number, amount: number) {
+  function changeQuantity(id: string, amount: number) {
     setCart((current) => {
       const next = { ...current, [id]: (current[id] ?? 0) + amount };
       if ((next[id] ?? 0) <= 0) delete next[id];
       return next;
     });
   }
-  function toggleFavorite(id: number) {
-    const productId = String(id);
+  function toggleFavorite(id: string) {
+    const productId = id;
     const isFavorite = favorites.includes(productId);
     setFavorites((current) => isFavorite ? current.filter((item) => item !== productId) : [...current, productId]);
     void fetch('/api/customer/favorites/' + productId, { method: isFavorite ? 'DELETE' : 'POST', credentials: 'include' }).catch(() => undefined);
@@ -453,7 +462,7 @@ export function App() {
                     {product.tag && <span className="product-tag">{product.tag}</span>}
                     <button
                       className={
-                        favorites.includes(String(product.id))
+                        favorites.includes(product.id)
                           ? 'favorite-button favorited'
                           : 'favorite-button'
                       }
