@@ -2,13 +2,11 @@ import { useState, type FormEvent } from 'react';
 
 export function ResetPassword({ onDone }: { onDone: () => void }) {
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setMessage('');
     try {
       const token = new URLSearchParams(window.location.search).get('token') ?? '';
       const response = await fetch('/api/auth/password-reset/complete', {
