@@ -16,10 +16,13 @@ app.post('/api/customer/orders', async (request, reply) => {
   if (!body.success) return reply.code(400).send({ error: 'A saved shipping address is required.' });
   const address = await prisma.address.findFirst({ where: { id: body.data.addressId, userId: user.id } });
   if (!address) return reply.code(404).send({ error: 'Address not found.' });
-  const cart = await prisma.cartItem.findMany({ where: { userId: user.id } });
-  if (!cart.length) return reply.code(400).send({ error: 'Cart is empty.' });
   try {
     const orders = await prisma.$transaction(async (tx) => {
+      // Read the cart inside the transaction. Reading it before the transaction
+      // lets two simultaneous checkout requests create duplicate orders from the
+      // same stale cart snapshot.
+      const cart = await tx.cartItem.findMany({ where: { userId: user.id } });
+      if (!cart.length) throw new Error('EMPTY_CART');
       const groups = new Map<string, { sellerId: string | null; totalCents: number; items: { productId: string; productName: string; unitPriceCents: number; quantity: number }[] }>();
       for (const item of cart) {
         const product = await tx.product.findFirst({ where: { id: item.productId, active: true } });
@@ -62,6 +65,7 @@ app.post('/api/customer/orders', async (request, reply) => {
     });
     return reply.code(201).send({ order: orders[0], orders });
   } catch (error) {
+    if (error instanceof Error && error.message === 'EMPTY_CART') return reply.code(400).send({ error: 'Cart is empty.' });
     if (error instanceof Error && error.message === 'INSUFFICIENT_STOCK') return reply.code(409).send({ error: 'Insufficient stock for one or more products.' });
     throw error;
   }
