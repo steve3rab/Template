@@ -13,6 +13,7 @@ import Fastify, {
 import { PrismaClient } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { z } from 'zod';
+import { registerCommerceRoutes } from './commerce.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -49,7 +50,7 @@ function cookieOptions() {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    path: '/api/auth',
+    path: '/',
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   };
 }
@@ -245,6 +246,8 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
       .code(204)
       .send();
   });
+
+  await registerCommerceRoutes(app, prisma, currentUser);
 
   app.addHook('onClose', async () => prisma.$disconnect());
   return app;
