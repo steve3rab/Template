@@ -60,7 +60,7 @@ Write-Host 'Démarrage du frontend et du backend dans deux fenêtres PowerShell.
 $frontend = Join-Path $PSScriptRoot 'dev.ps1'
 $backend = Join-Path $PSScriptRoot 'backend.ps1'
 $frontendCommand = "& '$frontend' -Port $FrontendPort"
-$backendCommand = "& '$backend' -Port $BackendPort"
+$backendCommand = "`$env:APP_ORIGIN = 'http://127.0.0.1:$FrontendPort'; & '$backend' -Port $BackendPort"
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoExit', '-ExecutionPolicy', 'Bypass', '-Command', $backendCommand)
 Start-Sleep -Milliseconds 700
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoExit', '-ExecutionPolicy', 'Bypass', '-Command', $frontendCommand)
