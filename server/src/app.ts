@@ -97,6 +97,9 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     if (!process.env.PASSWORD_RESET_WEBHOOK_URL || !process.env.PASSWORD_RESET_WEBHOOK_TOKEN) {
       throw new Error('PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.');
     }
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      throw new Error('STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be configured in production.');
+    }
     let resetWebhook: URL;
     try { resetWebhook = new URL(process.env.PASSWORD_RESET_WEBHOOK_URL); } catch {
       throw new Error('PASSWORD_RESET_WEBHOOK_URL must be an absolute HTTPS URL.');
@@ -162,6 +165,8 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return;
+    // Stripe authenticates webhooks using its signed raw body, not browser Origin.
+    if (request.url.split('?')[0] === '/api/webhooks/stripe') return;
     const origin = request.headers.origin;
     if (origin !== allowedOrigin) {
       return reply.code(403).send({ error: 'Forbidden origin' });
