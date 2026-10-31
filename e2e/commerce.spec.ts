@@ -25,7 +25,7 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
 
   await page.getByRole('button', { name: /retour à la boutique/i }).click();
   await page.getByRole('button', { name: /compte client/i }).click();
-  await expect(page.getByText(/commande/i).first()).toBeVisible();
+  await expect(page.getByText(/Commande [a-z0-9]{8}/i)).toBeVisible();
 });
 
 test('legal pages are accessible from the storefront footer', async ({ page }) => {
