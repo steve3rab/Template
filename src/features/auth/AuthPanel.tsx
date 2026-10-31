@@ -28,47 +28,61 @@ export function AuthPanel({
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
-    fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    void fetch('/api/auth/me', { credentials: 'include', signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) return null;
-        return (await response.json()) as AuthResponse;
-      })
-      .then((result) => {
+        if (response.status === 401) {
+          if (active) {
+            setUser(null);
+            window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: false } }));
+          }
+          return;
+        }
+        if (!response.ok) throw new Error('Session check failed');
+        const result = (await response.json()) as AuthResponse;
+        if (!result?.user) throw new Error('Invalid session response');
         if (active) {
-          setUser(result?.user ?? null);
-          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: Boolean(result?.user) } }));
+          setUser(result.user);
+          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
         }
       })
       .catch(() => {
+        // A network/server failure is not proof that the session is invalid.
         if (active) showToast(t.authError, 'error');
       })
       .finally(() => {
+        window.clearTimeout(timeout);
         if (active) setCheckingSession(false);
       });
     return () => {
       active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
     };
   }, [t.authError]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    const submittedMode = mode;
     setBusy(true);
     try {
-      const endpoint = mode === 'reset' ? '/api/auth/password-reset/request' : `/api/auth/${mode}`;
+      const endpoint = submittedMode === 'reset' ? '/api/auth/password-reset/request' : `/api/auth/${submittedMode}`;
       const response = await fetch(endpoint, {
         signal: AbortSignal.timeout(15000),
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mode === 'reset' ? { email } : { email, password }),
+        body: JSON.stringify(submittedMode === 'reset' ? { email } : { email, password }),
       });
       const payload = (await response.json()) as AuthResponse | { error?: string };
       if (!response.ok) {
-        showToast(mode === 'register' ? t.authRegisterError : mode === 'login' ? t.authLoginError : t.authError, 'error');
+        showToast(submittedMode === 'register' ? t.authRegisterError : submittedMode === 'login' ? t.authLoginError : t.authError, 'error');
         return;
       }
-      if (mode === 'reset') {
+      if (submittedMode === 'reset') {
         setPassword('');
         showToast('Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.', 'success');
         return;
@@ -78,7 +92,7 @@ export function AuthPanel({
       window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
       onAuthenticated?.();
       setPassword('');
-      if (mode === 'register') showToast(t.authSuccess, 'success');
+      if (submittedMode === 'register') showToast(t.authSuccess, 'success');
     } catch {
       showToast(t.authError, 'error');
     } finally {
@@ -162,12 +176,14 @@ export function AuthPanel({
             className="auth-mode-button"
             type="button"
             onClick={() => {
+              if (busy) return;
               setMode(mode === 'reset' ? 'login' : mode === 'register' ? 'login' : 'register');
             }}
+            disabled={busy}
           >
             {mode === 'reset' ? 'Retour à la connexion' : mode === 'register' ? t.authSwitchLogin : t.authSwitchRegister}
           </button>
-          {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => setMode('reset')}>Mot de passe oublié ?</button>}
+          {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => setMode('reset')} disabled={busy}>Mot de passe oublié ?</button>}
         </form>
       )}
     </section>
