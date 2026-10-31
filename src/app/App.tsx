@@ -113,7 +113,7 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
-  const [cart, setCart] = useState<Record<string, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<number, number>; } catch { return {}; } });
+  const [cart, setCart] = useState<Record<string, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<string, number>; } catch { return {}; } });
   const [favorites, setFavorites] = useState<string[]>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-favorites') ?? '[]') as string[]; } catch { return []; } });
   const [cartHydrated, setCartHydrated] = useState(false);
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
@@ -467,14 +467,14 @@ export function App() {
                           : 'favorite-button'
                       }
                       aria-label={
-                        favorites.includes(String(product.id))
+                        favorites.includes(product.id)
                           ? `Retirer ${product.name} des favoris`
                           : `Ajouter ${product.name} aux favoris`
                       }
-                      aria-pressed={favorites.includes(String(product.id))}
+                      aria-pressed={favorites.includes(product.id)}
                       onClick={() => toggleFavorite(product.id)}
                     >
-                      {favorites.includes(String(product.id)) ? '♥' : '♡'}
+                      {favorites.includes(product.id) ? '♥' : '♡'}
                     </button>
                     <span className={`product-emoji product-emoji-${index % 4}`} aria-hidden="true">
                       {product.icon}
