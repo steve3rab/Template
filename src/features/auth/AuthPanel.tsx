@@ -143,7 +143,7 @@ export function AuthPanel({
               type="password"
               name="password"
               required
-              minLength={12}
+              minLength={mode === 'register' ? 12 : undefined}
               maxLength={128}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
