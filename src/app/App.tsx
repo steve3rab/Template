@@ -125,7 +125,6 @@ export function App() {
   const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}, isCart));
   const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
   const [cartHydrated, setCartHydrated] = useState(false);
-  const [favoritesHydrated, setFavoritesHydrated] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
@@ -174,6 +173,13 @@ export function App() {
     0,
   );
   useEffect(() => {
+    const onAuthChanged = (event: Event) => {
+      if (event instanceof CustomEvent) setIsAuthenticated(event.detail?.authenticated === true);
+    };
+    window.addEventListener('template-auth-changed', onAuthChanged);
+    return () => window.removeEventListener('template-auth-changed', onAuthChanged);
+  }, []);
+  useEffect(() => {
     let active = true;
     void apiRequest('/api/products', apiSchemas.products)
       .then((payload) => {
@@ -204,16 +210,15 @@ export function App() {
   }, []);
   useEffect(() => {
     writeStoredJson('atelier-cart', cart);
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !cartHydrated) return;
     void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
-  }, [cart, isAuthenticated]);
+  }, [cart, isAuthenticated, cartHydrated]);
   useEffect(() => {
     writeStoredJson('atelier-favorites', favorites);
   }, [favorites]);
   useEffect(() => {
     if (!isAuthenticated) {
       setCartHydrated(false);
-      setFavoritesHydrated(false);
       return;
     }
     let active = true;
@@ -231,7 +236,6 @@ export function App() {
         if (active) setFavorites((current) => [...new Set([...payload.favorites.map((item) => item.productId), ...current])]);
       })
       .catch(() => undefined)
-      .finally(() => { if (active) setFavoritesHydrated(true); });
     return () => { active = false; };
   }, [isAuthenticated]);
   async function openSeller() {
