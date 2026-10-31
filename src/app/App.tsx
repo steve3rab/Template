@@ -135,6 +135,23 @@ export function App() {
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
     0,
   );
+  async function openSeller() {
+    try {
+      const response = await fetch('/api/seller/me', { credentials: 'include' });
+      if (!response.ok) {
+        setNotice(
+          response.status === 401
+            ? 'Connectez-vous avec un compte vendeur autorisé pour accéder à cet espace.'
+            : 'Accès refusé : cet espace est réservé aux comptes vendeurs autorisés.',
+        );
+        if (response.status === 401) setView('account');
+        return;
+      }
+      setView('seller');
+    } catch {
+      setNotice("Impossible de vérifier vos droits d'accès. Réessayez dans un instant.");
+    }
+  }
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
     setNotice(`${product.name} ajouté au panier`);
@@ -839,7 +856,7 @@ export function App() {
         <span className="copyright">© 2026 atelier. · Démonstration</span>
       </footer>
       {view !== 'seller' && (
-        <button className="seller-entry" onClick={() => setView('seller')}>
+        <button className="seller-entry" onClick={openSeller}>
           <span>▦</span> Espace vendeur
         </button>
       )}

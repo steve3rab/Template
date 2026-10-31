@@ -9,6 +9,7 @@ type FakeUser = {
   id: string;
   email: string;
   passwordHash: string;
+  role: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -40,6 +41,7 @@ function makePrisma() {
           id: `user-${++nextId}`,
           email: data.email,
           passwordHash: data.passwordHash,
+          role: 'CUSTOMER',
           createdAt: now,
           updatedAt: now,
         };
@@ -191,6 +193,40 @@ describe('authentication API', () => {
       headers: { cookie },
     });
     expect(afterLogout.statusCode).toBe(401);
+  });
+
+  it('denies seller API access to unauthenticated users and customers', async () => {
+    const anonymous = await app.inject({ method: 'GET', url: '/api/seller/me' });
+    expect(anonymous.statusCode).toBe(401);
+
+    const response = await register();
+    const cookie = sessionCookie(response);
+    const customer = await app.inject({
+      method: 'GET',
+      url: '/api/seller/me',
+      headers: { cookie },
+    });
+    expect(customer.statusCode).toBe(403);
+    expect(customer.json().error).toBe('Seller access required.');
+  });
+
+  it('allows the seller role to access the seller API', async () => {
+    const response = await register();
+    const cookie = sessionCookie(response);
+    const user = [...store.users.values()][0];
+    if (!user) throw new Error('Expected a registered user');
+    user.role = 'SELLER';
+
+    const seller = await app.inject({
+      method: 'GET',
+      url: '/api/seller/me',
+      headers: { cookie },
+    });
+    expect(seller.statusCode).toBe(200);
+    expect(seller.json().seller).toMatchObject({
+      email: 'test@example.com',
+      role: 'SELLER',
+    });
   });
 
   it('expires old sessions and removes them from storage', async () => {
