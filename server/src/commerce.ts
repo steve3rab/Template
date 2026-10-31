@@ -231,36 +231,45 @@ export async function registerCommerceRoutes(
     if (!body.success) return reply.code(400).send({ error: 'A saved shipping address is required.' });
     const address = await prisma.address.findFirst({ where: { id: body.data.addressId, userId: user.id } });
     if (!address) return reply.code(404).send({ error: 'Address not found.' });
-    const cart = await prisma.cartItem.findMany({ where: { userId: user.id }, include: { product: true } });
+    const cart = await prisma.cartItem.findMany({ where: { userId: user.id } });
     if (!cart.length) return reply.code(400).send({ error: 'Cart is empty.' });
     try {
-      const order = await prisma.$transaction(async (tx) => {
-        let totalCents = 0;
+      const orders = await prisma.$transaction(async (tx) => {
+        const groups = new Map<string, { sellerId: string | null; totalCents: number; items: { productId: string; productName: string; unitPriceCents: number; quantity: number }[] }>();
         for (const item of cart) {
-          const current = await tx.product.findFirst({ where: { id: item.productId, active: true } });
-          if (!current || current.stock < item.quantity) throw new Error('INSUFFICIENT_STOCK');
-          totalCents += current.priceCents * item.quantity;
+          const product = await tx.product.findFirst({ where: { id: item.productId, active: true } });
+          if (!product || product.stock < item.quantity) throw new Error('INSUFFICIENT_STOCK');
+          const key = product.sellerId ?? 'platform';
+          const group = groups.get(key) ?? { sellerId: product.sellerId, totalCents: 0, items: [] };
+          group.totalCents += product.priceCents * item.quantity;
+          group.items.push({ productId: product.id, productName: product.name, unitPriceCents: product.priceCents, quantity: item.quantity });
+          groups.set(key, group);
         }
-        const created = await tx.order.create({
-          data: {
-            userId: user.id,
-            addressId: address.id,
-            totalCents,
-            shippingRecipient: address.recipient,
-            shippingLine1: address.line1,
-            shippingLine2: address.line2,
-            shippingPostal: address.postalCode,
-            shippingCity: address.city,
-            shippingCountry: address.country,
-            items: { create: cart.map((item) => ({ productId: item.productId, productName: item.product.name, unitPriceCents: item.product.priceCents, quantity: item.quantity })) },
-          },
-          include: { items: true },
-        });
+        const created = [];
+        for (const group of groups.values()) {
+          const order = await tx.order.create({
+            data: {
+              userId: user.id,
+              sellerId: group.sellerId,
+              addressId: address.id,
+              totalCents: group.totalCents,
+              shippingRecipient: address.recipient,
+              shippingLine1: address.line1,
+              shippingLine2: address.line2,
+              shippingPostal: address.postalCode,
+              shippingCity: address.city,
+              shippingCountry: address.country,
+              items: { create: group.items },
+            },
+            include: { items: true },
+          });
+          created.push(order);
+        }
         for (const item of cart) await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
         await tx.cartItem.deleteMany({ where: { userId: user.id } });
         return created;
       });
-      return reply.code(201).send({ order });
+      return reply.code(201).send({ order: orders[0], orders });
     } catch (error) {
       if (error instanceof Error && error.message === 'INSUFFICIENT_STOCK') return reply.code(409).send({ error: 'Insufficient stock for one or more products.' });
       throw error;
@@ -277,7 +286,7 @@ export async function registerCommerceRoutes(
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
     const orders = await prisma.order.findMany({
-      where: seller.role === 'ADMIN' ? {} : { items: { some: { product: { sellerId: seller.id } } } },
+      where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id },
       include: { items: { include: { product: true } }, customer: { select: { id: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
@@ -291,7 +300,7 @@ export async function registerCommerceRoutes(
     const body = z.object({ status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']) }).safeParse(request.body);
     if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid order status.' });
     const order = await prisma.order.findFirst({
-      where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { items: { some: { product: { sellerId: seller.id } } } }) },
+      where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
     });
     if (!order) return reply.code(404).send({ error: 'Order not found.' });
     if (order.status === 'CANCELLED' || order.status === 'DELIVERED') return reply.code(409).send({ error: 'Order status is final.' });
@@ -307,17 +316,11 @@ export async function registerCommerceRoutes(
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const where = seller.role === 'ADMIN'
       ? { createdAt: { gte: since } }
-      : { createdAt: { gte: since }, items: { some: { product: { sellerId: seller.id } } } };
+      : { sellerId: seller.id, createdAt: { gte: since } };
     const orders = await prisma.order.findMany({ where, include: { items: { include: { product: true } } } });
     const paidOrders = orders.filter((order) => order.paymentStatus === 'PAID');
-    const revenueCents = paidOrders.reduce((sum, order) => sum + order.items.reduce((subtotal, item) => {
-      if (seller.role !== 'ADMIN' && item.product?.sellerId !== seller.id) return subtotal;
-      return subtotal + item.unitPriceCents * item.quantity;
-    }, 0), 0);
-    const unitsSold = orders.reduce((sum, order) => sum + order.items.reduce((subtotal, item) => {
-      if (seller.role !== 'ADMIN' && item.product?.sellerId !== seller.id) return subtotal;
-      return subtotal + item.quantity;
-    }, 0), 0);
+    const revenueCents = paidOrders.reduce((sum, order) => sum + order.totalCents, 0);
+    const unitsSold = orders.reduce((sum, order) => sum + order.items.reduce((subtotal, item) => subtotal + item.quantity, 0), 0);
     const products = await prisma.product.findMany({ where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id } });
     return {
       periodDays: days,
