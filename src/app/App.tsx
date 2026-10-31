@@ -142,7 +142,8 @@ export function App() {
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   useEffect(() => {
-    if (paymentState === 'success' || paymentState === 'cancelled') {
+    const currentPaymentState = new URLSearchParams(window.location.search).get('payment');
+    if (currentPaymentState === 'success' || currentPaymentState === 'cancelled') {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
