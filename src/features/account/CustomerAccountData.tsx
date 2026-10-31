@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { formatCents } from '../../shared/utils/formatCurrency';
 
 type Address = { id: string; label: string; recipient: string; line1: string; postalCode: string; city: string; country: string; isDefault: boolean };
 type Order = { id: string; status: string; paymentStatus: string; totalCents: number; createdAt: string; items: { id: string; productName: string; quantity: number; unitPriceCents: number }[] };
-const money = (cents: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 
 export function CustomerAccountData() {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -70,7 +70,7 @@ export function CustomerAccountData() {
           {orders.length === 0 ? <p>Vous n’avez pas encore de commande.</p> : orders.map((order) => (
             <article className="best-seller-row" key={order.id}>
               <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · {order.status} · Paiement : {order.paymentStatus}</span><span>{order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}</span></div>
-              <strong>{money(order.totalCents)}</strong>
+              <strong>{formatCents(order.totalCents)}</strong>
             </article>
           ))}
           <h3 style={{ marginTop: 24 }}>Adresses enregistrées</h3>
