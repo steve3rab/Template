@@ -21,7 +21,6 @@ export function SellerWorkspace({ range }: { range: string }) {
   const [category, setCategory] = useState('Vêtements');
   const [price, setPrice] = useState('29.90');
   const [stock, setStock] = useState('10');
-  const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -34,7 +33,6 @@ export function SellerWorkspace({ range }: { range: string }) {
       setDashboard(stats);
       setProducts(productPayload.products);
       setOrders(orderPayload.orders);
-      setMessage('');
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: 'Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.', type: 'error' } }));
@@ -53,7 +51,6 @@ export function SellerWorkspace({ range }: { range: string }) {
   async function createProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setMessage('');
     try {
       await apiRequest('/api/seller/products', apiSchemas.productResult, {
         method: 'POST',
