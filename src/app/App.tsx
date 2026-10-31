@@ -272,7 +272,7 @@ export function App() {
     setView('account');
     setNotice('Connectez-vous ou créez un compte pour finaliser votre commande.');
   }
-  async function completeDemoOrder(event: FormEvent<HTMLFormElement>) {
+  async function completeCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setNotice('');
@@ -319,7 +319,7 @@ export function App() {
   }
   return (
     <main className="store-app">
-      <div className="announcement">LIVRAISON OFFERTE DÈS 80 € · DROIT DE RÉTRACTATION DE 14 JOURS</div>
+      <div className="announcement">SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE</div>
       <header className="store-header">
         <a
           className="store-brand"
@@ -343,7 +343,7 @@ export function App() {
               setCategory('Tout');
             }}
           >
-            Nouveautés
+            Collection
           </button>
           <button
             className="nav-link"
@@ -582,18 +582,18 @@ export function App() {
             </div>
             <div>
               <span>↗</span>
-              <strong>Livraison offerte</strong>
-              <p>Dès 80 € d’achat en France.</p>
+              <strong>Paiement en ligne</strong>
+              <p>Le paiement est traité via Stripe lorsque le service est configuré.</p>
             </div>
             <div>
               <span>↺</span>
-              <strong>Retours encadrés</strong>
-              <p>Le droit de rétractation légal s’applique, sous réserve des exceptions prévues.</p>
+              <strong>Informations de retour</strong>
+              <p>Consultez les conditions applicables avant toute commande.</p>
             </div>
             <div>
               <span>♡</span>
-              <strong>À votre écoute</strong>
-              <p>Une équipe là pour vous aider.</p>
+              <strong>Informations utiles</strong>
+              <p>Conditions de vente et confidentialité accessibles en pied de page.</p>
             </div>
           </section>
         </>
@@ -608,8 +608,7 @@ export function App() {
             Bonjour, bienvenue<span className="brand-period">.</span>
           </h1>
           <p className="workspace-intro">
-            Connectez-vous pour retrouver vos commandes, vos favoris et vos informations de
-            livraison.
+            Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.
           </p>
           <div className="account-benefits">
             <div>
@@ -619,13 +618,13 @@ export function App() {
             </div>
             <div>
               <span>02</span>
-              <strong>Vos favoris</strong>
-              <p>Gardez vos pièces préférées à portée de main.</p>
+              <strong>Vos coordonnées</strong>
+              <p>Gardez vos informations de livraison à jour.
             </div>
             <div>
               <span>03</span>
-              <strong>Vos informations</strong>
-              <p>Retrouvez vos coordonnées et adresses.</p>
+              <strong>Votre historique</strong>
+              <p>Consultez les informations de vos commandes.
             </div>
           </div>
           <AuthPanel
@@ -679,7 +678,7 @@ export function App() {
                 Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.
               </p>
               <div className="checkout-layout">
-                <form className="checkout-form" onSubmit={completeDemoOrder}>
+                <form className="checkout-form" onSubmit={completeCheckout}>
                   <h2>Informations de livraison</h2>
                   <label>
                     Adresse e-mail
@@ -717,8 +716,7 @@ export function App() {
                     </label>
                   </div>
                   <label className="checkbox-line">
-                    <input type="checkbox" required /> Je confirme les informations saisies pour
-                    cette démonstration.
+                    <input type="checkbox" required /> Je confirme que les informations de livraison sont exactes.
                   </label>
                   <button className="dark-button full-button" type="submit">
                     Enregistrer la commande ↗
@@ -750,7 +748,7 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p className="summary-note">
-                    Les frais de livraison ne sont pas encore calculés automatiquement.
+                    Les frais de livraison ne sont pas encore configurés pour cette boutique de démonstration.
                   </p>
                 </aside>
               </div>
@@ -874,9 +872,7 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p>
-                    {cartTotal >= 80
-                      ? 'La livraison est offerte !'
-                      : `Plus que ${formatCurrency(80 - cartTotal)} pour la livraison offerte.`}
+                    'Les frais de livraison ne sont pas encore configurés pour cette boutique.'
                   </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
