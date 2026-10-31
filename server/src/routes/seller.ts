@@ -8,7 +8,7 @@ export function registerSellerRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
   resolveUser: ResolveUser,
-): Promise<void> {
+): void {
   app.get('/api/seller/products', async (request, reply) => {
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
