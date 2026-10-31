@@ -19,6 +19,7 @@ model User {
   favorites         Favorite[]
   cartItems         CartItem[]
   customerOrders    Order[]              @relation("CustomerOrders")
+  sellerOrders      Order[]              @relation("SellerOrders")
   sellerProducts    Product[]            @relation("SellerProducts")
   passwordResets    PasswordResetToken[]
 
@@ -107,6 +108,7 @@ model Address {
 model Order {
   id                String      @id @default(cuid())
   userId            String
+  sellerId          String?
   addressId         String?
   status            String      @default("PENDING")
   totalCents        Int
@@ -122,9 +124,11 @@ model Order {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   customer          User        @relation("CustomerOrders", fields: [userId], references: [id], onDelete: Restrict)
+  seller            User?       @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: SetNull)
   address           Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
   items             OrderItem[]
 
+  @@index([sellerId, createdAt])
   @@index([userId, createdAt])
   @@index([status, createdAt])
 }
