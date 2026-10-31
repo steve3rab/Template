@@ -189,7 +189,7 @@ export function SellerWorkspace({ range }: { range: string }) {
           <div className="best-seller-row" key={order.id}>
             <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{order.customer.email} · {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement : {order.paymentStatus}</span></div>
             <strong>{money(order.totalCents)}</strong>
-            <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} onChange={(event) => void updateOrder(order.id, event.target.value)}><option value="PENDING">En attente</option><option value="PROCESSING">En préparation</option><option value="SHIPPED">Expédiée</option><option value="DELIVERED">Livrée</option><option value="CANCELLED">Annulée</option></select></label>
+            <label>Statut<select aria-label={`Statut commande ${order.id}`} value={order.status} disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => void updateOrder(order.id, event.target.value)}><option value="PENDING">En attente</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>En préparation</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>Expédiée</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>Livrée</option><option value="CANCELLED">Annulée</option></select></label>
           </div>
         ))}
       </section>
