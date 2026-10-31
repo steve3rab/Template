@@ -17,7 +17,7 @@ function isFavorites(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires' | 'Maison';
+type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
 type Product = {
   id: string;
   name: string;
@@ -353,7 +353,7 @@ export function App() {
             Collection
           </button>
           <button
-            className="nav-link"
+            className={view === 'shop' && category === 'Vêtements' ? 'nav-link active' : 'nav-link'}
             onClick={() => {
               setView('shop');
               setCategory('Vêtements');
@@ -362,7 +362,7 @@ export function App() {
             Vêtements
           </button>
           <button
-            className="nav-link"
+            className={view === 'shop' && category === 'Chaussures' ? 'nav-link active' : 'nav-link'}
             onClick={() => {
               setView('shop');
               setCategory('Chaussures');
@@ -371,22 +371,13 @@ export function App() {
             Chaussures
           </button>
           <button
-            className="nav-link"
+            className={view === 'shop' && category === 'Accessoires' ? 'nav-link active' : 'nav-link'}
             onClick={() => {
               setView('shop');
               setCategory('Accessoires');
             }}
           >
             Accessoires
-          </button>
-          <button
-            className="nav-link"
-            onClick={() => {
-              setView('shop');
-              setCategory('Maison');
-            }}
-          >
-            Maison
           </button>
         </nav>
         <div className="header-actions">
@@ -474,18 +465,6 @@ export function App() {
               <span className="product-count">{filteredProducts.length} articles</span>
             </div>
             <div className="catalogue-toolbar">
-              <div className="category-filters" role="group" aria-label="Filtrer par catégorie">
-                {(['Tout', 'Vêtements', 'Chaussures', 'Accessoires', 'Maison'] as const).map((item) => (
-                  <button
-                    key={item}
-                    className={category === item ? 'filter-chip selected' : 'filter-chip'}
-                    aria-pressed={category === item}
-                    onClick={() => setCategory(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
               <div className="catalogue-tools">
                 <label className="search-box">
                   <span aria-hidden="true">⌕</span>
