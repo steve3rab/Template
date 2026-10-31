@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
 import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
+import { CustomerAccountData } from '../features/account/CustomerAccountData';
 import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
 
@@ -567,6 +568,7 @@ export function App() {
               }
             }}
           />
+          <CustomerAccountData />
           <p className="fine-print">
             La création de compte et la connexion utilisent le service d’authentification existant.
           </p>
