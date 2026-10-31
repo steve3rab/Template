@@ -112,12 +112,14 @@ export function registerPaymentRoutes(
     }
 
     const orderIds = orders.map((order) => order.id).sort();
+    // Round expiry to a minute so retries with the same idempotency key use identical parameters.
+    const expiresAt = Math.floor(Date.now() / 60_000) * 60 + 60 * 60;
     const params = new URLSearchParams({
       mode: 'payment',
       client_reference_id: orderIds[0] ?? '',
       success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?payment=cancelled`,
-      expires_at: String(Math.floor(Date.now() / 1000) + 60 * 60),
+      expires_at: String(expiresAt),
       'payment_method_types[0]': 'card',
       'metadata[orderIds]': orderIds.join(','),
     });
@@ -132,7 +134,9 @@ export function registerPaymentRoutes(
       }
     }
 
-    const idempotencyKey = createHmac('sha256', secretKey).update(orderIds.join(':')).digest('hex');
+    const idempotencyKey = createHmac('sha256', secretKey)
+      .update(`${orderIds.join(':')}:${expiresAt}`)
+      .digest('hex');
     let response: Response;
     try {
       response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
