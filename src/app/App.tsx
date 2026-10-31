@@ -131,6 +131,15 @@ export function App() {
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
+  useEffect(() => {
+    const paymentState = new URLSearchParams(window.location.search).get('payment');
+    if (paymentState !== 'success' && paymentState !== 'cancelled') return;
+    setView('account');
+    setNotice(paymentState === 'success'
+      ? 'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.'
+      : 'Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }, []);
   const filteredProducts = useMemo(() => {
     const result = catalog.filter(
       (product) =>
