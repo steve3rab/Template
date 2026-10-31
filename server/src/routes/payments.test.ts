@@ -117,7 +117,7 @@ describe('Stripe payment routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ received: true });
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['order-1'] }, paymentReference: 'cs_test_123', paymentStatus: 'UNPAID' },
+      where: { id: { in: ['order-1'] }, paymentReference: 'cs_test_123', paymentStatus: 'UNPAID', status: 'PENDING' },
       data: { paymentStatus: 'PAID' },
     });
     expect(prisma.order.findMany).not.toHaveBeenCalled();
