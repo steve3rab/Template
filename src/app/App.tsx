@@ -224,10 +224,37 @@ export function App() {
     setView('account');
     setNotice('Connectez-vous ou créez un compte pour finaliser votre commande.');
   }
-  function completeDemoOrder(event: FormEvent<HTMLFormElement>) {
+  async function completeDemoOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCheckoutDone(true);
-    setCart({});
+    const form = new FormData(event.currentTarget);
+    setNotice('');
+    try {
+      const cartResponse = await fetch('/api/customer/cart', {
+        method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId: String(productId), quantity })) }),
+      });
+      if (!cartResponse.ok) throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
+      const addressResponse = await fetch('/api/customer/addresses', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: 'Livraison', recipient: String(form.get('recipient') ?? ''),
+          line1: String(form.get('line1') ?? ''), postalCode: String(form.get('postalCode') ?? ''),
+          city: String(form.get('city') ?? ''), country: 'FR', isDefault: true,
+        }),
+      });
+      const addressPayload = await addressResponse.json() as { address?: { id: string }; error?: string };
+      if (!addressResponse.ok || !addressPayload.address) throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
+      const orderResponse = await fetch('/api/customer/orders', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addressId: addressPayload.address.id }),
+      });
+      const orderPayload = await orderResponse.json() as { order?: { id: string }; error?: string };
+      if (!orderResponse.ok || !orderPayload.order) throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
+      setCheckoutDone(true);
+      setCart({});
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.');
+    }
   }
   return (
     <main className="store-app">
@@ -598,25 +625,25 @@ export function App() {
                   <div className="form-two-col">
                     <label>
                       Prénom
-                      <input required autoComplete="given-name" placeholder="Votre prénom" />
+                      <input required name="recipient" autoComplete="name" placeholder="Prénom et nom du destinataire" />
                     </label>
                     <label>
                       Nom
-                      <input required autoComplete="family-name" placeholder="Votre nom" />
+                      <input required autoComplete="family-name" placeholder="Complément (facultatif)" />
                     </label>
                   </div>
                   <label>
                     Adresse
-                    <input required autoComplete="street-address" placeholder="Numéro et rue" />
+                    <input required name="line1" autoComplete="street-address" placeholder="Numéro et rue" />
                   </label>
                   <div className="form-two-col">
                     <label>
                       Code postal
-                      <input required autoComplete="postal-code" placeholder="75000" />
+                      <input required name="postalCode" autoComplete="postal-code" placeholder="75000" />
                     </label>
                     <label>
                       Ville
-                      <input required autoComplete="address-level2" placeholder="Paris" />
+                      <input required name="city" autoComplete="address-level2" placeholder="Paris" />
                     </label>
                   </div>
                   <label className="checkbox-line">
@@ -624,7 +651,7 @@ export function App() {
                     cette démonstration.
                   </label>
                   <button className="dark-button full-button" type="submit">
-                    Simuler la confirmation ↗
+                    Enregistrer la commande ↗
                   </button>
                   <p className="fine-print">
                     Aucune donnée bancaire n’est demandée. Cette étape ne déclenche ni paiement ni
