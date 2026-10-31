@@ -33,10 +33,41 @@ export function CustomerAccountData() {
   }, []);
 
   useEffect(() => {
-    const refresh = () => { void load().catch(() => undefined); };
+    let active = true;
+    const refresh = (event?: Event) => {
+      const authenticated = event instanceof CustomEvent
+        ? event.detail?.authenticated === true
+        : false;
+      if (!event) {
+        void fetch('/api/auth/me', { credentials: 'include' })
+          .then((response) => {
+            if (!active) return;
+            if (response.ok) void load();
+            else {
+              setAddresses([]);
+              setOrders([]);
+              setAvailable(false);
+            }
+          })
+          .catch(() => {
+            if (active) setAvailable(false);
+          });
+        return;
+      }
+      if (authenticated) void load();
+      else {
+        setAddresses([]);
+        setOrders([]);
+        setAvailable(false);
+      }
+    };
     refresh();
-    window.addEventListener('template-auth-changed', refresh);
-    return () => window.removeEventListener('template-auth-changed', refresh);
+    const onAuthChanged = (event: Event) => refresh(event);
+    window.addEventListener('template-auth-changed', onAuthChanged);
+    return () => {
+      active = false;
+      window.removeEventListener('template-auth-changed', onAuthChanged);
+    };
   }, [load]);
 
   async function payUnpaidOrders() {
