@@ -58,7 +58,7 @@ Les conventions d'architecture, de TypeScript strict, de validation des entrées
 
 - `src/shared/api/client.ts` centralise les requêtes HTTP, les erreurs API et la validation Zod des réponses. Les écrans ne doivent pas faire confiance à `response.json()` avec une simple assertion TypeScript.
 - `src/shared/utils/` contient les utilitaires transverses testés, comme le formatage des montants et le stockage local défensif.
-- `server/src/commerce.ts` est le point de composition des routes. Les implémentations sont séparées dans `server/src/routes/` par domaine : catalogue, administration, vendeur, panier, favoris, adresses, commandes et réinitialisation du mot de passe.
+- `server/src/commerce.ts` est le point de composition des routes. Les implémentations sont séparées dans `server/src/routes/` par domaine : catalogue, administration, vendeur, panier, favoris, adresses, commandes, réinitialisation du mot de passe et paiements.
 - `server/src/auth/requireUser.ts` centralise la vérification de session et des rôles ; les schémas Zod de requête sont définis dans `server/src/schemas/commerce.ts`.
 
 Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
@@ -147,6 +147,6 @@ Voir [docs/PRODUCTION.md](docs/PRODUCTION.md) et [server/.env.production.example
 
 Les pages CGV, confidentialité et retours/remboursements sont des **modèles à compléter et faire valider** avant toute vente. Les coordonnées de l'entreprise, du médiateur, les durées de conservation, les prestataires et les modalités de livraison doivent être exacts.
 
-**Non encore prêt pour encaisser des commandes réelles :** le prestataire de paiement, les webhooks de paiement signés, les remboursements, le suivi transporteur et les e-mails transactionnels de commande ne sont pas implémentés. Les commandes sont enregistrées avec le statut de paiement UNPAID ; le tableau de bord ne compte que les commandes explicitement marquées PAID. N'exposez pas le site à des clients payants avant d'avoir intégré et testé ces flux.
+**Paiement :** Stripe Checkout et les webhooks signés sont implémentés, mais doivent être configurés avec `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` avant utilisation. Le webhook doit écouter `checkout.session.completed`, `checkout.session.async_payment_succeeded` et `checkout.session.expired`. Les commandes ne passent à `PAID` qu'après confirmation signée ; une session impayée expirée annule la commande et libère le stock. Les remboursements, le suivi transporteur et les e-mails transactionnels restent à implémenter. Ne mettez pas en production avant que la CI soit verte et que le flux Stripe ait été testé en mode test puis validé pour l'environnement réel.
 
 Un smoke test de charge k6 est disponible dans `tests/load/k6-smoke.js`. Il nécessite k6 et doit être exécuté contre une préproduction isolée, par exemple `BASE_URL=https://staging.example.com k6 run tests/load/k6-smoke.js`. Ce script n'est pas une preuve qu'un test de charge ou un audit de sécurité a déjà été exécuté.
