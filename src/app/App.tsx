@@ -300,11 +300,19 @@ export function App() {
       if (!orderResponse.ok || !orderPayload.order) throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
-      const checkoutPayload = await apiRequest('/api/customer/checkout', apiSchemas.checkoutSession, {
-        method: 'POST',
-        body: JSON.stringify({ orderIds }),
-      });
-      window.location.assign(checkoutPayload.checkoutUrl);
+      try {
+        const checkoutPayload = await apiRequest('/api/customer/checkout', apiSchemas.checkoutSession, {
+          method: 'POST',
+          body: JSON.stringify({ orderIds }),
+        });
+        window.location.assign(checkoutPayload.checkoutUrl);
+      } catch (error) {
+        // The order has already been persisted. Keep it visible and explain that
+        // payment still needs to be completed instead of reporting order creation as failed.
+        setNotice(error instanceof Error ? error.message : 'Commande enregistrée, mais paiement indisponible.');
+        setCheckoutDone(true);
+        setView('checkout');
+      }
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.');
     }
@@ -634,13 +642,13 @@ export function App() {
           {checkoutDone ? (
             <div className="success-panel">
               <span className="success-icon">✓</span>
-              <span className="eyebrow">PARCOURS DE DÉMONSTRATION</span>
+              <span className="eyebrow">COMMANDE ENREGISTRÉE</span>
               <h1>
                 Merci pour votre commande<span className="brand-period">.</span>
               </h1>
               <p>
-                Une confirmation de démonstration a été préparée pour {orderEmail}. Aucun paiement
-                n’a été effectué et aucune commande réelle n’a été enregistrée.
+                Votre commande est enregistrée pour {orderEmail}. Aucun paiement n’a été effectué pour le moment.
+                Si le paiement n’a pas pu être préparé, retrouvez cette commande dans votre compte pour réessayer.
               </p>
               <button
                 className="dark-button"
