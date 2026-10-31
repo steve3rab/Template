@@ -636,7 +636,7 @@ export function App() {
                   </label>
                   <div className="form-two-col">
                     <label>
-                      Prénom
+                      Destinataire (prénom et nom)
                       <input required name="recipient" autoComplete="name" placeholder="Prénom et nom du destinataire" />
                     </label>
                     <label>
