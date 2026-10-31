@@ -3,7 +3,10 @@ import type { PrismaClient } from '@prisma/client';
 import type { ResolveUser } from './auth/requireUser.js';
 import { registerAdminRoutes } from './routes/admin.js';
 import { registerCatalogRoutes } from './routes/catalog.js';
-import { registerCustomerRoutes } from './routes/customer.js';
+import { registerAddressRoutes } from './routes/addresses.js';
+import { registerCartRoutes } from './routes/cart.js';
+import { registerFavoriteRoutes } from './routes/favorites.js';
+import { registerCustomerOrderRoutes } from './routes/orders.js';
 import { registerPasswordResetRoutes } from './routes/passwordReset.js';
 import { registerSellerRoutes } from './routes/seller.js';
 
@@ -19,6 +22,9 @@ export function registerCommerceRoutes(
   registerCatalogRoutes(app, prisma);
   registerAdminRoutes(app, prisma, resolveUser);
   registerSellerRoutes(app, prisma, resolveUser);
-  registerCustomerRoutes(app, prisma, resolveUser);
+  registerCartRoutes(app, prisma, resolveUser);
+  registerFavoriteRoutes(app, prisma, resolveUser);
+  registerAddressRoutes(app, prisma, resolveUser);
+  registerCustomerOrderRoutes(app, prisma, resolveUser);
   registerPasswordResetRoutes(app, prisma);
 }
