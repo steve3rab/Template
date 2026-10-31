@@ -1,5 +1,6 @@
 // @vitest-environment node
 import type { OutgoingHttpHeaders } from 'node:http';
+import argon2 from 'argon2';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -297,6 +298,27 @@ describe('authentication API', () => {
     });
     expect(invalid.statusCode).toBe(401);
     expect(invalid.json().error).toBe('Invalid email or password.');
+  });
+
+
+  it('accepts a legacy account password shorter than the registration minimum', async () => {
+    const registered = await register();
+    expect(registered.statusCode).toBe(201);
+
+    const user = [...store.users.values()][0];
+    if (!user) throw new Error('Expected a registered user');
+    user.passwordHash = await argon2.hash('legacy123');
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      headers: validHeaders,
+      payload: { email: 'test@example.com', password: 'legacy123' },
+    });
+
+    expect(login.statusCode).toBe(200);
+    expect(login.headers['set-cookie']).toBeTruthy();
+    expect(login.json().user.email).toBe('test@example.com');
   });
 
   it('rejects state-changing requests without the configured origin', async () => {

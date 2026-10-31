@@ -24,8 +24,16 @@ if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
 Invoke-Npm -Arguments @('run', 'db:generate')
 Invoke-Npm -Arguments @('run', 'db:deploy')
 
-if ($InstallPlaywrightBrowsers) {
-    Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
-}
+Write-Host 'Installation du navigateur Chromium pour les tests E2E...' -ForegroundColor Cyan
+Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
 
-Write-Host 'Installation terminée.' -ForegroundColor Green
+Write-Host 'Exécution des tests unitaires...' -ForegroundColor Cyan
+Invoke-Npm -Arguments @('run', 'test:unit')
+
+Write-Host 'Exécution des tests d’intégration API...' -ForegroundColor Cyan
+Invoke-Npm -Arguments @('run', 'test:integration')
+
+Write-Host 'Exécution des tests de bout en bout (E2E)...' -ForegroundColor Cyan
+Invoke-Npm -Arguments @('run', 'test:e2e')
+
+Write-Host 'Installation terminée. Tous les tests configurés ont réussi.' -ForegroundColor Green
