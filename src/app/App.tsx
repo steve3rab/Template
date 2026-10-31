@@ -126,6 +126,7 @@ export function App() {
   const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
   const [cartHydrated, setCartHydrated] = useState(false);
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
   const [notice, setNotice] = useState(() => {
@@ -193,12 +194,35 @@ export function App() {
         }));
       })
       .catch(() => undefined);
+    // Keep guest data local. Customer endpoints are only queried after a session is confirmed.
+    void fetch('/api/auth/me', { credentials: 'include' })
+      .then((response) => {
+        if (active && response.ok) setIsAuthenticated(true);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    writeStoredJson('atelier-cart', cart);
+    if (!isAuthenticated) return;
+    void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
+  }, [cart, isAuthenticated]);
+  useEffect(() => {
+    writeStoredJson('atelier-favorites', favorites);
+  }, [favorites]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setCartHydrated(false);
+      setFavoritesHydrated(false);
+      return;
+    }
+    let active = true;
     void apiRequest('/api/customer/cart', apiSchemas.customerCart)
       .then((payload) => {
         if (!active) return;
-        const next: Record<string, number> = {};
-        for (const item of payload.items) next[item.productId] = item.quantity;
-        setCart((current) => ({ ...next, ...current }));
+        const serverCart: Record<string, number> = {};
+        for (const item of payload.items) serverCart[item.productId] = item.quantity;
+        setCart((current) => ({ ...serverCart, ...current }));
       })
       .catch(() => undefined)
       .finally(() => { if (active) setCartHydrated(true); });
@@ -209,29 +233,7 @@ export function App() {
       .catch(() => undefined)
       .finally(() => { if (active) setFavoritesHydrated(true); });
     return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    if (!cartHydrated) return;
-    writeStoredJson('atelier-cart', cart);
-    void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
-  }, [cart, cartHydrated]);
-  useEffect(() => {
-    if (!favoritesHydrated) return;
-    writeStoredJson('atelier-favorites', favorites);
-  }, [favorites, favoritesHydrated]);
-  useEffect(() => {
-    const syncGuestData = () => {
-      void fetch('/api/customer/cart', {
-        method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }),
-      }).catch(() => undefined);
-      for (const productId of favorites) {
-        void fetch('/api/customer/favorites/' + productId, { method: 'POST', credentials: 'include' }).catch(() => undefined);
-      }
-    };
-    window.addEventListener('template-auth-changed', syncGuestData);
-    return () => window.removeEventListener('template-auth-changed', syncGuestData);
-  }, [cart, favorites]);
+  }, [isAuthenticated]);
   async function openSeller() {
     try {
       const response = await fetch('/api/seller/me', { credentials: 'include' });
@@ -265,7 +267,9 @@ export function App() {
     const productId = id;
     const isFavorite = favorites.includes(productId);
     setFavorites((current) => isFavorite ? current.filter((item) => item !== productId) : [...current, productId]);
-    void fetch('/api/customer/favorites/' + productId, { method: isFavorite ? 'DELETE' : 'POST', credentials: 'include' }).catch(() => undefined);
+    if (isAuthenticated) {
+      void fetch('/api/customer/favorites/' + productId, { method: isFavorite ? 'DELETE' : 'POST', credentials: 'include' }).catch(() => undefined);
+    }
   }
   async function beginCheckout() {
     setCartOpen(false);
