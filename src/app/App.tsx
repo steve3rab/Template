@@ -6,6 +6,8 @@ import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { CustomerAccountData } from '../features/account/CustomerAccountData';
 import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
+import { formatCurrency } from '../shared/utils/formatCurrency';
+import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 
 type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
 type Product = {
@@ -99,13 +101,6 @@ const products: Product[] = [
     description: 'La finition simple qui change un look.',
   },
 ];
-const money = (value: number) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0,
-  }).format(value);
 type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
@@ -114,8 +109,8 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
-  const [cart, setCart] = useState<Record<string, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<string, number>; } catch { return {}; } });
-  const [favorites, setFavorites] = useState<string[]>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-favorites') ?? '[]') as string[]; } catch { return []; } });
+  const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}));
+  const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', []));
   const [cartHydrated, setCartHydrated] = useState(false);
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
@@ -177,12 +172,12 @@ export function App() {
   }, []);
   useEffect(() => {
     if (!cartHydrated) return;
-    window.localStorage.setItem('atelier-cart', JSON.stringify(cart));
+    writeStoredJson('atelier-cart', cart);
     void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
   }, [cart, cartHydrated]);
   useEffect(() => {
     if (!favoritesHydrated) return;
-    window.localStorage.setItem('atelier-favorites', JSON.stringify(favorites));
+    writeStoredJson('atelier-favorites', favorites);
   }, [favorites, favoritesHydrated]);
   useEffect(() => {
     const syncGuestData = () => {
@@ -507,7 +502,7 @@ export function App() {
                     </div>
                     <div className="product-price">
                       {product.oldPrice && <del>{money(product.oldPrice)}</del>}
-                      <strong>{money(product.price)}</strong>
+                      <strong>{formatCurrency(product.price)}</strong>
                     </div>
                   </div>
                   <p className="product-description">{product.description}</p>
