@@ -25,6 +25,7 @@ export default defineConfig({
       timeout: 30_000,
       env: {
         NODE_ENV: 'test',
+        E2E_TEST: 'true',
         DATABASE_URL: 'file:./dev.db',
         APP_ORIGIN: 'http://127.0.0.1:4173',
         SESSION_SECRET: 'playwright-only-secret-long-enough-for-tests',
