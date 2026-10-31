@@ -138,6 +138,38 @@ export function App() {
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
     0,
   );
+  useEffect(() => {
+    let active = true;
+    fetch('/api/customer/cart', { credentials: 'include' })
+      .then(async (response) => response.ok ? await response.json() as { items: { productId: string; quantity: number }[] } : null)
+      .then((payload) => {
+        if (active && payload) {
+          const next: Record<number, number> = {};
+          for (const item of payload.items) {
+            const id = Number(item.productId);
+            if (Number.isSafeInteger(id)) next[id] = item.quantity;
+          }
+          setCart(next);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => { if (active) setCartHydrated(true); });
+    fetch('/api/customer/favorites', { credentials: 'include' })
+      .then(async (response) => response.ok ? await response.json() as { favorites: { productId: string }[] } : null)
+      .then((payload) => { if (active && payload) setFavorites(payload.favorites.map((item) => item.productId)); })
+      .catch(() => undefined)
+      .finally(() => { if (active) setFavoritesHydrated(true); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    if (!cartHydrated) return;
+    window.localStorage.setItem('atelier-cart', JSON.stringify(cart));
+    void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
+  }, [cart, cartHydrated]);
+  useEffect(() => {
+    if (!favoritesHydrated) return;
+    window.localStorage.setItem('atelier-favorites', JSON.stringify(favorites));
+  }, [favorites, favoritesHydrated]);
   async function openSeller() {
     try {
       const response = await fetch('/api/seller/me', { credentials: 'include' });
