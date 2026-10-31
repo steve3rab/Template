@@ -240,7 +240,7 @@ export function App() {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           label: 'Livraison', recipient: String(form.get('recipient') ?? ''),
-          line1: String(form.get('line1') ?? ''), postalCode: String(form.get('postalCode') ?? ''),
+          line1: String(form.get('line1') ?? ''), line2: String(form.get('line2') ?? '') || null, postalCode: String(form.get('postalCode') ?? ''),
           city: String(form.get('city') ?? ''), country: 'FR', isDefault: true,
         }),
       });
@@ -631,8 +631,8 @@ export function App() {
                       <input required name="recipient" autoComplete="name" placeholder="Prénom et nom du destinataire" />
                     </label>
                     <label>
-                      Nom
-                      <input required autoComplete="family-name" placeholder="Complément (facultatif)" />
+                      Complément d’adresse (facultatif)
+                      <input name="line2" autoComplete="address-line2" placeholder="Appartement, bâtiment…" />
                     </label>
                   </div>
                   <label>
