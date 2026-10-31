@@ -20,17 +20,26 @@ const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const localSessionSecret = 'local-development-only-change-this-secret';
 
-const credentialsSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email()
-    .max(254)
-    .transform((email) => email.toLowerCase()),
+const emailSchema = z
+  .string()
+  .trim()
+  .email()
+  .max(254)
+  .transform((email) => email.toLowerCase());
+
+const registrationSchema = z.object({
+  email: emailSchema,
   password: z.string().min(12).max(128),
 });
 
-type Credentials = z.infer<typeof credentialsSchema>;
+const loginSchema = z.object({
+  email: emailSchema,
+  // Existing accounts may have passwords created before the 12-character
+  // registration policy was introduced. Login must not enforce that policy.
+  password: z.string().min(1).max(128),
+});
+
+type Credentials = z.infer<typeof registrationSchema>;
 
 function tokenHash(token: string): string {
   const secret = process.env.SESSION_SECRET ?? localSessionSecret;
@@ -57,7 +66,7 @@ function cookieOptions() {
 }
 
 function parseCredentials(body: unknown): Credentials | null {
-  const result = credentialsSchema.safeParse(body);
+  const result = registrationSchema.safeParse(body);
   return result.success ? result.data : null;
 }
 
@@ -230,7 +239,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
     },
     async (request, reply) => {
       const body = request.body;
-      const credentials = credentialsSchema.safeParse(body);
+      const credentials = loginSchema.safeParse(body);
       if (!credentials.success) {
         return reply.code(400).send({ error: 'Invalid email or password.' });
       }
