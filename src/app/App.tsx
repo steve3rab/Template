@@ -127,6 +127,7 @@ export function App() {
   const [cartHydrated, setCartHydrated] = useState(false);
   const cartSyncQueue = useRef<Promise<void>>(Promise.resolve());
   const cartSyncVersion = useRef(0);
+  const authEpoch = useRef(0);
   const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
@@ -191,6 +192,8 @@ export function App() {
     const onAuthChanged = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
       const authenticated = event.detail?.authenticated === true;
+      authEpoch.current += 1;
+      cartSyncVersion.current += 1;
       // Every account transition requires a fresh server hydration before cart writes.
       setCartHydrated(false);
       setIsAuthenticated(authenticated);
@@ -244,11 +247,15 @@ export function App() {
     writeStoredJson('atelier-cart', cart);
     if (!isAuthenticated || !cartHydrated) return;
     const version = ++cartSyncVersion.current;
+    const epoch = authEpoch.current;
     const snapshot = Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity }));
     // Serialize writes: slower older requests must never overwrite a newer cart.
     cartSyncQueue.current = cartSyncQueue.current
       .catch(() => undefined)
       .then(async () => {
+        // A queued write belongs to the session that created it. Never send it
+        // after logout/account switching, when the browser cookie may have changed.
+        if (epoch !== authEpoch.current || !isAuthenticated) return;
         const response = await fetch('/api/customer/cart', {
           method: 'PUT',
           credentials: 'include',
@@ -258,7 +265,7 @@ export function App() {
         if (!response.ok) throw new Error('Impossible de synchroniser le panier avec votre compte.');
       })
       .catch(() => {
-        if (version === cartSyncVersion.current) {
+        if (epoch === authEpoch.current && version === cartSyncVersion.current) {
           setToastKind('error');
           setNotice('Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.');
         }
@@ -326,6 +333,7 @@ export function App() {
     const productId = id;
     if (favoriteRequests.current.has(productId)) return;
     const isFavorite = favorites.includes(productId);
+    const epoch = authEpoch.current;
     if (!isAuthenticated) {
       setFavorites((current) => isFavorite
         ? current.filter((item) => item !== productId)
@@ -345,10 +353,12 @@ export function App() {
           ? 'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.'
           : 'Impossible de mettre à jour vos favoris. Réessayez.');
       }
+      if (epoch !== authEpoch.current) return;
       setFavorites((current) => isFavorite
         ? current.filter((item) => item !== productId)
         : [...new Set([...current, productId])]);
     } catch (error) {
+      if (epoch !== authEpoch.current) return;
       setToastKind('error');
       setNotice(error instanceof Error ? error.message : 'Impossible de mettre à jour vos favoris.');
     } finally {
