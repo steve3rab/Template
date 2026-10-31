@@ -52,6 +52,7 @@ export const apiSchemas = {
     currency: z.string(),
   }),
   sellerOrders: z.object({ orders: z.array(orderSchema) }),
+  orderResult: z.object({ order: orderSchema }),
   customerOrders: z.object({ orders: z.array(orderSchema) }),
   customerAddresses: z.object({ addresses: z.array(addressSchema) }),
   addressCreated: z.object({ address: addressSchema }),
