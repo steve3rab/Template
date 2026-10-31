@@ -8,6 +8,7 @@ import { useTranslation } from '../shared/i18n';
 import type { Language } from '../shared/i18n';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
+import { apiRequest, apiSchemas } from '../shared/api/client';
 
 function isCart(value: unknown): value is Record<string, number> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -150,31 +151,38 @@ export function App() {
   );
   useEffect(() => {
     let active = true;
-    fetch('/api/products')
-      .then(async (response) => response.ok ? await response.json() as { products: { id: string; name: string; description: string; category: string; priceCents: number }[] } : null)
+    void apiRequest('/api/products', apiSchemas.products)
       .then((payload) => {
-        if (!active || !payload) return;
+        if (!active) return;
         setCatalog(payload.products.map((item) => {
           const fallback = products.find((product) => product.id === item.id);
-          return { id: item.id, name: item.name, description: item.description, category: item.category, price: item.priceCents / 100, color: fallback?.color ?? 'sand', icon: fallback?.icon ?? '📦', oldPrice: fallback?.oldPrice, tag: fallback?.tag };
+          return {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            price: item.priceCents / 100,
+            color: fallback?.color ?? 'sand',
+            icon: fallback?.icon ?? '📦',
+            oldPrice: fallback?.oldPrice,
+            tag: fallback?.tag,
+          };
         }));
-      }).catch(() => undefined);
-    fetch('/api/customer/cart', { credentials: 'include' })
-      .then(async (response) => response.ok ? await response.json() as { items: { productId: string; quantity: number }[] } : null)
+      })
+      .catch(() => undefined);
+    void apiRequest('/api/customer/cart', apiSchemas.customerCart)
       .then((payload) => {
-        if (active && payload) {
-          const next: Record<string, number> = {};
-          for (const item of payload.items) {
-            next[item.productId] = item.quantity;
-          }
-          setCart((current) => ({ ...next, ...current }));
-        }
+        if (!active) return;
+        const next: Record<string, number> = {};
+        for (const item of payload.items) next[item.productId] = item.quantity;
+        setCart((current) => ({ ...next, ...current }));
       })
       .catch(() => undefined)
       .finally(() => { if (active) setCartHydrated(true); });
-    fetch('/api/customer/favorites', { credentials: 'include' })
-      .then(async (response) => response.ok ? await response.json() as { favorites: { productId: string }[] } : null)
-      .then((payload) => { if (active && payload) setFavorites((current) => [...new Set([...payload.favorites.map((item) => item.productId), ...current])]); })
+    void apiRequest('/api/customer/favorites', apiSchemas.customerFavorites)
+      .then((payload) => {
+        if (active) setFavorites((current) => [...new Set([...payload.favorites.map((item) => item.productId), ...current])]);
+      })
       .catch(() => undefined)
       .finally(() => { if (active) setFavoritesHydrated(true); });
     return () => { active = false; };
