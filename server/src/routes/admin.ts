@@ -8,7 +8,7 @@ export function registerAdminRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
   resolveUser: ResolveUser,
-): Promise<void> {
+): void {
   app.post('/api/admin/users/:id/role', async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
