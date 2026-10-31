@@ -111,8 +111,10 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
-  const [cart, setCart] = useState<Record<number, number>>({});
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [cart, setCart] = useState<Record<number, number>>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-cart') ?? '{}') as Record<number, number>; } catch { return {}; } });
+  const [favorites, setFavorites] = useState<string[]>(() => { try { return JSON.parse(window.localStorage.getItem('atelier-favorites') ?? '[]') as string[]; } catch { return []; } });
+  const [cartHydrated, setCartHydrated] = useState(false);
+  const [favoritesHydrated, setFavoritesHydrated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [checkoutDone, setCheckoutDone] = useState(false);
@@ -200,9 +202,10 @@ export function App() {
     });
   }
   function toggleFavorite(id: number) {
-    setFavorites((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
+    const productId = String(id);
+    const isFavorite = favorites.includes(productId);
+    setFavorites((current) => isFavorite ? current.filter((item) => item !== productId) : [...current, productId]);
+    void fetch('/api/customer/favorites/' + productId, { method: isFavorite ? 'DELETE' : 'POST', credentials: 'include' }).catch(() => undefined);
   }
   async function beginCheckout() {
     setCartOpen(false);
@@ -421,19 +424,19 @@ export function App() {
                     {product.tag && <span className="product-tag">{product.tag}</span>}
                     <button
                       className={
-                        favorites.includes(product.id)
+                        favorites.includes(String(product.id))
                           ? 'favorite-button favorited'
                           : 'favorite-button'
                       }
                       aria-label={
-                        favorites.includes(product.id)
+                        favorites.includes(String(product.id))
                           ? `Retirer ${product.name} des favoris`
                           : `Ajouter ${product.name} aux favoris`
                       }
-                      aria-pressed={favorites.includes(product.id)}
+                      aria-pressed={favorites.includes(String(product.id))}
                       onClick={() => toggleFavorite(product.id)}
                     >
-                      {favorites.includes(product.id) ? '♥' : '♡'}
+                      {favorites.includes(String(product.id)) ? '♥' : '♡'}
                     </button>
                     <span className={`product-emoji product-emoji-${index % 4}`} aria-hidden="true">
                       {product.icon}
