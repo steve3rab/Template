@@ -3,13 +3,15 @@ import { PrismaClient } from '@prisma/client';
 
 const [emailArg, roleArg] = process.argv.slice(2);
 const email = emailArg?.trim().toLowerCase();
-const role = roleArg?.trim().toUpperCase();
+const roleArgUpper = roleArg?.trim().toUpperCase();
+const validRoles = ['CUSTOMER', 'SELLER', 'ADMIN'] as const;
 
-if (!email || !['CUSTOMER', 'SELLER', 'ADMIN'].includes(role ?? '')) {
+if (!email || !roleArgUpper || !validRoles.includes(roleArgUpper as (typeof validRoles)[number])) {
   console.error('Usage: npx tsx server/scripts/set-user-role.ts <email> <CUSTOMER|SELLER|ADMIN>');
   process.exit(2);
 }
 
+const role = roleArgUpper as (typeof validRoles)[number];
 const prisma = new PrismaClient();
 try {
   const user = await prisma.user.update({
