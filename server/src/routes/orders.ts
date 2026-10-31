@@ -50,7 +50,13 @@ app.post('/api/customer/orders', async (request, reply) => {
         });
         created.push(order);
       }
-      for (const item of cart) await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity } } });
+      for (const item of cart) {
+        const stockUpdate = await tx.product.updateMany({
+          where: { id: item.productId, active: true, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (stockUpdate.count !== 1) throw new Error('INSUFFICIENT_STOCK');
+      }
       await tx.cartItem.deleteMany({ where: { userId: user.id } });
       return created;
     });
