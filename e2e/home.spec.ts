@@ -1,35 +1,38 @@
 import { expect, test } from '@playwright/test';
 
-test('home page renders and counter works in a real browser', async ({ page }) => {
+test('storefront renders the Atelier catalogue and filters products', async ({ page }) => {
   await page.goto('/');
-  await expect(
-    page.getByRole('heading', { name: /une base solide|a solid foundation/i }),
-  ).toBeVisible();
-  await expect(page.getByTestId('counter-value')).toHaveText('0');
-  await page.getByRole('button', { name: /incrémenter|increment/i }).click();
-  await expect(page.getByTestId('counter-value')).toHaveText('1');
+  await expect(page.getByRole('heading', { name: /le style, en toute simplicité/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /les pièces du moment/i })).toBeVisible();
+  await expect(page.locator('.product-card').first()).toBeVisible();
+
+  await page.locator('.category-filters').getByRole('button', { name: 'Chaussures' }).click();
+  await expect(page.locator('.product-card')).toHaveCount(2);
+  await expect(page.locator('.product-meta h3', { hasText: /sneakers everyday|baskets city/i }).first()).toBeVisible();
 });
 
-test('language can be switched and is persisted', async ({ page }) => {
+test('language preference is applied to the account panel and persists', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Compte client' }).click();
   await page.getByRole('button', { name: 'English' }).click();
-  await expect(page.getByRole('heading', { name: /a solid foundation/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'User account' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
   await page.reload();
-  await expect(page.getByRole('heading', { name: /a solid foundation/i })).toBeVisible();
+  await page.getByRole('button', { name: 'Compte client' }).click();
+  await expect(page.getByRole('heading', { name: 'User account' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
-test('layout remains usable without horizontal overflow at common viewport widths', async ({
+test('storefront stays usable without horizontal overflow at common viewport widths', async ({
   page,
 }) => {
   const viewportWidths = [320, 360, 375, 390, 430, 540, 640, 768, 820, 1024, 1280, 1440, 1920];
 
+  await page.goto('/');
   for (const width of viewportWidths) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    await expect(
-      page.getByRole('heading', { name: /une base solide|a solid foundation/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /le style, en toute simplicité/i })).toBeVisible();
 
     const dimensions = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,
@@ -40,6 +43,6 @@ test('layout remains usable without horizontal overflow at common viewport width
       dimensions.documentWidth,
       `Expected no horizontal overflow at viewport width ${width}px`,
     ).toBeLessThanOrEqual(dimensions.viewportWidth);
-    await expect(page.getByRole('button', { name: /incrémenter|increment/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /panier/i })).toBeVisible();
   }
 });
