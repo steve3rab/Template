@@ -34,7 +34,7 @@ Pour démarrer séparément :
 - Validation d'entrée avec Zod, limitation de débit sur les routes d'authentification, CORS limité à l'origine configurée et vérification de l'origine des requêtes mutantes.
 - Routes : `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
 
-Le refus d'inscription pour une adresse déjà utilisée utilise un message générique, mais la différence entre création réussie et refus peut encore permettre l'énumération d'adresses. Pour un produit public, ajoutez une vérification d'e-mail avec réponse uniforme. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. Les flux de réinitialisation de mot de passe, vérification d'e-mail, MFA et gestion des rôles métier restent à ajouter selon les besoins du produit.
+Le refus d'inscription pour une adresse déjà utilisée utilise un message générique, mais la différence entre création réussie et refus peut encore permettre l'énumération d'adresses. Pour un produit public, ajoutez une vérification d'e-mail avec réponse uniforme. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. La réinitialisation du mot de passe et la gestion des rôles métier sont implémentées ; la vérification d'e-mail et le MFA restent à prévoir selon les besoins du produit.
 
 ## Base de données Prisma + SQLite
 
@@ -52,9 +52,16 @@ npm run db:deploy
 
 SQLite convient au développement et aux déploiements simples sur disque persistant. Pour une API multi-instance ou une forte concurrence d'écritures, préférez PostgreSQL et configurez le provider Prisma correspondant ; le code d'accès aux données reste isolé dans Prisma.
 
-## Standards de code
+## Architecture et standards de code
 
-Les conventions d'architecture, de TypeScript strict, de validation des entrées, de tests et de commits sont décrites dans [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md). La configuration ESLint, Prettier et `.editorconfig` fait partie du contrat du dépôt. Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
+Les conventions d'architecture, de TypeScript strict, de validation des entrées, de tests et de commits sont décrites dans [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md). ESLint, Prettier, `.editorconfig` et la CI font partie du contrat du dépôt.
+
+- `src/shared/api/client.ts` centralise les requêtes HTTP, les erreurs API et la validation Zod des réponses. Les écrans ne doivent pas faire confiance à `response.json()` avec une simple assertion TypeScript.
+- `src/shared/utils/` contient les utilitaires transverses testés, comme le formatage des montants et le stockage local défensif.
+- `server/src/commerce.ts` est le point de composition des routes. Les implémentations sont séparées dans `server/src/routes/` par domaine : catalogue, administration, vendeur, client et réinitialisation du mot de passe.
+- `server/src/auth/requireUser.ts` centralise la vérification de session et des rôles ; les schémas Zod de requête sont définis dans `server/src/schemas/commerce.ts`.
+
+Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
 
 ## Contrôles qualité
 
