@@ -708,8 +708,8 @@ export function App() {
                     Enregistrer la commande ↗
                   </button>
                   <p className="fine-print">
-                    Aucune donnée bancaire n’est demandée. Cette étape ne déclenche ni paiement ni
-                    expédition.
+                    Le paiement sécurisé sera effectué sur Stripe après validation de cette étape.
+                    L’expédition ne démarre qu’après confirmation du paiement.
                   </p>
                 </form>
                 <aside className="order-summary">
@@ -734,7 +734,7 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p className="summary-note">
-                    Livraison calculée à l’étape suivante (simulation).
+                    Les frais de livraison ne sont pas encore calculés automatiquement.
                   </p>
                 </aside>
               </div>
