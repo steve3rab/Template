@@ -99,6 +99,13 @@ export function registerSellerRoutes(
     if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
       return reply.code(409).send({ error: 'Paid orders require a refund workflow before cancellation.' });
     }
+    if (
+      body.data.status === 'CANCELLED' &&
+      order.paymentStatus === 'UNPAID' &&
+      order.paymentReference
+    ) {
+      return reply.code(409).send({ error: 'An active payment session must expire before this order can be cancelled.' });
+    }
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.order.update({ where: { id: order.id }, data: { status: body.data.status }, include: { items: true } });
       if (body.data.status === 'CANCELLED') {
