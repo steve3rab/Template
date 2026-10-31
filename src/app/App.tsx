@@ -121,6 +121,7 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}, isCart));
   const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
   const [cartHydrated, setCartHydrated] = useState(false);
@@ -156,6 +157,7 @@ export function App() {
     const result = catalog.filter(
       (product) =>
         (category === 'Tout' || product.category === category) &&
+        (!favoritesOnly || favorites.includes(product.id)) &&
         `${product.name} ${product.category} ${product.description}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -164,7 +166,7 @@ export function App() {
     if (sort === 'price-down') result.sort((a, b) => b.price - a.price);
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
-  }, [catalog, category, query, sort]);
+  }, [catalog, category, favorites, favoritesOnly, query, sort]);
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   const cartTotal = catalog.reduce(
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
@@ -480,6 +482,14 @@ export function App() {
                     onChange={(event) => setQuery(event.target.value)}
                   />
                 </label>
+                <button
+                  type="button"
+                  className={favoritesOnly ? 'favorite-filter selected' : 'favorite-filter'}
+                  aria-pressed={favoritesOnly}
+                  onClick={() => setFavoritesOnly((current) => !current)}
+                >
+                  <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span> Favoris
+                </button>
                 <label className="sort-label">
                   <span className="visually-hidden">Trier les produits</span>
                   <select value={sort} onChange={(event) => setSort(event.target.value)}>
@@ -544,6 +554,7 @@ export function App() {
                   onClick={() => {
                     setQuery('');
                     setCategory('Tout');
+                    setFavoritesOnly(false);
                   }}
                 >
                   Réinitialiser les filtres
