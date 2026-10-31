@@ -11,14 +11,14 @@ import { registerSellerRoutes } from './routes/seller.js';
  * Composition root for commerce endpoints. Keep route implementations in their
  * feature modules so each area can evolve and be tested independently.
  */
-export async function registerCommerceRoutes(
+export function registerCommerceRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
   resolveUser: ResolveUser,
-): Promise<void> {
+): void {
   registerCatalogRoutes(app, prisma);
-  await registerAdminRoutes(app, prisma, resolveUser);
-  await registerSellerRoutes(app, prisma, resolveUser);
-  await registerCustomerRoutes(app, prisma, resolveUser);
+  registerAdminRoutes(app, prisma, resolveUser);
+  registerSellerRoutes(app, prisma, resolveUser);
+  registerCustomerRoutes(app, prisma, resolveUser);
   registerPasswordResetRoutes(app, prisma);
 }
