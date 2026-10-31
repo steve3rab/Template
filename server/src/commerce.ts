@@ -301,10 +301,27 @@ export async function registerCommerceRoutes(
     if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid order status.' });
     const order = await prisma.order.findFirst({
       where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
+      include: { items: true },
     });
     if (!order) return reply.code(404).send({ error: 'Order not found.' });
-    if (order.status === 'CANCELLED' || order.status === 'DELIVERED') return reply.code(409).send({ error: 'Order status is final.' });
-    const updated = await prisma.order.update({ where: { id: order.id }, data: { status: body.data.status }, include: { items: true } });
+    const transitions: Record<string, string[]> = {
+      PENDING: ['PROCESSING', 'CANCELLED'],
+      PROCESSING: ['SHIPPED', 'CANCELLED'],
+      SHIPPED: ['DELIVERED'],
+    };
+    if (!transitions[order.status]?.includes(body.data.status)) return reply.code(409).send({ error: 'Invalid order status transition.' });
+    if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
+      return reply.code(409).send({ error: 'Paid orders require a refund workflow before cancellation.' });
+    }
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.order.update({ where: { id: order.id }, data: { status: body.data.status }, include: { items: true } });
+      if (body.data.status === 'CANCELLED') {
+        for (const item of order.items) {
+          if (item.productId) await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
+        }
+      }
+      return result;
+    });
     return { order: updated };
   });
 
