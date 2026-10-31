@@ -99,7 +99,6 @@ export function AuthPanel({
   return (
     <section className="auth-card" aria-labelledby="auth-title">
       <div className="auth-heading">
-        <span className="card-label">API · SQLITE</span>
         <h2 id="auth-title">{t.authTitle}</h2>
         <p>{t.authIntro}</p>
       </div>
