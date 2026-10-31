@@ -36,6 +36,28 @@ Pour démarrer séparément :
 
 Le refus d'inscription pour une adresse déjà utilisée utilise un message générique, mais la différence entre création réussie et refus peut encore permettre l'énumération d'adresses. Pour un produit public, ajoutez une vérification d'e-mail avec réponse uniforme. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. La réinitialisation du mot de passe et la gestion des rôles métier sont implémentées ; la vérification d'e-mail et le MFA restent à prévoir selon les besoins du produit.
 
+### Comptes de test (développement local uniquement)
+
+Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes dans la base configurée par `DATABASE_URL` :
+
+| Rôle | Identifiant |
+| --- | --- |
+| Client (`CUSTOMER`) | `test.customer@example.com` |
+| Vendeur (`SELLER`) | `test.seller@example.com` |
+| Administrateur (`ADMIN`) | `test.admin@example.com` |
+
+Choisissez un mot de passe de test (12 à 128 caractères), puis lancez ces commandes dans PowerShell depuis la racine du dépôt :
+
+```powershell
+$env:ALLOW_TEST_USER_SEED = "true"
+$env:TEST_USERS_PASSWORD = "Local-Test-Password-2026!"
+npm run db:seed:test-users
+Remove-Item Env:ALLOW_TEST_USER_SEED
+Remove-Item Env:TEST_USERS_PASSWORD
+```
+
+Le mot de passe indiqué est un exemple à remplacer. Les trois comptes utilisent le mot de passe fourni dans `TEST_USERS_PASSWORD`. Le script hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse de s'exécuter si `NODE_ENV=production`, mais vérifiez aussi que `DATABASE_URL` pointe bien vers votre base locale avant de le lancer. **Ne réutilisez pas ces comptes ni ce mot de passe en production.**
+
 ## Base de données Prisma + SQLite
 
 Le fichier SQLite local est créé dans `server/prisma/dev.db` par défaut. Les migrations versionnées sont sous `server/prisma/migrations`.
