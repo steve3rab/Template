@@ -52,13 +52,19 @@ describe('Fashion storefront', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('opens the seller dashboard with demo KPIs', async () => {
+  it('does not open the seller dashboard when the server denies access', async () => {
     const user = userEvent.setup();
+    window.fetch = (async () =>
+      new Response(JSON.stringify({ error: 'Seller access required.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })) as typeof fetch;
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Espace vendeur' }));
-    expect(screen.getByRole('heading', { name: /vue d’ensemble/i })).toBeInTheDocument();
-    expect(screen.getByText('APERÇU AVEC DONNÉES FICTIVES')).toBeInTheDocument();
-    expect(screen.getByText('Taux de conversion')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /vue d’ensemble/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/accès refusé : cet espace est réservé aux comptes vendeurs autorisés/i),
+    ).toBeInTheDocument();
   });
 
   it('switches language preferences and updates the document language', async () => {
