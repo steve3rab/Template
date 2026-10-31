@@ -86,7 +86,7 @@ describe('Stripe payment routes', () => {
       include: { items: true },
     });
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['order-1'] }, userId: customer.id, paymentStatus: 'UNPAID' },
+      where: { id: { in: ['order-1'] }, userId: customer.id, paymentStatus: 'UNPAID', status: 'PENDING', paymentReference: null },
       data: { paymentReference: 'cs_test_123' },
     });
     const request = vi.mocked(fetch).mock.calls[0]?.[1];
