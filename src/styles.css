@@ -2728,3 +2728,14 @@ button {
   position: relative;
   z-index: 1;
 }
+
+.toast-success {
+  border-color: #cbd8bf;
+  background: #f3f7ef;
+  color: #35472d;
+}
+.toast-error {
+  border-color: #e4c3bd;
+  background: #fff4f2;
+  color: #8b352b;
+}

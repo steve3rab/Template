@@ -128,6 +128,7 @@ export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
+  const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
     if (paymentState === 'success') {
       return 'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.';
@@ -142,6 +143,17 @@ export function App() {
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
+  useEffect(() => {
+    const onToast = (event: Event) => {
+      if (!(event instanceof CustomEvent)) return;
+      const detail = event.detail as { message?: unknown; type?: unknown };
+      if (typeof detail.message !== 'string' || !detail.message) return;
+      setToastKind(detail.type === 'error' || detail.type === 'success' ? detail.type : 'info');
+      setNotice(detail.message);
+    };
+    window.addEventListener('template-toast', onToast);
+    return () => window.removeEventListener('template-toast', onToast);
+  }, []);
   useEffect(() => {
     if (!notice) return;
     const timeoutId = window.setTimeout(() => setNotice(''), 4000);
@@ -413,7 +425,7 @@ export function App() {
         </div>
       </header>
       {notice && (
-        <div className="toast" role="status">
+        <div className={`toast toast-${toastKind}`} role={toastKind === 'error' ? 'alert' : 'status'}>
           {notice}
           <button aria-label="Fermer le message" onClick={() => setNotice('')}>
             ×

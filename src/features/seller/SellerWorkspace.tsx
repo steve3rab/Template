@@ -37,17 +37,17 @@ export function SellerWorkspace({ range }: { range: string }) {
       setMessage('');
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-        setMessage('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.');
+        window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: 'Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.', type: 'error' } }));
         return;
       }
-      setMessage(error instanceof Error ? error.message : 'Impossible de charger les données du vendeur.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: error instanceof Error ? error.message : 'Impossible de charger les données du vendeur.', type: 'error' } }));
     }
   }, [range]);
 
   useEffect(() => {
     void Promise.resolve()
       .then(() => load())
-      .catch(() => setMessage('Erreur réseau pendant le chargement du tableau de bord.'));
+      .catch(() => window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: 'Erreur réseau pendant le chargement du tableau de bord.', type: 'error' } })));
   }, [load]);
 
   async function createProduct(event: FormEvent<HTMLFormElement>) {
@@ -70,10 +70,10 @@ export function SellerWorkspace({ range }: { range: string }) {
       setDescription('');
       setPrice('29.90');
       setStock('10');
-      setMessage('Produit créé.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: 'Produit créé.', type: 'success' } }));
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Erreur lors de la création.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: error instanceof Error ? error.message : 'Erreur lors de la création.', type: 'error' } }));
     } finally {
       setBusy(false);
     }
@@ -96,7 +96,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       });
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Erreur réseau.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: error instanceof Error ? error.message : 'Erreur réseau.', type: 'error' } }));
     }
   }
 
@@ -109,7 +109,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       });
       await load();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Impossible de modifier le statut de cette commande.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: error instanceof Error ? error.message : 'Impossible de modifier le statut de cette commande.', type: 'error' } }));
     }
   }
 
@@ -122,7 +122,6 @@ export function SellerWorkspace({ range }: { range: string }) {
           <p>Indicateurs calculés à partir des commandes et produits enregistrés.</p>
         </div>
       </div>
-      {message && <p role="status" className="auth-message">{message}</p>}
       <div className="kpi-grid">
         <article className="kpi-card"><div className="kpi-label">Chiffre d’affaires payé</div><strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong><p>{dashboard?.paidOrders ?? 0} commandes payées sur {dashboard?.periodDays ?? Number(range)} jours</p></article>
         <article className="kpi-card"><div className="kpi-label">Commandes</div><strong>{dashboard?.orders ?? '—'}</strong><p>Commandes sur la période sélectionnée</p></article>

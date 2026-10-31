@@ -18,10 +18,10 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
       });
       const payload = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(payload.error ?? 'Lien invalide ou expiré.');
-      setMessage(payload.message ?? 'Mot de passe modifié.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: payload.message ?? 'Mot de passe modifié.', type: 'success' } }));
       setPassword('');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Impossible de réinitialiser le mot de passe.');
+      window.dispatchEvent(new CustomEvent('template-toast', { detail: { message: error instanceof Error ? error.message : 'Impossible de réinitialiser le mot de passe.', type: 'error' } }));
     } finally {
       setBusy(false);
     }
@@ -36,7 +36,6 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
         <label>Nouveau mot de passe<input type="password" required minLength={12} maxLength={128} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
         <button className="dark-button" type="submit" disabled={busy}>{busy ? 'Enregistrement…' : 'Modifier le mot de passe'}</button>
       </form>
-      {message && <p role="status">{message}</p>}
       <button className="back-link" onClick={onDone}>Retour à la boutique</button>
     </section>
   );

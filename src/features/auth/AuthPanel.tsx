@@ -25,6 +25,10 @@ export function AuthPanel({
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
+  function showToast(message: string, type: 'info' | 'success' | 'error' = 'info') {
+    window.dispatchEvent(new CustomEvent('template-toast', { detail: { message, type } }));
+  }
+
   useEffect(() => {
     let active = true;
     fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
@@ -39,7 +43,7 @@ export function AuthPanel({
         }
       })
       .catch(() => {
-        if (active) setMessage(t.authError);
+        if (active) showToast(t.authError, 'error');
       })
       .finally(() => {
         if (active) setCheckingSession(false);
@@ -66,12 +70,12 @@ export function AuthPanel({
       const payload = (await response.json()) as AuthResponse | { error?: string };
       if (!response.ok) {
         setIsError(true);
-        setMessage(mode === 'register' ? t.authRegisterError : mode === 'login' ? t.authLoginError : t.authError);
+        showToast(mode === 'register' ? t.authRegisterError : mode === 'login' ? t.authLoginError : t.authError, 'error');
         return;
       }
       if (mode === 'reset') {
         setPassword('');
-        setMessage('Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.');
+        showToast('Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.', 'success');
         return;
       }
       if (!('user' in payload)) throw new Error(t.authError);
@@ -79,10 +83,10 @@ export function AuthPanel({
       window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
       onAuthenticated?.();
       setPassword('');
-      setMessage(mode === 'register' ? t.authSuccess : '');
+      if (mode === 'register') showToast(t.authSuccess, 'success');
     } catch {
       setIsError(true);
-      setMessage(t.authError);
+      showToast(t.authError, 'error');
     } finally {
       setBusy(false);
     }
@@ -99,7 +103,7 @@ export function AuthPanel({
       setPassword('');
     } catch {
       setIsError(true);
-      setMessage(t.authError);
+      showToast(t.authError, 'error');
     } finally {
       setBusy(false);
     }
@@ -175,14 +179,6 @@ export function AuthPanel({
           {mode === 'login' && <button className="auth-mode-button" type="button" onClick={() => { setMode('reset'); setMessage(''); setIsError(false); }}>Mot de passe oublié ?</button>}
         </form>
       )}
-      {message ? (
-        <p
-          className={isError ? 'auth-message auth-error' : 'auth-message'}
-          role={isError ? 'alert' : 'status'}
-        >
-          {message}
-        </p>
-      ) : null}
     </section>
   );
 }
