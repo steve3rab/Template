@@ -9,12 +9,14 @@ type Mode = 'login' | 'register' | 'reset';
 export function AuthPanel({
   language,
   onAuthenticated,
+  initialMode = 'register',
 }: {
   language: Language;
   onAuthenticated?: () => void;
+  initialMode?: Mode;
 }) {
   const t = translations[language];
-  const [mode, setMode] = useState<Mode>('register');
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<User | null>(null);
