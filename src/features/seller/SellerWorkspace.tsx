@@ -3,6 +3,7 @@ import { formatCents } from '../../shared/utils/formatCurrency';
 
 import {
   apiRequest,
+  ApiError,
   apiSchemas,
   type SellerDashboard as Dashboard,
   type SellerOrder as Order,
@@ -33,7 +34,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       setOrders(orderPayload.orders);
       setMessage('');
     } catch (error) {
-      if (error instanceof Error && 'status' in error && (error.status === 401 || error.status === 403)) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         setMessage('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.');
         return;
       }
