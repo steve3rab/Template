@@ -13,6 +13,7 @@ export function CustomerAccountData() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutPending, setCheckoutPending] = useState(false);
   const loadVersion = useRef(0);
@@ -28,13 +29,14 @@ export function CustomerAccountData() {
       setAddresses(addressPayload.addresses);
       setOrders(orderPayload.orders);
       setAvailable(true);
+      setLoadFailed(false);
       setMessage('');
     } catch {
       // A temporary API/database failure is not an empty account. Preserve the
       // last known data and show a recoverable error instead of erasing the UI.
       if (version !== loadVersion.current) return;
+      setLoadFailed(true);
       setMessage('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.');
-      setAvailable((current) => current);
     }
   }, []);
 
@@ -54,6 +56,7 @@ export function CustomerAccountData() {
               setAddresses([]);
               setOrders([]);
               setAvailable(false);
+              setLoadFailed(false);
               setMessage('');
             }
           })
@@ -68,6 +71,7 @@ export function CustomerAccountData() {
         setAddresses([]);
         setOrders([]);
         setAvailable(false);
+        setLoadFailed(false);
         setMessage('');
       }
     };
@@ -133,7 +137,9 @@ export function CustomerAccountData() {
   return (
     <section className="seller-panel" style={{ marginTop: 24 }}>
       <h2>Mes commandes et adresses</h2>
-      {!available ? <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p> : (
+      {!available && !loadFailed ? <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p> : loadFailed ? (
+        <p role="alert">{message}</p>
+      ) : (
         <>
           <h3>Historique des commandes</h3>
           {orders.some((order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING') && (
@@ -164,7 +170,7 @@ export function CustomerAccountData() {
           </form>
         </>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && !loadFailed && <p role="status">{message}</p>}
     </section>
   );
 }
