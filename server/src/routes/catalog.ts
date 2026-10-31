@@ -5,7 +5,7 @@ import { productQuerySchema } from '../schemas/commerce.js';
 export function registerCatalogRoutes(
   app: FastifyInstance,
   prisma: PrismaClient,
-): Promise<void> {
+): void {
   app.get('/api/products', async (request) => {
     const query = productQuerySchema.safeParse(request.query);
     if (!query.success) return { products: [] };
