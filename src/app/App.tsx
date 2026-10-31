@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
 import { ResetPassword } from '../features/auth/ResetPassword';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
@@ -125,6 +125,9 @@ export function App() {
   const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}, isCart));
   const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
   const [cartHydrated, setCartHydrated] = useState(false);
+  const cartSyncQueue = useRef<Promise<void>>(Promise.resolve());
+  const cartSyncVersion = useRef(0);
+  const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
@@ -226,7 +229,26 @@ export function App() {
   useEffect(() => {
     writeStoredJson('atelier-cart', cart);
     if (!isAuthenticated || !cartHydrated) return;
-    void fetch('/api/customer/cart', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity })) }) }).catch(() => undefined);
+    const version = ++cartSyncVersion.current;
+    const snapshot = Object.entries(cart).map(([productId, quantity]) => ({ productId, quantity }));
+    // Serialize writes: slower older requests must never overwrite a newer cart.
+    cartSyncQueue.current = cartSyncQueue.current
+      .catch(() => undefined)
+      .then(async () => {
+        const response = await fetch('/api/customer/cart', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: snapshot }),
+        });
+        if (!response.ok) throw new Error('Impossible de synchroniser le panier avec votre compte.');
+      })
+      .catch(() => {
+        if (version === cartSyncVersion.current) {
+          setToastKind('error');
+          setNotice('Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.');
+        }
+      });
   }, [cart, isAuthenticated, cartHydrated]);
   useEffect(() => {
     writeStoredJson('atelier-favorites', favorites);
@@ -279,12 +301,37 @@ export function App() {
       return next;
     });
   }
-  function toggleFavorite(id: string) {
+  async function toggleFavorite(id: string) {
     const productId = id;
+    if (favoriteRequests.current.has(productId)) return;
     const isFavorite = favorites.includes(productId);
-    setFavorites((current) => isFavorite ? current.filter((item) => item !== productId) : [...current, productId]);
-    if (isAuthenticated) {
-      void fetch('/api/customer/favorites/' + productId, { method: isFavorite ? 'DELETE' : 'POST', credentials: 'include' }).catch(() => undefined);
+    if (!isAuthenticated) {
+      setFavorites((current) => isFavorite
+        ? current.filter((item) => item !== productId)
+        : [...new Set([...current, productId])]);
+      return;
+    }
+
+    // Do not report a favorite change until the server confirms it.
+    favoriteRequests.current.add(productId);
+    try {
+      const response = await fetch('/api/customer/favorites/' + encodeURIComponent(productId), {
+        method: isFavorite ? 'DELETE' : 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 401
+          ? 'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.'
+          : 'Impossible de mettre à jour vos favoris. Réessayez.');
+      }
+      setFavorites((current) => isFavorite
+        ? current.filter((item) => item !== productId)
+        : [...new Set([...current, productId])]);
+    } catch (error) {
+      setToastKind('error');
+      setNotice(error instanceof Error ? error.message : 'Impossible de mettre à jour vos favoris.');
+    } finally {
+      favoriteRequests.current.delete(productId);
     }
   }
   async function beginCheckout() {
