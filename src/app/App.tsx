@@ -103,7 +103,8 @@ const money = (value: number) =>
   new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
   }).format(value);
 type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
