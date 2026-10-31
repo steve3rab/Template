@@ -1,11 +1,17 @@
 /**
- * Reads JSON from browser storage without allowing malformed or unavailable storage
- * to crash application startup. The caller supplies the expected fallback value.
+ * Reads JSON from browser storage and validates its shape. Storage is untrusted input:
+ * the validator must narrow unknown to T before the value is returned.
  */
-export function readStoredJson<T>(key: string, fallback: T): T {
+export function readStoredJson<T>(
+  key: string,
+  fallback: T,
+  isValid: (value: unknown) => value is T,
+): T {
   try {
     const raw = window.localStorage.getItem(key);
-    return raw === null ? fallback : (JSON.parse(raw) as T);
+    if (raw === null) return fallback;
+    const parsed: unknown = JSON.parse(raw);
+    return isValid(parsed) ? parsed : fallback;
   } catch {
     return fallback;
   }
