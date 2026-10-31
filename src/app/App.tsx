@@ -9,6 +9,15 @@ import type { Language } from '../shared/i18n';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 
+function isCart(value: unknown): value is Record<string, number> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    && Object.entries(value).every(([id, quantity]) => id.length > 0 && Number.isInteger(quantity) && quantity >= 0);
+}
+
+function isFavorites(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
 type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
 type Product = {
   id: string;
@@ -109,8 +118,8 @@ export function App() {
   const [category, setCategory] = useState<Category>('Tout');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
-  const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}));
-  const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', []));
+  const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}, isCart));
+  const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
   const [cartHydrated, setCartHydrated] = useState(false);
   const [favoritesHydrated, setFavoritesHydrated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
