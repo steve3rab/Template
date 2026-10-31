@@ -166,6 +166,7 @@ describe('authentication API', () => {
     expect(response.json().user).toMatchObject({ email: 'test@example.com' });
     expect(response.json().user.passwordHash).toBeUndefined();
     expect(response.json().user.id).toBeTruthy();
+    expect(String(response.headers['set-cookie'])).toContain('Path=/;');
     expect(store.users.size).toBe(1);
     expect(store.sessions.size).toBe(1);
     expect([...store.users.values()][0]?.passwordHash).not.toBe('correct-horse-battery');
@@ -227,6 +228,27 @@ describe('authentication API', () => {
       email: 'test@example.com',
       role: 'SELLER',
     });
+  });
+
+  it('protects seller product management and customer cart endpoints', async () => {
+    const anonymousCart = await app.inject({ method: 'GET', url: '/api/customer/cart' });
+    expect(anonymousCart.statusCode).toBe(401);
+
+    const registered = await register();
+    const cookie = sessionCookie(registered);
+    const deniedProducts = await app.inject({
+      method: 'GET',
+      url: '/api/seller/products',
+      headers: { cookie },
+    });
+    expect(deniedProducts.statusCode).toBe(403);
+
+    const deniedOrders = await app.inject({
+      method: 'GET',
+      url: '/api/seller/orders',
+      headers: { cookie },
+    });
+    expect(deniedOrders.statusCode).toBe(403);
   });
 
   it('expires old sessions and removes them from storage', async () => {
