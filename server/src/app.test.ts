@@ -5,12 +5,16 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
 import { createApp } from './app.js';
 
-// Keep API tests deterministic and fast; password-hashing behavior is provided by Argon2 itself.
+// Keep API tests deterministic and fast by replacing the native Argon2 implementation.
+const argon2TestDouble = {
+  argon2id: 2,
+  hash: vi.fn(async (password: string) => `test-hash:${password}`),
+  verify: vi.fn(async (hash: string, password: string) => hash === `test-hash:${password}`),
+};
+
 vi.mock('argon2', () => ({
-  default: {
-    hash: vi.fn(async (password: string) => `test-hash:${password}`),
-    verify: vi.fn(async (hash: string, password: string) => hash === `test-hash:${password}`),
-  },
+  ...argon2TestDouble,
+  default: argon2TestDouble,
 }));
 
 type FakeUser = {
