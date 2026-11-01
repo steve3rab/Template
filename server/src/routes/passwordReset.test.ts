@@ -174,7 +174,8 @@ describe('password reset routes', () => {
         }),
       }),
     );
-  });
+    },
+  );
 
   it(
     'handles a failed reset delivery without disclosing account details',
@@ -197,7 +198,8 @@ describe('password reset routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().message).toContain('Si cette adresse');
-  });
+    },
+  );
 
   it('rejects malformed completion requests', async () => {
     const { resetFindUnique } = setup();
@@ -270,7 +272,8 @@ describe('password reset routes', () => {
     expect(prisma.$transaction).toHaveBeenCalledOnce();
     expect(userUpdate).not.toHaveBeenCalled();
     expect(sessionDeleteMany).not.toHaveBeenCalled();
-  });
+    },
+  );
 
   it(
     'changes the password, deletes sibling reset tokens, and invalidates all sessions',
@@ -308,5 +311,6 @@ describe('password reset routes', () => {
     expect(sessionDeleteMany).toHaveBeenCalledWith({
       where: { userId: user.id },
     });
-  });
+    },
+  );
 });
