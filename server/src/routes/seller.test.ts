@@ -11,7 +11,7 @@ let app: FastifyInstance;
 
 function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
   const productFindMany = vi.fn(async () => []);
-  const productFindFirst = vi.fn(async () => ({
+  const productFindFirst = vi.fn(async (): Promise<{ id: string; sellerId: string; active: boolean } | null> => ({
     id: 'product-1',
     sellerId: 'seller-1',
     active: true,
