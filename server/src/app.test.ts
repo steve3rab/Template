@@ -8,7 +8,7 @@ import { createApp } from './app.js';
 // Inject deterministic password operations into API tests instead of mocking a native module.
 const argon2TestDouble = {
   argon2id: 2,
-  hash: vi.fn(async (password: string, _options?: { type: number }) => `test-hash:${password}`),
+  hash: vi.fn(async (password: string) => `test-hash:${password}`),
   verify: vi.fn(async (hash: string, password: string) => hash === `test-hash:${password}`),
 };
 
