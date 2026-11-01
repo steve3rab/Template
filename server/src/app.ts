@@ -207,10 +207,7 @@ export async function createApp(
       error.statusCode && error.statusCode >= 400 && error.statusCode < 500
         ? error.statusCode
         : 500;
-    if (statusCode === 500) {
-      request.log.error(error);
-      if (process.env.NODE_ENV === 'test') console.error('[auth-error-diagnostic]', error);
-    }
+    if (statusCode === 500) request.log.error(error);
     return reply.code(statusCode).send({
       error: statusCode < 500 ? 'Invalid request.' : 'Internal server error.',
     });
