@@ -72,7 +72,7 @@ describe('password reset routes', () => {
   });
 
   it('does not reveal whether an email address has an account', async () => {
-    const { userFindUnique, resetCreate } = setup({ foundUser: null });
+    const { resetCreate } = setup({ foundUser: null });
     await app.ready();
     const response = await app.inject({ method: 'POST', url: '/api/auth/password-reset/request', payload: { email: 'unknown@example.test' } });
     expect(response.statusCode).toBe(200);
@@ -83,7 +83,7 @@ describe('password reset routes', () => {
   it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
-    const fetchMock = vi.fn(async () => new Response('', { status: 200 }));
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response('', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const { resetCreate } = setup();
     await app.ready();
@@ -96,7 +96,7 @@ describe('password reset routes', () => {
         expiresAt: expect.any(Date),
       }),
     });
-    const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[0] ? (fetchMock.mock.calls[0]?.[1] as RequestInit).body : '{}'));
+    const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
     expect(delivery.email).toBe(user.email);
     expect(delivery.resetUrl).toMatch(/^http:\/\/localhost:5173\/reset-password\?token=/);
     expect(fetchMock).toHaveBeenCalledWith('https://mailer.example.test/reset', expect.objectContaining({
@@ -150,7 +150,7 @@ describe('password reset routes', () => {
   });
 
   it('changes the password, deletes sibling reset tokens, and invalidates all sessions', async () => {
-    const { prisma, resetUpdateMany, resetDeleteMany, userUpdate, sessionDeleteMany } = setup();
+    const { resetUpdateMany, resetDeleteMany, userUpdate, sessionDeleteMany } = setup();
     await app.ready();
     const response = await app.inject({ method: 'POST', url: '/api/auth/password-reset/complete', payload: { token: 'token-value', password: 'a-very-long-new-password' } });
     expect(response.statusCode).toBe(200);
