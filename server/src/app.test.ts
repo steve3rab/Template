@@ -5,17 +5,12 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
 import { createApp } from './app.js';
 
-// Keep API tests deterministic and fast by replacing the native Argon2 implementation.
-const argon2TestDouble = vi.hoisted(() => ({
+// Inject deterministic password operations into API tests instead of mocking a native module.
+const argon2TestDouble = {
   argon2id: 2,
-  hash: vi.fn(async (password: string) => `test-hash:${password}`),
+  hash: vi.fn(async (password: string, _options?: { type: number }) => `test-hash:${password}`),
   verify: vi.fn(async (hash: string, password: string) => hash === `test-hash:${password}`),
-}));
-
-vi.mock('argon2', () => ({
-  ...argon2TestDouble,
-  default: argon2TestDouble,
-}));
+};
 
 type FakeUser = {
   id: string;
@@ -121,7 +116,7 @@ let store: ReturnType<typeof makePrisma>;
 
 async function startApp() {
   store = makePrisma();
-  app = await createApp(store.prisma);
+  app = await createApp(store.prisma, argon2TestDouble as never);
   await app.ready();
 }
 
