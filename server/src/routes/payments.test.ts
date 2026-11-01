@@ -196,6 +196,42 @@ describe('Stripe payment routes', () => {
     });
   });
 
+  it('does not restore stock twice when Stripe concurrently replays an expiration webhook', async () => {
+    vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
+    const prisma = setup();
+    updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+    await app.ready();
+
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        id: 'evt_expired_replayed',
+        type: 'checkout.session.expired',
+        data: {
+          object: {
+            id: 'cs_test_123',
+            payment_status: 'unpaid',
+            metadata: { orderIds: 'order-1' },
+          },
+        },
+      }),
+    );
+    const headers = {
+      'content-type': 'application/json',
+      'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
+    };
+
+    const [first, replay] = await Promise.all([
+      app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
+      app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
+    ]);
+
+    expect(first.statusCode).toBe(200);
+    expect(replay.statusCode).toBe(200);
+    expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
+    expect(updateMany).toHaveBeenCalledTimes(2);
+    expect(productUpdateMany).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects invalid and stale webhook signatures', async () => {
     setup();
     const rawBody = Buffer.from('{"type":"checkout.session.completed"}');

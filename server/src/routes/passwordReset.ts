@@ -16,49 +16,49 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
       config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
     },
     async (request, reply) => {
-      const body = passwordResetRequestSchema.safeParse(request.body);
-      if (!body.success) return reply.code(400).send({ error: 'Invalid email.' });
-      const user = await prisma.user.findUnique({ where: { email: body.data.email } });
-      if (user) {
-        const token = randomBytes(32).toString('base64url');
-        await prisma.passwordResetToken.create({
-          data: {
-            userId: user.id,
-            tokenHash: hashToken(token),
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-          },
-        });
-        const webhook = process.env.PASSWORD_RESET_WEBHOOK_URL;
-        if (webhook) {
-          const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
-          const response = await fetch(webhook, {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              ...(process.env.PASSWORD_RESET_WEBHOOK_TOKEN
-                ? { authorization: `Bearer ${process.env.PASSWORD_RESET_WEBHOOK_TOKEN}` }
-                : {}),
+        const body = passwordResetRequestSchema.safeParse(request.body);
+        if (!body.success) return reply.code(400).send({ error: 'Invalid email.' });
+        const user = await prisma.user.findUnique({ where: { email: body.data.email } });
+        if (user) {
+          const token = randomBytes(32).toString('base64url');
+          await prisma.passwordResetToken.create({
+            data: {
+              userId: user.id,
+              tokenHash: hashToken(token),
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000),
             },
-            body: JSON.stringify({
-              email: user.email,
-              resetUrl: `${origin}/reset-password?token=${token}`,
-              expiresInMinutes: 30,
-            }),
-            signal: AbortSignal.timeout(5000),
-          }).catch(() => null);
-          if (!response?.ok) request.log.error('Password reset delivery failed.');
-        } else if (process.env.NODE_ENV !== 'production') {
-          request.log.info({ resetToken: token }, 'Development-only password reset token');
-        } else {
-          request.log.error(
-            'PASSWORD_RESET_WEBHOOK_URL is missing; password reset email was not delivered.',
-          );
+          });
+          const webhook = process.env.PASSWORD_RESET_WEBHOOK_URL;
+          if (webhook) {
+            const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+            const response = await fetch(webhook, {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                ...(process.env.PASSWORD_RESET_WEBHOOK_TOKEN
+                  ? { authorization: `Bearer ${process.env.PASSWORD_RESET_WEBHOOK_TOKEN}` }
+                  : {}),
+              },
+              body: JSON.stringify({
+                email: user.email,
+                resetUrl: `${origin}/reset-password?token=${token}`,
+                expiresInMinutes: 30,
+              }),
+              signal: AbortSignal.timeout(5000),
+            }).catch(() => null);
+            if (!response?.ok) request.log.error('Password reset delivery failed.');
+          } else if (process.env.NODE_ENV !== 'production') {
+            request.log.info({ resetToken: token }, 'Development-only password reset token');
+          } else {
+            request.log.error(
+              'PASSWORD_RESET_WEBHOOK_URL is missing; password reset email was not delivered.',
+            );
+          }
         }
-      }
-      return reply.send({
-        message:
-          'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
-      });
+        return reply.send({
+          message:
+            'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
+        });
     },
   );
 

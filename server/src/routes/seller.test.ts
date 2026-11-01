@@ -24,7 +24,15 @@ function setup() {
   };
   app = Fastify({ logger: false });
   registerSellerRoutes(app, prisma as unknown as PrismaClient, (async () => seller) as never);
-  return { prisma, productFindMany, productFindFirst, productUpdate, orderFindMany, orderFindFirst, orderUpdate };
+  return {
+    prisma,
+    productFindMany,
+    productFindFirst,
+    productUpdate,
+    orderFindMany,
+    orderFindFirst,
+    orderUpdate,
+  };
 }
 
 afterEach(async () => {
