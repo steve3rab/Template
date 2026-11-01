@@ -1,12 +1,21 @@
 import { z } from 'zod';
 
+const httpUrlSchema = z
+  .string()
+  .url()
+  .max(2048)
+  .refine((value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  }, 'URL must use HTTP or HTTPS.');
+
 export const productInputSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(4000).default(''),
   category: z.string().trim().min(2).max(60),
   priceCents: z.number().int().min(1).max(100_000_000),
   stock: z.number().int().min(0).max(1_000_000),
-  imageUrl: z.string().url().max(2048).optional().nullable(),
+  imageUrl: httpUrlSchema.optional().nullable(),
   active: z.boolean().default(true),
 });
 
@@ -17,7 +26,12 @@ export const addressInputSchema = z.object({
   line2: z.string().trim().max(180).optional().nullable(),
   postalCode: z.string().trim().min(2).max(20),
   city: z.string().trim().min(2).max(100),
-  country: z.string().trim().length(2).default('FR'),
+  country: z
+    .string()
+    .trim()
+    .transform((country) => country.toUpperCase())
+    .pipe(z.string().regex(/^[A-Z]{2}$/))
+    .default('FR'),
   isDefault: z.boolean().default(false),
 });
 
@@ -30,7 +44,7 @@ export const cartInputSchema = z
     items: z
       .array(
         z.object({
-          productId: z.string().min(1),
+          productId: z.string().trim().min(1).max(128),
           quantity: z.number().int().min(0).max(100),
         }),
       )
@@ -42,24 +56,24 @@ export const cartInputSchema = z
   );
 
 export const productQuerySchema = z.object({
-  category: z.string().max(60).optional(),
+  category: z.string().trim().max(60).optional(),
 });
 
 export const resourceIdParamsSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().trim().min(1).max(128),
 });
 
 export const productIdParamsSchema = z.object({
-  productId: z.string().trim().min(1),
+  productId: z.string().trim().min(1).max(128),
 });
 
 export const createOrderInputSchema = z.object({
-  addressId: z.string().min(1),
+  addressId: z.string().trim().min(1).max(128),
 });
 
 export const checkoutInputSchema = z
   .object({
-    orderIds: z.array(z.string().min(1).max(128)).min(1).max(15),
+    orderIds: z.array(z.string().trim().min(1).max(128)).min(1).max(15),
   })
   .refine(
     (value) => new Set(value.orderIds).size === value.orderIds.length,
@@ -73,6 +87,7 @@ export const sellerOrderStatusSchema = z.object({
 export const passwordResetRequestSchema = z.object({
   email: z
     .string()
+    .trim()
     .email()
     .max(254)
     .transform((email) => email.toLowerCase()),
