@@ -27,7 +27,7 @@ function Invoke-Npm {
 function Assert-DependenciesInstalled {
     $nodeModules = Join-Path $script:ProjectRoot 'node_modules'
     if (-not (Test-Path $nodeModules)) {
-        throw 'Les dépendances ne sont pas installées. Exécutez d’abord .\scripts\setup.ps1.'
+        throw 'Les dépendances ne sont pas installées. Exécutez au préalable .\scripts\setup.ps1.'
     }
 }
 
