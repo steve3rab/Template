@@ -118,7 +118,9 @@ const products: Product[] = [
 type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
-  const language = 'fr' as const;
+  const [language, setLanguage] = useState<'fr' | 'en'>(() =>
+    window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
+  );
   const paymentState = new URLSearchParams(window.location.search).get('payment');
   const [view, setView] = useState<View>(() => {
     if (window.location.pathname === '/reset-password') return 'reset';
@@ -157,6 +159,10 @@ export function App() {
   const [orderEmail, setOrderEmail] = useState('');
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
+  useEffect(() => {
+    document.documentElement.lang = language;
+    window.localStorage.setItem('template-react-language', language);
+  }, [language]);
   useEffect(() => {
     const onToast = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
@@ -578,6 +584,14 @@ export function App() {
           </button>
         </nav>
         <div className="header-actions">
+          <div className="language-toggle" aria-label="Langue">
+            <button type="button" aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>
+              English
+            </button>
+            <button type="button" aria-pressed={language === 'fr'} onClick={() => setLanguage('fr')}>
+              French
+            </button>
+          </div>
           <button
             className="icon-button"
             aria-label="Compte client"
