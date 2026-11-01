@@ -140,6 +140,7 @@ export function App() {
   const cartSyncQueue = useRef<Promise<void>>(Promise.resolve());
   const cartSyncVersion = useRef(0);
   const authEpoch = useRef(0);
+  const checkoutPendingRef = useRef(false);
   const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [catalog, setCatalog] = useState<Product[]>(products);
@@ -211,7 +212,8 @@ export function App() {
       authEpoch.current += 1;
       cartSyncVersion.current += 1;
       // Every account transition requires a fresh server hydration before cart writes.
-      setCartHydrated(false);
+      const preserveCheckoutCart = authenticated && checkoutPendingRef.current;
+      setCartHydrated(preserveCheckoutCart);
       setIsAuthenticated(authenticated);
       if (!authenticated) {
         // Never carry a previous account's private cart/favorites into a guest or another account.
@@ -320,7 +322,7 @@ export function App() {
     writeStoredJson('atelier-favorites', favorites);
   }, [favorites]);
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || checkoutPendingRef.current) return;
     let active = true;
     void Promise.all([
       apiRequest('/api/customer/cart', apiSchemas.customerCart),
@@ -424,6 +426,7 @@ export function App() {
   async function beginCheckout() {
     setCartOpen(false);
     setCheckoutDone(false);
+    checkoutPendingRef.current = false;
     try {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
@@ -436,6 +439,7 @@ export function App() {
     } catch {
       // Continue to account sign-in if the session cannot be verified.
     }
+    checkoutPendingRef.current = true;
     setCheckoutPending(true);
     setView('account');
     setNotice('Connectez-vous ou créez un compte pour finaliser votre commande.');
@@ -835,6 +839,7 @@ export function App() {
             initialMode={checkoutPending ? 'login' : 'register'}
             onAuthenticated={() => {
               if (checkoutPending) {
+                checkoutPendingRef.current = false;
                 setCheckoutPending(false);
                 setView('checkout');
               }
