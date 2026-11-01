@@ -55,7 +55,7 @@ describe('public product catalog', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/api/products?category=',
+      url: `/api/products?category=${'x'.repeat(61)}`,
     });
 
     expect(response.statusCode).toBe(200);

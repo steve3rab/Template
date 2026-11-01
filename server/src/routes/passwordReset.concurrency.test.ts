@@ -55,7 +55,7 @@ describe('password reset concurrency protection', () => {
     registerPasswordResetRoutes(app, prisma as unknown as PrismaClient);
     await app.ready();
 
-    const payload = { token: 'same-reset-token', password: 'new-password-that-is-long' };
+    const payload = { token: 'same-reset-token-that-is-at-least-32-chars', password: 'new-password-that-is-long' };
     const [first, second] = await Promise.all([
       app.inject({ method: 'POST', url: '/api/auth/password-reset/complete', payload }),
       app.inject({ method: 'POST', url: '/api/auth/password-reset/complete', payload }),

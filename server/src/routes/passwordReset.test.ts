@@ -121,49 +121,45 @@ describe('password reset routes', () => {
     expect(resetCreate).not.toHaveBeenCalled();
   });
 
-  it(
-    'creates a hashed reset token and sends a reset link through the configured webhook',
-    async () => {
-      vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
-      vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
-      const fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
-        void url;
-        void init;
-        return new Response('', { status: 200 });
-      });
-      vi.stubGlobal('fetch', fetchMock);
-      const { resetCreate } = setup();
-      await app.ready();
+  it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
+    const fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      void url;
+      void init;
+      return new Response('', { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { resetCreate } = setup();
+    await app.ready();
 
-      const response = await app.inject({
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(resetCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: user.id,
+        tokenHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        expiresAt: expect.any(Date),
+      }),
+    });
+    const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
+    expect(delivery.email).toBe(user.email);
+    expect(delivery.resetUrl).toMatch(/^http:\/\/localhost:5173\/reset-password\?token=/);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://mailer.example.test/reset',
+      expect.objectContaining({
         method: 'POST',
-        url: '/api/auth/password-reset/request',
-        payload: { email: user.email },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(resetCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          userId: user.id,
-          tokenHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-          expiresAt: expect.any(Date),
+        headers: expect.objectContaining({
+          authorization: 'Bearer test-webhook-token',
         }),
-      });
-      const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
-      expect(delivery.email).toBe(user.email);
-      expect(delivery.resetUrl).toMatch(/^http:\/\/localhost:5173\/reset-password\?token=/);
-      expect(fetchMock).toHaveBeenCalledWith(
-        'https://mailer.example.test/reset',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            authorization: 'Bearer test-webhook-token',
-          }),
-        }),
-      );
-    },
-  );
-
+      }),
+    );
+  });
   it('handles a failed reset delivery without disclosing account details', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubGlobal(
@@ -229,7 +225,7 @@ describe('password reset routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/password-reset/complete',
-        payload: { token: 'token-value', password: 'a-very-long-new-password' },
+        payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
       });
 
       expect(response.statusCode).toBe(400);
@@ -245,7 +241,7 @@ describe('password reset routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/password-reset/complete',
-      payload: { token: 'token-value', password: 'a-very-long-new-password' },
+      payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
     });
 
     expect(response.statusCode).toBe(400);
@@ -254,31 +250,29 @@ describe('password reset routes', () => {
     expect(sessionDeleteMany).not.toHaveBeenCalled();
   });
 
-  it(
-    'changes the password, deletes sibling reset tokens, and invalidates all sessions',
-    async () => {
-      const { resetUpdateMany, resetDeleteMany, userUpdate, sessionDeleteMany } = setup();
-      await app.ready();
+  it('changes the password, deletes sibling reset tokens, and invalidates all sessions', async () => {
+    const { resetUpdateMany, resetDeleteMany, userUpdate, sessionDeleteMany } = setup();
+    await app.ready();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/auth/password-reset/complete',
-        payload: { token: 'token-value', password: 'a-very-long-new-password' },
-      });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/complete',
+      payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
+    });
 
-      expect(response.statusCode).toBe(200);
-      expect(resetUpdateMany).toHaveBeenCalledWith({
-        where: { id: 'reset-1', usedAt: null, expiresAt: { gt: expect.any(Date) } },
-        data: { usedAt: expect.any(Date) },
-      });
-      expect(userUpdate).toHaveBeenCalledWith({
-        where: { id: user.id },
-        data: { passwordHash: expect.stringMatching(/^\$argon2id\$/) },
-      });
-      expect(resetDeleteMany).toHaveBeenCalledWith({
-        where: { userId: user.id, id: { not: 'reset-1' } },
-      });
-      expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
+    expect(response.statusCode).toBe(200);
+    expect(resetUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'reset-1', usedAt: null, expiresAt: { gt: expect.any(Date) } },
+      data: { usedAt: expect.any(Date) },
+    });
+    expect(userUpdate).toHaveBeenCalledWith({
+      where: { id: user.id },
+      data: { passwordHash: expect.stringMatching(/^\$argon2id\$/) },
+    });
+    expect(resetDeleteMany).toHaveBeenCalledWith({
+      where: { userId: user.id, id: { not: 'reset-1' } },
+    });
+    expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
     },
   );
 });

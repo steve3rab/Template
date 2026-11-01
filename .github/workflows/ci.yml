@@ -29,8 +29,7 @@ jobs:
       - run: npm run db:deploy
       - run: npm run typecheck
       - run: npm run lint
-      - name: Temporary formatting diagnostics
-        run: npx prettier --write server/src/routes/passwordReset.test.ts && git diff -- server/src/routes/passwordReset.test.ts && npm run format:check
+      - run: npm run format:check
       - name: Frontend coverage with regression thresholds
         run: npm run test:coverage
       - name: Backend coverage with regression thresholds
