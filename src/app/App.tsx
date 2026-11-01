@@ -499,6 +499,7 @@ export function App() {
         throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
+      checkoutPendingRef.current = false;
       try {
         const checkoutPayload = await apiRequest(
           '/api/customer/checkout',
@@ -808,7 +809,14 @@ export function App() {
       )}
       {view === 'account' && (
         <section className="workspace-page">
-          <button className="back-link" onClick={() => setView('shop')}>
+          <button
+            className="back-link"
+            onClick={() => {
+              checkoutPendingRef.current = false;
+              setCheckoutPending(false);
+              setView('shop');
+            }}
+          >
             ← Retour à la boutique
           </button>
           <span className="eyebrow">VOTRE ESPACE PERSONNEL</span>
@@ -840,7 +848,6 @@ export function App() {
             initialMode={checkoutPending ? 'login' : 'register'}
             onAuthenticated={() => {
               if (checkoutPending) {
-                checkoutPendingRef.current = false;
                 setCheckoutPending(false);
                 setView('checkout');
               }
