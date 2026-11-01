@@ -11,13 +11,29 @@ let app: FastifyInstance;
 
 function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
   const productFindMany = vi.fn(async () => []);
-  const productFindFirst = vi.fn(async (): Promise<{ id: string; sellerId: string; active: boolean } | null> => ({
-    id: 'product-1',
-    sellerId: 'seller-1',
-    active: true,
-  }));
-  const productCreate = vi.fn(async ({ data }: { data: unknown }) => ({ id: 'product-new', ...data as object }));
-  const productUpdate = vi.fn(async ({ data }: { data: unknown }) => ({ id: 'product-1', ...data as object }));
+  const productFindFirst = vi.fn(
+    async (): Promise<{
+      id: string;
+      sellerId: string;
+      active: boolean;
+    } | null> => ({
+      id: 'product-1',
+      sellerId: 'seller-1',
+      active: true,
+    }),
+  );
+  const productCreate = vi.fn(
+    async ({ data }: { data: unknown }) => ({
+      id: 'product-new',
+      ...(data as object),
+    }),
+  );
+  const productUpdate = vi.fn(
+    async ({ data }: { data: unknown }) => ({
+      id: 'product-1',
+      ...(data as object),
+    }),
+  );
   const orderFindMany = vi.fn(async () => []);
   const orderFindFirst = vi.fn(async () => ({
     id: 'order-1',
@@ -27,9 +43,17 @@ function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
     paymentReference: null,
     items: [{ productId: 'product-1', quantity: 2 }],
   }));
-  const orderUpdate = vi.fn(async () => ({ id: 'order-1', status: 'PROCESSING', items: [] }));
+  const orderUpdate = vi.fn(async () => ({
+    id: 'order-1',
+    status: 'PROCESSING',
+    items: [],
+  }));
   const txProductUpdate = vi.fn(async () => ({ id: 'product-1' }));
-  const txOrderUpdate = vi.fn(async () => ({ id: 'order-1', status: 'CANCELLED', items: [] }));
+  const txOrderUpdate = vi.fn(async () => ({
+    id: 'order-1',
+    status: 'CANCELLED',
+    items: [],
+  }));
   const transaction = {
     order: { update: txOrderUpdate },
     product: { update: txProductUpdate },
@@ -46,14 +70,29 @@ function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
       findFirst: orderFindFirst,
       update: orderUpdate,
     },
-    $transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    $transaction: vi.fn(
+      async (callback: (tx: typeof transaction) => Promise<unknown>) =>
+        callback(transaction),
+    ),
   };
   app = Fastify({ logger: false });
   const current = role === 'ADMIN' ? admin : seller;
-  registerSellerRoutes(app, prisma as unknown as PrismaClient, (async () => current) as never);
+  registerSellerRoutes(
+    app,
+    prisma as unknown as PrismaClient,
+    (async () => current) as never,
+  );
   return {
-    prisma, productFindMany, productFindFirst, productCreate, productUpdate,
-    orderFindMany, orderFindFirst, orderUpdate, txProductUpdate, txOrderUpdate,
+    prisma,
+    productFindMany,
+    productFindFirst,
+    productCreate,
+    productUpdate,
+    orderFindMany,
+    orderFindFirst,
+    orderUpdate,
+    txProductUpdate,
+    txOrderUpdate,
   };
 }
 
@@ -66,8 +105,14 @@ describe('seller workspace authorization and rules', () => {
     const { productFindMany, orderFindMany } = setup();
     await app.ready();
 
-    const products = await app.inject({ method: 'GET', url: '/api/seller/products' });
-    const orders = await app.inject({ method: 'GET', url: '/api/seller/orders' });
+    const products = await app.inject({
+      method: 'GET',
+      url: '/api/seller/products',
+    });
+    const orders = await app.inject({
+      method: 'GET',
+      url: '/api/seller/orders',
+    });
 
     expect(products.statusCode).toBe(200);
     expect(productFindMany).toHaveBeenCalledWith({
@@ -89,10 +134,16 @@ describe('seller workspace authorization and rules', () => {
     const { productFindMany } = setup('ADMIN');
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/seller/products' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/seller/products',
+    });
 
     expect(response.statusCode).toBe(200);
-    expect(productFindMany).toHaveBeenCalledWith({ where: {}, orderBy: { updatedAt: 'desc' } });
+    expect(productFindMany).toHaveBeenCalledWith({
+      where: {},
+      orderBy: { updatedAt: 'desc' },
+    });
   });
 
   it('forces the creating seller ID and does not accept caller-controlled ownership', async () => {
@@ -185,7 +236,10 @@ describe('seller workspace authorization and rules', () => {
     const { orderFindMany } = setup();
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/seller/dashboard?days=14' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/seller/dashboard?days=14',
+    });
 
     expect(response.statusCode).toBe(400);
     expect(orderFindMany).not.toHaveBeenCalled();
