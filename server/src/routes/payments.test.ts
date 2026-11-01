@@ -196,42 +196,44 @@ describe('Stripe payment routes', () => {
     });
   });
 
-  it('does not restore stock twice when Stripe concurrently replays an expiration webhook', async () => {
-    vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
-    const prisma = setup();
-    updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
-    await app.ready();
+  it(
+    'does not restore stock twice when Stripe concurrently replays an expiration webhook',
+    async () => {
+      vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
+      const prisma = setup();
+      updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+      await app.ready();
 
-    const rawBody = Buffer.from(
-      JSON.stringify({
-        id: 'evt_expired_replayed',
-        type: 'checkout.session.expired',
-        data: {
-          object: {
-            id: 'cs_test_123',
-            payment_status: 'unpaid',
-            metadata: { orderIds: 'order-1' },
+      const rawBody = Buffer.from(
+        JSON.stringify({
+          id: 'evt_expired_replayed',
+          type: 'checkout.session.expired',
+          data: {
+            object: {
+              id: 'cs_test_123',
+              payment_status: 'unpaid',
+              metadata: { orderIds: 'order-1' },
+            },
           },
-        },
-      }),
-    );
-    const headers = {
-      'content-type': 'application/json',
-      'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
-    };
+        }),
+      );
+      const headers = {
+        'content-type': 'application/json',
+        'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
+      };
 
-    const [first, replay] = await Promise.all([
-      app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
-      app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
-    ]);
+      const [first, replay] = await Promise.all([
+        app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
+        app.inject({ method: 'POST', url: '/api/webhooks/stripe', headers, payload: rawBody }),
+      ]);
 
-    expect(first.statusCode).toBe(200);
-    expect(replay.statusCode).toBe(200);
-    expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
-    expect(updateMany).toHaveBeenCalledTimes(2);
-    expect(productUpdateMany).toHaveBeenCalledTimes(1);
-  });
-
+      expect(first.statusCode).toBe(200);
+      expect(replay.statusCode).toBe(200);
+      expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
+      expect(updateMany).toHaveBeenCalledTimes(2);
+      expect(productUpdateMany).toHaveBeenCalledTimes(1);
+    },
+  );
   it('rejects invalid and stale webhook signatures', async () => {
     setup();
     const rawBody = Buffer.from('{"type":"checkout.session.completed"}');
@@ -501,7 +503,9 @@ describe('Stripe payment routes', () => {
         object: {
           id: 'cs_many',
           payment_status: 'paid',
-          metadata: { orderIds: Array.from({ length: 16 }, (_, index) => `order-${index}`).join(',') },
+          metadata: {
+            orderIds: Array.from({ length: 16 }, (_, index) => `order-${index}`).join(','),
+          },
         },
       },
     }));
@@ -525,7 +529,13 @@ describe('Stripe payment routes', () => {
     const rawBody = Buffer.from(JSON.stringify({
       id: 'evt_unpaid',
       type: 'checkout.session.completed',
-      data: { object: { id: 'cs_test_123', payment_status: 'unpaid', metadata: { orderIds: 'order-1' } } },
+      data: {
+        object: {
+          id: 'cs_test_123',
+          payment_status: 'unpaid',
+          metadata: { orderIds: 'order-1' },
+        },
+      },
     }));
     const response = await app.inject({
       method: 'POST',
