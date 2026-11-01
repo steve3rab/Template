@@ -294,7 +294,6 @@ export function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
     let active = true;
-    setCartHydrated(false);
     void Promise.all([
       apiRequest('/api/customer/cart', apiSchemas.customerCart),
       apiRequest('/api/customer/favorites', apiSchemas.customerFavorites),
