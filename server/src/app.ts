@@ -235,7 +235,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   app.post(
     '/api/auth/login',
     {
-      config: { rateLimit: { max: 8, timeWindow: '1 minute' } },
+      config: { rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 8, timeWindow: '1 minute' } },
     },
     async (request, reply) => {
       const body = request.body;
