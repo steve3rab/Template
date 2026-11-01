@@ -69,7 +69,10 @@ export function registerSellerRoutes(
       const productData = Object.fromEntries(
         Object.entries(body.data).filter(([, value]) => value !== undefined),
       ) as Prisma.ProductUpdateInput;
-      const product = await prisma.product.update({ where: { id: existing.id }, data: productData });
+      const product = await prisma.product.update({
+        where: { id: existing.id },
+        data: productData,
+      });
       return { product };
     },
   );
@@ -141,7 +144,9 @@ export function registerSellerRoutes(
         ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(body.data.status) &&
         order.paymentStatus !== 'PAID'
       ) {
-        return reply.code(409).send({ error: 'A confirmed payment is required before fulfillment.' });
+        return reply
+          .code(409)
+          .send({ error: 'A confirmed payment is required before fulfillment.' });
       }
       if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
         return reply
