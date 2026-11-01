@@ -109,13 +109,18 @@ export function registerPaymentRoutes(
         .filter((value): value is string => Boolean(value));
       if (existingReferences.length > 0) {
         if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
-          return reply.code(409).send({ error: 'Orders are linked to different payment sessions.' });
+          return reply
+            .code(409)
+            .send({ error: 'Orders are linked to different payment sessions.' });
         }
         let existingResponse: Response;
         try {
           existingResponse = await fetch(
             `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(existingReferences[0] ?? '')}`,
-            { headers: { Authorization: `Bearer ${secretKey}` }, signal: AbortSignal.timeout(10000) },
+            {
+              headers: { Authorization: `Bearer ${secretKey}` },
+              signal: AbortSignal.timeout(10000),
+            },
           );
         } catch {
           request.log.error('Stripe Checkout session lookup failed.');
