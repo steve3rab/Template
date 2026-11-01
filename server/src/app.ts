@@ -207,7 +207,10 @@ export async function createApp(
       error.statusCode && error.statusCode >= 400 && error.statusCode < 500
         ? error.statusCode
         : 500;
-    if (statusCode === 500) request.log.error(error);
+    if (statusCode === 500) {
+      request.log.error(error);
+      if (process.env.NODE_ENV === 'test') console.error('[auth-error-diagnostic]', error);
+    }
     return reply.code(statusCode).send({
       error: statusCode < 500 ? 'Invalid request.' : 'Internal server error.',
     });
@@ -305,10 +308,8 @@ export async function createApp(
     if (token) {
       await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
     }
-    return reply
-      .clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'lax' })
-      .code(204)
-      .send();
+    reply.clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'lax' });
+    return reply.code(204).send();
   });
 
   registerCommerceRoutes(app, prisma, currentUser);
