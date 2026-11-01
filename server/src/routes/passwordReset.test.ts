@@ -189,7 +189,6 @@ describe('password reset routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().message).toContain('Si cette adresse');
-
   });
 
   it('rejects malformed completion requests', async () => {
@@ -259,7 +258,6 @@ describe('password reset routes', () => {
     expect(prisma.$transaction).toHaveBeenCalledOnce();
     expect(userUpdate).not.toHaveBeenCalled();
     expect(sessionDeleteMany).not.toHaveBeenCalled();
-
   });
 
   it(
