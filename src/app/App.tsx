@@ -212,10 +212,11 @@ export function App() {
       authEpoch.current += 1;
       cartSyncVersion.current += 1;
       // Every account transition requires a fresh server hydration before cart writes.
-      const preserveCheckoutCart = authenticated && checkoutPendingRef.current;
-      setCartHydrated(preserveCheckoutCart);
+      const checkoutInProgress = checkoutPendingRef.current;
+      const preserveCheckoutCart = checkoutInProgress;
+      setCartHydrated(authenticated && preserveCheckoutCart);
       setIsAuthenticated(authenticated);
-      if (!authenticated) {
+      if (!authenticated && !preserveCheckoutCart) {
         // Never carry a previous account's private cart/favorites into a guest or another account.
         setCart({});
         setFavorites([]);
