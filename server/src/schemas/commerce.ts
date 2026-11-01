@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emailSchema, passwordResetCompleteCredentialsSchema } from './auth.js';
 
 const httpUrlSchema = z
   .string()
@@ -84,16 +85,6 @@ export const sellerOrderStatusSchema = z.object({
   status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
 });
 
-export const passwordResetRequestSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email()
-    .max(254)
-    .transform((email) => email.toLowerCase()),
-});
+export const passwordResetRequestSchema = z.object({ email: emailSchema });
 
-export const passwordResetCompleteSchema = z.object({
-  token: z.string().min(32).max(256),
-  password: z.string().min(12).max(128),
-});
+export const passwordResetCompleteSchema = passwordResetCompleteCredentialsSchema;
