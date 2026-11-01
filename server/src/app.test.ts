@@ -8,7 +8,12 @@ import { createApp } from './app.js';
 // Inject deterministic password operations into API tests instead of mocking a native module.
 const argon2TestDouble = {
   argon2id: 2,
-  hash: async (password: string) => `test-hash:${password}`,
+  hash: async (password: string) => {
+    console.error('[auth-diagnostic] password hash start');
+    const result = `test-hash:${password}`;
+    console.error('[auth-diagnostic] password hash complete');
+    return result;
+  },
   verify: async (hash: string, password: string) => hash === `test-hash:${password}`,
 };
 
@@ -40,6 +45,7 @@ function makePrisma() {
           [...users.values()].find((user) => user.email === where.email) ?? null,
       ),
       create: vi.fn(async ({ data }: { data: { email: string; passwordHash: string } }) => {
+        console.error('[auth-diagnostic] user.create start');
         if ([...users.values()].some((user) => user.email === data.email)) {
           throw Object.assign(new Error('Unique constraint failed'), { code: 'P2002' });
         }
@@ -53,17 +59,20 @@ function makePrisma() {
           updatedAt: now,
         };
         users.set(user.id, user);
+        console.error('[auth-diagnostic] user.create complete');
         return user;
       }),
     },
     session: {
       create: vi.fn(async ({ data }: { data: Omit<FakeSession, 'id' | 'createdAt'> }) => {
+        console.error('[auth-diagnostic] session.create start');
         const session: FakeSession = {
           ...data,
           id: `session-${++nextId}`,
           createdAt: new Date(),
         };
         sessions.set(session.tokenHash, session);
+        console.error('[auth-diagnostic] session.create complete');
         return session;
       }),
       findUnique: vi.fn(
@@ -121,12 +130,15 @@ async function startApp() {
 }
 
 async function register(email = 'test@example.com', password = 'correct-horse-battery') {
-  return app.inject({
+  console.error('[auth-diagnostic] register request start');
+  const response = await app.inject({
     method: 'POST',
     url: '/api/auth/register',
     headers: validHeaders,
     payload: { email, password },
   });
+  console.error('[auth-diagnostic] register request complete', response.statusCode);
+  return response;
 }
 
 function sessionCookie(response: { headers: OutgoingHttpHeaders }) {
