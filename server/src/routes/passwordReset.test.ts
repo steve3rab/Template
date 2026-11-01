@@ -83,7 +83,11 @@ describe('password reset routes', () => {
   it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
-    const fetchMock = vi.fn(async (_url: string | URL, _init?: RequestInit) => new Response('', { status: 200 }));
+    const fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      void url;
+      void init;
+      return new Response('', { status: 200 });
+    });
     vi.stubGlobal('fetch', fetchMock);
     const { resetCreate } = setup();
     await app.ready();
