@@ -140,11 +140,13 @@ function sessionCookie(response: { headers: OutgoingHttpHeaders }) {
 beforeEach(async () => {
   process.env.APP_ORIGIN = allowedOrigin;
   process.env.NODE_ENV = 'test';
+  process.env.E2E_TEST = 'false';
   await startApp();
 });
 
 afterEach(async () => {
   await app.close();
+  vi.unstubAllEnvs();
 });
 
 describe('authentication API', () => {
@@ -256,6 +258,46 @@ describe('authentication API', () => {
       headers: { cookie },
     });
     expect(deniedOrders.statusCode).toBe(403);
+  });
+
+  it('rate-limits repeated failed login attempts', async () => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        headers: validHeaders,
+        payload: { email: 'missing@example.com', password: 'wrong-password' },
+      });
+      expect(response.statusCode).toBe(401);
+    }
+
+    const limited = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      headers: validHeaders,
+      payload: { email: 'missing@example.com', password: 'wrong-password' },
+    });
+    expect(limited.statusCode).toBe(429);
+  });
+
+  it('rate-limits repeated password-reset completion attempts before database access', async () => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/password-reset/complete',
+        headers: validHeaders,
+        payload: { token: '', password: 'short' },
+      });
+      expect(response.statusCode).toBe(400);
+    }
+
+    const limited = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/complete',
+      headers: validHeaders,
+      payload: { token: '', password: 'short' },
+    });
+    expect(limited.statusCode).toBe(429);
   });
 
   it('expires old sessions and removes them from storage', async () => {

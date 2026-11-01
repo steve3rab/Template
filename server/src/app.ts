@@ -185,9 +185,11 @@ export async function createApp(
   // The E2E suite shares one API process and IP across all browser projects and retries.
   // Keep production throttling intact, but prevent unrelated test requests from exhausting
   // the global bucket before registration/checkout flows are exercised.
+  const e2eRateLimitOverride =
+    process.env.NODE_ENV !== 'production' && process.env.E2E_TEST === 'true';
   await app.register(rateLimit, {
     global: true,
-    max: process.env.E2E_TEST === 'true' ? 1000 : 120,
+    max: e2eRateLimitOverride ? 1000 : 120,
     timeWindow: '1 minute',
   });
 
@@ -219,7 +221,10 @@ export async function createApp(
     '/api/auth/register',
     {
       config: {
-        rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 5, timeWindow: '1 minute' },
+        rateLimit: {
+          max: e2eRateLimitOverride ? 100 : 5,
+          timeWindow: '15 minutes',
+        },
       },
     },
     async (request, reply) => {
@@ -259,7 +264,10 @@ export async function createApp(
     '/api/auth/login',
     {
       config: {
-        rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 8, timeWindow: '1 minute' },
+        rateLimit: {
+          max: e2eRateLimitOverride ? 100 : 5,
+          timeWindow: '15 minutes',
+        },
       },
     },
     async (request, reply) => {

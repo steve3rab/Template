@@ -13,7 +13,7 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
   app.post(
     '/api/auth/password-reset/request',
     {
-      config: { rateLimit: { max: 4, timeWindow: '1 hour' } },
+      config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
     },
     async (request, reply) => {
       const body = passwordResetRequestSchema.safeParse(request.body);
@@ -62,7 +62,12 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
     },
   );
 
-  app.post('/api/auth/password-reset/complete', async (request, reply) => {
+  app.post(
+    '/api/auth/password-reset/complete',
+    {
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
     const body = passwordResetCompleteSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: 'Invalid reset request.' });
     const tokenHash = hashToken(body.data.token);
@@ -92,5 +97,6 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
     return reply.send({
       message: 'Mot de passe modifié. Connectez-vous avec votre nouveau mot de passe.',
     });
-  });
+    },
+  );
 }
