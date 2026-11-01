@@ -116,7 +116,7 @@ describe('Fashion storefront', () => {
   it('uses product photography with accessible text alternatives', () => {
     render(<App />);
     const photo = screen.getByRole('img', { name: 'Veste Studio' });
-    expect(photo).toHaveAttribute('src', expect.stringContaining('images.unsplash.com'));
+    expect(photo.getAttribute('src')).toContain('images.unsplash.com');
     expect(photo).toHaveAttribute('loading', 'eager');
   });
 
