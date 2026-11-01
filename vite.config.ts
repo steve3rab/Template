@@ -32,15 +32,27 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/main.tsx', 'src/test/**', '**/*.d.ts', '**/*.test.{ts,tsx}'],
-      // Temporary regression floor aligned with the current measured baseline.
-      // Raise these values as coverage is added for the account, seller, and commerce flows.
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}', 'server/src/**/*.ts'],
+      exclude: [
+        'src/main.tsx',
+        'src/test/**',
+        'server/src/index.ts',
+        '**/*.d.ts',
+        '**/*.test.{ts,tsx}',
+      ],
       thresholds: {
+        // Keep the existing frontend floor while making server-side access control measurable.
         statements: 45,
         branches: 35,
         functions: 44,
         lines: 47,
+        'server/src/**': {
+          statements: 25,
+          branches: 20,
+          functions: 25,
+          lines: 25,
+        },
       },
     },
   },
