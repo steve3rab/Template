@@ -861,7 +861,14 @@ export function App() {
       )}
       {view === 'checkout' && (
         <section className="workspace-page checkout-page">
-          <button className="back-link" onClick={() => setView('shop')}>
+          <button
+            className="back-link"
+            onClick={() => {
+              checkoutPendingRef.current = false;
+              setCheckoutPending(false);
+              setView('shop');
+            }}
+          >
             ← Continuer mes achats
           </button>
           {checkoutDone ? (
