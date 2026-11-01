@@ -1,11 +1,39 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
+
+const catalogue = [
+  { id: '1', name: 'Veste Studio', description: 'Une coupe structurée, facile à porter du matin au soir.', category: 'Vêtements', priceCents: 8900, stock: 10, active: true },
+  { id: '2', name: 'Sneakers Everyday', description: 'Le confort au quotidien, avec une silhouette minimaliste.', category: 'Chaussures', priceCents: 7400, stock: 10, active: true },
+  { id: '3', name: 'Sac Épure', description: 'Un sac compact et pratique.', category: 'Accessoires', priceCents: 5900, stock: 10, active: true },
+  { id: '4', name: 'Pull Essentiel', description: 'Une maille douce et une coupe décontractée.', category: 'Vêtements', priceCents: 6500, stock: 10, active: true },
+  { id: '5', name: 'Lunettes Soleil', description: 'Une touche graphique pour les journées ensoleillées.', category: 'Accessoires', priceCents: 3500, stock: 10, active: true },
+  { id: '6', name: 'Baskets City', description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.', category: 'Chaussures', priceCents: 9200, stock: 10, active: true },
+  { id: '7', name: 'Chemise Relax', description: 'Une chemise légère pensée pour les superpositions.', category: 'Vêtements', priceCents: 4800, stock: 10, active: true },
+  { id: '8', name: 'Casquette Club', description: 'La finition simple qui change un look.', category: 'Accessoires', priceCents: 2500, stock: 10, active: true },
+];
+
+function apiResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 describe('Fashion storefront', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/products') return apiResponse({ products: catalogue });
+      if (url === '/api/auth/me') return apiResponse({ error: 'Not authenticated.' }, 401);
+      return apiResponse({ error: 'Not authenticated.' }, 401);
+    }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('renders the public catalogue and product categories', () => {
