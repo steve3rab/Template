@@ -202,7 +202,6 @@ export function App() {
         setCart({});
         setFavorites([]);
         setCheckoutDone(false);
-        setCheckoutPending(false);
       }
     };
     window.addEventListener('template-auth-changed', onAuthChanged);
