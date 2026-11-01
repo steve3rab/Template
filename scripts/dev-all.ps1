@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [int]$FrontendPort = 5173,
     [int]$BackendPort = 3001,
