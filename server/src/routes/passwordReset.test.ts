@@ -25,10 +25,12 @@ function setup(
   const userFindUnique = vi.fn(async () =>
     options.foundUser === undefined ? user : options.foundUser,
   );
-  const resetCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
-    id: 'reset-1',
-    ...data,
-  }));
+  const resetCreate = vi.fn(
+    async ({ data }: { data: Record<string, unknown> }) => ({
+      id: 'reset-1',
+      ...data,
+    }),
+  );
   const resetFindUnique = vi.fn(async () =>
     options.reset === undefined
       ? {
@@ -40,7 +42,9 @@ function setup(
         }
       : options.reset,
   );
-  const resetUpdateMany = vi.fn(async () => ({ count: options.claimedCount ?? 1 }));
+  const resetUpdateMany = vi.fn(async () => ({
+    count: options.claimedCount ?? 1,
+  }));
   const resetDeleteMany = vi.fn(async () => ({ count: 1 }));
   const userUpdate = vi.fn(async () => ({ id: user.id }));
   const sessionDeleteMany = vi.fn(async () => ({ count: 1 }));
@@ -123,8 +127,13 @@ describe('password reset routes', () => {
     expect(resetCreate).not.toHaveBeenCalled();
   });
 
-  it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
-    vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
+  it(
+    'creates a hashed reset token and sends a reset link through the configured webhook',
+    async () => {
+    vi.stubEnv(
+      'PASSWORD_RESET_WEBHOOK_URL',
+      'https://mailer.example.test/reset',
+    );
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
     const fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
       void url;
@@ -149,7 +158,9 @@ describe('password reset routes', () => {
         expiresAt: expect.any(Date),
       }),
     });
-    const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
+    const delivery = JSON.parse(
+      String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'),
+    );
     expect(delivery.email).toBe(user.email);
     expect(delivery.resetUrl).toMatch(
       /^http:\/\/localhost:5173\/reset-password\?token=/,
@@ -165,7 +176,9 @@ describe('password reset routes', () => {
     );
   });
 
-  it('handles a failed reset delivery without disclosing account details', async () => {
+  it(
+    'handles a failed reset delivery without disclosing account details',
+    async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubGlobal(
       'fetch',
@@ -239,8 +252,12 @@ describe('password reset routes', () => {
     }
   });
 
-  it('rejects a token that another concurrent request already claimed', async () => {
-    const { prisma, userUpdate, sessionDeleteMany } = setup({ claimedCount: 0 });
+  it(
+    'rejects a token that another concurrent request already claimed',
+    async () => {
+    const { prisma, userUpdate, sessionDeleteMany } = setup({
+      claimedCount: 0,
+    });
     await app.ready();
 
     const response = await app.inject({
@@ -255,8 +272,15 @@ describe('password reset routes', () => {
     expect(sessionDeleteMany).not.toHaveBeenCalled();
   });
 
-  it('changes the password, deletes sibling reset tokens, and invalidates all sessions', async () => {
-    const { resetUpdateMany, resetDeleteMany, userUpdate, sessionDeleteMany } = setup();
+  it(
+    'changes the password, deletes sibling reset tokens, and invalidates all sessions',
+    async () => {
+    const {
+      resetUpdateMany,
+      resetDeleteMany,
+      userUpdate,
+      sessionDeleteMany,
+    } = setup();
     await app.ready();
 
     const response = await app.inject({
@@ -281,6 +305,8 @@ describe('password reset routes', () => {
     expect(resetDeleteMany).toHaveBeenCalledWith({
       where: { userId: user.id, id: { not: 'reset-1' } },
     });
-    expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
+    expect(sessionDeleteMany).toHaveBeenCalledWith({
+      where: { userId: user.id },
+    });
   });
 });
