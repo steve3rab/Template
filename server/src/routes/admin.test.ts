@@ -15,7 +15,11 @@ function setup(
 ) {
   const user = role === 'ADMIN' ? admin : seller;
   const userFindUnique = vi.fn(async () => ({ id: 'target-user' }));
-  const userUpdate = vi.fn(async () => ({ id: 'target-user', email: 'target@example.test', role: 'SELLER' }));
+  const userUpdate = vi.fn(async () => ({
+    id: 'target-user',
+    email: 'target@example.test',
+    role: 'SELLER',
+  }));
   const sessionDeleteMany = vi.fn(async () => ({ count: 2 }));
   const prisma = {
     user: { findUnique: userFindUnique, update: userUpdate },
@@ -23,7 +27,11 @@ function setup(
     ...overrides,
   };
   app = Fastify({ logger: false });
-  registerAdminRoutes(app, prisma as unknown as PrismaClient, (async () => user) as never);
+  registerAdminRoutes(
+    app,
+    prisma as unknown as PrismaClient,
+    (async () => user) as never,
+  );
   return { prisma, userFindUnique, userUpdate, sessionDeleteMany };
 }
 
@@ -119,6 +127,8 @@ describe('admin role management', () => {
       data: { role: 'SELLER' },
       select: { id: true, email: true, role: true },
     });
-    expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { userId: 'target-user' } });
+    expect(sessionDeleteMany).toHaveBeenCalledWith({
+      where: { userId: 'target-user' },
+    });
   });
 });
