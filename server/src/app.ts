@@ -95,7 +95,12 @@ async function currentUser(request: FastifyRequest, prisma: PrismaClient) {
   return session.user;
 }
 
-export async function createApp(prisma = new PrismaClient()): Promise<FastifyInstance> {
+type PasswordCrypto = Pick<typeof argon2, 'hash' | 'verify' | 'argon2id'>;
+
+export async function createApp(
+  prisma = new PrismaClient(),
+  passwordCrypto: PasswordCrypto = argon2,
+): Promise<FastifyInstance> {
   if (
     process.env.NODE_ENV === 'production' &&
     (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)
@@ -226,7 +231,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
         });
       }
 
-      const passwordHash = await argon2.hash(credentials.password, { type: argon2.argon2id });
+      const passwordHash = await passwordCrypto.hash(credentials.password, { type: passwordCrypto.argon2id });
       try {
         const user = await prisma.user.create({
           data: { email: credentials.email, passwordHash },
@@ -264,7 +269,7 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
 
       const user = await prisma.user.findUnique({ where: { email: credentials.data.email } });
       const validPassword = user
-        ? await argon2.verify(user.passwordHash, credentials.data.password).catch(() => false)
+        ? await passwordCrypto.verify(user.passwordHash, credentials.data.password).catch(() => false)
         : false;
 
       if (!user || !validPassword) {
