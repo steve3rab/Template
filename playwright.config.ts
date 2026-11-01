@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -27,7 +28,7 @@ export default defineConfig({
       env: {
         NODE_ENV: 'test',
         E2E_TEST: 'true',
-        DATABASE_URL: 'file:./dev.db',
+        DATABASE_URL: `file:${resolve('server/prisma/dev.db')}`,
         APP_ORIGIN: 'http://127.0.0.1:4173',
         SESSION_SECRET: 'playwright-only-secret-long-enough-for-tests',
       },
