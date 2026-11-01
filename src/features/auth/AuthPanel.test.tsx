@@ -194,4 +194,33 @@ describe('AuthPanel', () => {
       window.removeEventListener('template-auth-changed', onAuthChanged);
     }
   });
+
+  it('shows localized password-reset actions and neutral confirmation feedback', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response(false))
+      .mockResolvedValueOnce(response(true, {}, 200));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="en" initialMode="login" />);
+    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: 'Forgot password?' }));
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
+    await user.click(screen.getByRole('button', { name: 'Send reset link' }));
+
+    await waitFor(() =>
+      expect(toastMessages).toContain(
+        'If an account exists for this address, a password reset link will be sent.',
+      ),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/auth/password-reset/request',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'test@example.com' }),
+      }),
+    );
+  });
 });
