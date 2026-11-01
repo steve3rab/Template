@@ -632,7 +632,7 @@ export function App() {
           <section className="hero-banner" aria-labelledby="hero-title">
             <div className="hero-copy">
               <span className="eyebrow">LA SÉLECTION DE LA SAISON</span>
-              <h1 id="hero-title">
+              <h1 id="hero-title" aria-label="Le style, en toute simplicité.">
                 Le style, en
                 <br />
                 <em>toute simplicité.</em>
