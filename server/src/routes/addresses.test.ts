@@ -11,12 +11,16 @@ let app: FastifyInstance;
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const addressFindMany = vi.fn(async () => []);
   const addressFindFirst = vi.fn(async () => null);
-  const addressCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
-    id: 'address-new',
-    ...data,
-  }));
+  const addressCreate = vi.fn(
+    async ({ data }: { data: Record<string, unknown> }) => ({
+      id: 'address-new',
+      ...data,
+    }),
+  );
   const addressDelete = vi.fn(async () => ({ id: 'address-1' }));
-  const addressUpdate = vi.fn(async () => ({ id: 'address-2', isDefault: true }));
+  const addressUpdate = vi.fn(
+    async () => ({ id: 'address-2', isDefault: true }),
+  );
   const addressUpdateMany = vi.fn(async () => ({ count: 1 }));
   const transaction = {
     address: {
@@ -30,7 +34,8 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const prisma = {
     address: { findMany: addressFindMany },
     $transaction: vi.fn(
-      async (callback: (tx: typeof transaction) => Promise<unknown>) => callback(transaction),
+      async (callback: (tx: typeof transaction) => Promise<unknown>) =>
+        callback(transaction),
     ),
   };
   app = Fastify({ logger: false });
@@ -165,7 +170,9 @@ describe('customer address routes', () => {
     });
 
     expect(response.statusCode).toBe(204);
-    expect(addressDelete).toHaveBeenCalledWith({ where: { id: 'address-1' } });
+    expect(addressDelete).toHaveBeenCalledWith({
+      where: { id: 'address-1' },
+    });
     expect(addressFindFirst).toHaveBeenNthCalledWith(2, {
       where: { userId: customer.id },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
