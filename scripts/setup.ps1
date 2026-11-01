@@ -29,4 +29,4 @@ if ($InstallPlaywrightBrowsers) {
     Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
 }
 
-Write-Host 'Installation terminée. Aucun test n’a été lancé.' -ForegroundColor Green
+Write-Host 'Installation terminée. Aucun test exécuté.' -ForegroundColor Green
