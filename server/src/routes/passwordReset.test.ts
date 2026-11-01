@@ -160,6 +160,7 @@ describe('password reset routes', () => {
       }),
     );
   });
+
   it('handles a failed reset delivery without disclosing account details', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubGlobal(
@@ -273,6 +274,5 @@ describe('password reset routes', () => {
       where: { userId: user.id, id: { not: 'reset-1' } },
     });
     expect(sessionDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
-    },
-  );
+  });
 });
