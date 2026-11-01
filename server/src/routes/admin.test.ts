@@ -9,10 +9,7 @@ const admin = { id: 'admin-1', role: 'ADMIN' } as User;
 const seller = { id: 'seller-1', role: 'SELLER' } as User;
 let app: FastifyInstance;
 
-function setup(
-  role: User['role'] = 'ADMIN',
-  overrides: Record<string, unknown> = {},
-) {
+function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> = {}) {
   const user = role === 'ADMIN' ? admin : seller;
   const userFindUnique = vi.fn(async () => ({ id: 'target-user' }));
   const userUpdate = vi.fn(async () => ({
@@ -27,11 +24,7 @@ function setup(
     ...overrides,
   };
   app = Fastify({ logger: false });
-  registerAdminRoutes(
-    app,
-    prisma as unknown as PrismaClient,
-    (async () => user) as never,
-  );
+  registerAdminRoutes(app, prisma as unknown as PrismaClient, (async () => user) as never);
   return { prisma, userFindUnique, userUpdate, sessionDeleteMany };
 }
 
@@ -86,12 +79,8 @@ describe('admin role management', () => {
   });
 
   it('returns 404 for an unknown user and does not mutate sessions', async () => {
-    const { userFindUnique, userUpdate, sessionDeleteMany } = setup('ADMIN', {
-      user: {
-        findUnique: vi.fn(async () => null),
-        update: vi.fn(),
-      },
-    });
+    const { userFindUnique, userUpdate, sessionDeleteMany } = setup();
+    userFindUnique.mockResolvedValueOnce(null as never);
     await app.ready();
 
     const response = await app.inject({

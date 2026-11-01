@@ -22,18 +22,14 @@ function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
       active: true,
     }),
   );
-  const productCreate = vi.fn(
-    async ({ data }: { data: unknown }) => ({
-      id: 'product-new',
-      ...(data as object),
-    }),
-  );
-  const productUpdate = vi.fn(
-    async ({ data }: { data: unknown }) => ({
-      id: 'product-1',
-      ...(data as object),
-    }),
-  );
+  const productCreate = vi.fn(async ({ data }: { data: unknown }) => ({
+    id: 'product-new',
+    ...(data as object),
+  }));
+  const productUpdate = vi.fn(async ({ data }: { data: unknown }) => ({
+    id: 'product-1',
+    ...(data as object),
+  }));
   const orderFindMany = vi.fn(async () => []);
   const orderFindFirst = vi.fn(async () => ({
     id: 'order-1',
@@ -70,18 +66,13 @@ function setup(role: 'SELLER' | 'ADMIN' = 'SELLER') {
       findFirst: orderFindFirst,
       update: orderUpdate,
     },
-    $transaction: vi.fn(
-      async (callback: (tx: typeof transaction) => Promise<unknown>) =>
-        callback(transaction),
+    $transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) =>
+      callback(transaction),
     ),
   };
   app = Fastify({ logger: false });
   const current = role === 'ADMIN' ? admin : seller;
-  registerSellerRoutes(
-    app,
-    prisma as unknown as PrismaClient,
-    (async () => current) as never,
-  );
+  registerSellerRoutes(app, prisma as unknown as PrismaClient, (async () => current) as never);
   return {
     prisma,
     productFindMany,

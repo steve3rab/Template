@@ -50,7 +50,7 @@ export const resourceIdParamsSchema = z.object({
 });
 
 export const productIdParamsSchema = z.object({
-  productId: z.string().min(1),
+  productId: z.string().trim().min(1),
 });
 
 export const createOrderInputSchema = z.object({

@@ -10,15 +10,11 @@ let app: FastifyInstance;
 
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const txCartDeleteMany = vi.fn(async () => ({ count: 0 }));
-  const txProductFindFirst = vi.fn(
-    async (): Promise<{ id: string; active: boolean } | null> => ({
-      id: 'product-1',
-      active: true,
-    }),
-  );
-  const txCartCreate = vi.fn(
-    async ({ data }: { data: Record<string, unknown> }) => ({ ...data }),
-  );
+  const txProductFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({
+    id: 'product-1',
+    active: true,
+  }));
+  const txCartCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...data }));
   const transaction = {
     cartItem: { deleteMany: txCartDeleteMany, create: txCartCreate },
     product: { findFirst: txProductFindFirst },
@@ -28,24 +24,17 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
       findMany: vi.fn(async () => []),
     },
     product: {
-      findFirst: vi.fn(
-        async (): Promise<{ id: string; active: boolean } | null> => ({
-          id: 'product-1',
-          active: true,
-        }),
-      ),
+      findFirst: vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({
+        id: 'product-1',
+        active: true,
+      })),
     },
-    $transaction: vi.fn(
-      async (callback: (tx: typeof transaction) => Promise<unknown>) =>
-        callback(transaction),
+    $transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) =>
+      callback(transaction),
     ),
   };
   app = Fastify({ logger: false });
-  registerCartRoutes(
-    app,
-    prisma as unknown as PrismaClient,
-    (async () => resolveUser()) as never,
-  );
+  registerCartRoutes(app, prisma as unknown as PrismaClient, (async () => resolveUser()) as never);
   return { prisma, transaction, txCartDeleteMany, txProductFindFirst, txCartCreate };
 }
 

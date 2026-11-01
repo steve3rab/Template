@@ -9,12 +9,10 @@ const customer = { id: 'customer-1', role: 'CUSTOMER' } as User;
 let app: FastifyInstance;
 
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
-  const productFindFirst = vi.fn(
-    async (): Promise<{ id: string; active: boolean } | null> => ({
-      id: 'product-1',
-      active: true,
-    }),
-  );
+  const productFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({
+    id: 'product-1',
+    active: true,
+  }));
   const favoriteFindMany = vi.fn(async () => []);
   const favoriteUpsert = vi.fn(async (args: unknown) => args);
   const favoriteDeleteMany = vi.fn(async () => ({ count: 1 }));
