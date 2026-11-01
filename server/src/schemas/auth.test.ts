@@ -59,6 +59,21 @@ describe('password validator', () => {
     expect(passwordSchema.safeParse(password).success).toBe(false);
   });
 
+  it('validates login credentials and normalizes the email', () => {
+    expect(
+      loginCredentialsSchema.parse({
+        email: ' USER@Example.COM ',
+        password: 'legacy123',
+      }),
+    ).toEqual({ email: 'user@example.com', password: 'legacy123' });
+    expect(
+      loginCredentialsSchema.safeParse({
+        email: 'invalid-email',
+        password: 'legacy123',
+      }).success,
+    ).toBe(false);
+  });
+
   it('allows legacy short passwords for login, but still bounds input', () => {
     expect(loginPasswordSchema.safeParse('legacy123').success).toBe(true);
     expect(loginPasswordSchema.safeParse('').success).toBe(false);
