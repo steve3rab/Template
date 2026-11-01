@@ -9,7 +9,12 @@ const customer = { id: 'customer-1', role: 'CUSTOMER' } as User;
 let app: FastifyInstance;
 
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
-  const productFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({ id: 'product-1', active: true }));
+  const productFindFirst = vi.fn(
+    async (): Promise<{ id: string; active: boolean } | null> => ({
+      id: 'product-1',
+      active: true,
+    }),
+  );
   const favoriteFindMany = vi.fn(async () => []);
   const favoriteUpsert = vi.fn(async (args: unknown) => args);
   const favoriteDeleteMany = vi.fn(async () => ({ count: 1 }));
@@ -22,9 +27,18 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
     },
   };
   app = Fastify({ logger: false });
-  registerFavoriteRoutes(app, prisma as unknown as PrismaClient, (async () =>
-    resolveUser()) as never);
-  return { prisma, productFindFirst, favoriteFindMany, favoriteUpsert, favoriteDeleteMany };
+  registerFavoriteRoutes(
+    app,
+    prisma as unknown as PrismaClient,
+    (async () => resolveUser()) as never,
+  );
+  return {
+    prisma,
+    productFindFirst,
+    favoriteFindMany,
+    favoriteUpsert,
+    favoriteDeleteMany,
+  };
 }
 
 afterEach(async () => {
@@ -36,7 +50,10 @@ describe('customer favorites routes', () => {
     const { favoriteFindMany } = setup(async () => null);
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/customer/favorites' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/customer/favorites',
+    });
 
     expect(response.statusCode).toBe(401);
     expect(favoriteFindMany).not.toHaveBeenCalled();
@@ -46,7 +63,10 @@ describe('customer favorites routes', () => {
     const { favoriteFindMany } = setup();
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/customer/favorites' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/customer/favorites',
+    });
 
     expect(response.statusCode).toBe(200);
     expect(favoriteFindMany).toHaveBeenCalledWith({
@@ -95,7 +115,9 @@ describe('customer favorites routes', () => {
 
     expect(response.statusCode).toBe(201);
     expect(favoriteUpsert).toHaveBeenCalledWith({
-      where: { userId_productId: { userId: customer.id, productId: 'product-1' } },
+      where: {
+        userId_productId: { userId: customer.id, productId: 'product-1' },
+      },
       create: { userId: customer.id, productId: 'product-1' },
       update: {},
     });
