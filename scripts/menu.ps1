@@ -64,6 +64,13 @@ function Invoke-NpmCommand {
         }
     }
 
+    $npmCommand = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
+    if (-not $npmCommand) {
+        Write-Host 'Erreur : npm.cmd est introuvable. Vérifiez l installation de Node.js et le PATH.' -ForegroundColor Red
+        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
+        return
+    }
+
     Write-Host ''
     Write-Host "> $Description" -ForegroundColor Cyan
     Write-Host ("Commande : npm " + ($NpmArguments -join ' ')) -ForegroundColor DarkGray
@@ -71,7 +78,7 @@ function Invoke-NpmCommand {
 
     Push-Location $projectRoot
     try {
-        & npm @NpmArguments
+        & $npmCommand.Source @NpmArguments
         $exitCode = $LASTEXITCODE
         if ($exitCode -ne 0) {
             Write-Host "Echec : la commande s'est terminee avec le code $exitCode." -ForegroundColor Red
