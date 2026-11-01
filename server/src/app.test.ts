@@ -1,6 +1,5 @@
 // @vitest-environment node
 import type { OutgoingHttpHeaders } from 'node:http';
-import argon2 from 'argon2';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyInstance } from 'fastify';
@@ -314,7 +313,7 @@ describe('authentication API', () => {
 
     const user = [...store.users.values()][0];
     if (!user) throw new Error('Expected a registered user');
-    user.passwordHash = await argon2.hash('legacy123');
+    user.passwordHash = 'test-hash:legacy123';
 
     const login = await app.inject({
       method: 'POST',
