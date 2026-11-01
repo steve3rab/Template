@@ -41,3 +41,5 @@ export const passwordResetCompleteCredentialsSchema = z.object({
   token: z.string().min(32).max(256),
   password: passwordSchema,
 });
+
+export type RegistrationCredentials = z.infer<typeof registrationCredentialsSchema>;
