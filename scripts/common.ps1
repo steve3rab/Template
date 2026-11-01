@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 
 $script:ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
