@@ -12,7 +12,11 @@ import Fastify, {
 } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import type { User } from '@prisma/client';
-import { loginCredentialsSchema, registrationCredentialsSchema } from './schemas/auth.js';
+import {
+  loginCredentialsSchema,
+  registrationCredentialsSchema,
+  type RegistrationCredentials,
+} from './schemas/auth.js';
 import { registerCommerceRoutes } from './commerce.js';
 import { registerPaymentRoutes } from './routes/payments.js';
 
@@ -44,7 +48,7 @@ function cookieOptions() {
   };
 }
 
-function parseCredentials(body: unknown): Credentials | null {
+function parseCredentials(body: unknown): RegistrationCredentials | null {
   const result = registrationCredentialsSchema.safeParse(body);
   return result.success ? result.data : null;
 }
