@@ -767,6 +767,9 @@ export function App() {
                       alt={product.name}
                       loading={index < 4 ? 'eager' : 'lazy'}
                       decoding="async"
+                      onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                      }}
                     />
                     <span className="visual-label">{product.category.toUpperCase()}</span>
                     <button className="quick-add" onClick={() => addToCart(product)}>
