@@ -585,10 +585,18 @@ export function App() {
         </nav>
         <div className="header-actions">
           <div className="language-toggle" aria-label="Langue">
-            <button type="button" aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>
+            <button
+              type="button"
+              aria-pressed={language === 'en'}
+              onClick={() => setLanguage('en')}
+            >
               English
             </button>
-            <button type="button" aria-pressed={language === 'fr'} onClick={() => setLanguage('fr')}>
+            <button
+              type="button"
+              aria-pressed={language === 'fr'}
+              onClick={() => setLanguage('fr')}
+            >
               French
             </button>
           </div>
