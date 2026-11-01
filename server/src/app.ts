@@ -226,7 +226,12 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
         });
       }
 
-      const passwordHash = await argon2.hash(credentials.password, { type: argon2.argon2id });
+      const passwordHash = await argon2.hash(
+        credentials.password,
+        process.env.NODE_ENV === 'test'
+          ? { type: argon2.argon2id, memoryCost: 4096, timeCost: 1, parallelism: 1 }
+          : { type: argon2.argon2id },
+      );
       try {
         const user = await prisma.user.create({
           data: { email: credentials.email, passwordHash },
