@@ -10,8 +10,15 @@ let app: FastifyInstance;
 
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const txCartDeleteMany = vi.fn(async () => ({ count: 0 }));
-  const txProductFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({ id: 'product-1', active: true }));
-  const txCartCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...data }));
+  const txProductFindFirst = vi.fn(
+    async (): Promise<{ id: string; active: boolean } | null> => ({
+      id: 'product-1',
+      active: true,
+    }),
+  );
+  const txCartCreate = vi.fn(
+    async ({ data }: { data: Record<string, unknown> }) => ({ ...data }),
+  );
   const transaction = {
     cartItem: { deleteMany: txCartDeleteMany, create: txCartCreate },
     product: { findFirst: txProductFindFirst },
@@ -21,10 +28,16 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
       findMany: vi.fn(async () => []),
     },
     product: {
-      findFirst: vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({ id: 'product-1', active: true })),
+      findFirst: vi.fn(
+        async (): Promise<{ id: string; active: boolean } | null> => ({
+          id: 'product-1',
+          active: true,
+        }),
+      ),
     },
-    $transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) =>
-      callback(transaction),
+    $transaction: vi.fn(
+      async (callback: (tx: typeof transaction) => Promise<unknown>) =>
+        callback(transaction),
     ),
   };
   app = Fastify({ logger: false });
@@ -45,7 +58,10 @@ describe('customer cart routes', () => {
     const { prisma } = setup(async () => null);
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/customer/cart' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/customer/cart',
+    });
 
     expect(response.statusCode).toBe(401);
     expect(prisma.cartItem.findMany).not.toHaveBeenCalled();
@@ -55,7 +71,10 @@ describe('customer cart routes', () => {
     const { prisma } = setup();
     await app.ready();
 
-    const response = await app.inject({ method: 'GET', url: '/api/customer/cart' });
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/customer/cart',
+    });
 
     expect(response.statusCode).toBe(200);
     expect(prisma.cartItem.findMany).toHaveBeenCalledWith({
@@ -96,8 +115,12 @@ describe('customer cart routes', () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.json()).toEqual({ error: 'One or more products are unavailable.' });
-    expect(txCartDeleteMany).toHaveBeenCalledWith({ where: { userId: customer.id } });
+    expect(response.json()).toEqual({
+      error: 'One or more products are unavailable.',
+    });
+    expect(txCartDeleteMany).toHaveBeenCalledWith({
+      where: { userId: customer.id },
+    });
     expect(txCartCreate).not.toHaveBeenCalled();
   });
 
@@ -117,7 +140,9 @@ describe('customer cart routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(txCartDeleteMany).toHaveBeenCalledWith({ where: { userId: customer.id } });
+    expect(txCartDeleteMany).toHaveBeenCalledWith({
+      where: { userId: customer.id },
+    });
     expect(txProductFindFirst).toHaveBeenCalledTimes(1);
     expect(txCartCreate).toHaveBeenCalledTimes(1);
     expect(txCartCreate).toHaveBeenCalledWith({
