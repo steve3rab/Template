@@ -1,7 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ResolveUser } from '../auth/requireUser.js';
-import { productInputSchema, resourceIdParamsSchema, sellerOrderStatusSchema } from '../schemas/commerce.js';
+import {
+  productInputSchema,
+  resourceIdParamsSchema,
+  sellerOrderStatusSchema,
+} from '../schemas/commerce.js';
 import { requireUser } from '../auth/requireUser.js';
 
 export function registerSellerRoutes(
@@ -70,7 +74,10 @@ export function registerSellerRoutes(
     if (!seller) return;
     const orders = await prisma.order.findMany({
       where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id },
-      include: { items: { include: { product: true } }, customer: { select: { id: true, email: true } } },
+      include: {
+        items: { include: { product: true } },
+        customer: { select: { id: true, email: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
     return { orders };
@@ -81,7 +88,8 @@ export function registerSellerRoutes(
     if (!seller) return;
     const params = resourceIdParamsSchema.safeParse(request.params);
     const body = sellerOrderStatusSchema.safeParse(request.body);
-    if (!params.success || !body.success) return reply.code(400).send({ error: 'Invalid order status.' });
+    if (!params.success || !body.success)
+      return reply.code(400).send({ error: 'Invalid order status.' });
     const order = await prisma.order.findFirst({
       where: { id: params.data.id, ...(seller.role === 'ADMIN' ? {} : { sellerId: seller.id }) },
       include: { items: true },
@@ -92,25 +100,41 @@ export function registerSellerRoutes(
       PROCESSING: ['SHIPPED', 'CANCELLED'],
       SHIPPED: ['DELIVERED'],
     };
-    if (!transitions[order.status]?.includes(body.data.status)) return reply.code(409).send({ error: 'Invalid order status transition.' });
-    if (['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(body.data.status) && order.paymentStatus !== 'PAID') {
+    if (!transitions[order.status]?.includes(body.data.status))
+      return reply.code(409).send({ error: 'Invalid order status transition.' });
+    if (
+      ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(body.data.status) &&
+      order.paymentStatus !== 'PAID'
+    ) {
       return reply.code(409).send({ error: 'A confirmed payment is required before fulfillment.' });
     }
     if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
-      return reply.code(409).send({ error: 'Paid orders require a refund workflow before cancellation.' });
+      return reply
+        .code(409)
+        .send({ error: 'Paid orders require a refund workflow before cancellation.' });
     }
     if (
       body.data.status === 'CANCELLED' &&
       order.paymentStatus === 'UNPAID' &&
       order.paymentReference
     ) {
-      return reply.code(409).send({ error: 'An active payment session must expire before this order can be cancelled.' });
+      return reply.code(409).send({
+        error: 'An active payment session must expire before this order can be cancelled.',
+      });
     }
     const updated = await prisma.$transaction(async (tx) => {
-      const result = await tx.order.update({ where: { id: order.id }, data: { status: body.data.status }, include: { items: true } });
+      const result = await tx.order.update({
+        where: { id: order.id },
+        data: { status: body.data.status },
+        include: { items: true },
+      });
       if (body.data.status === 'CANCELLED') {
         for (const item of order.items) {
-          if (item.productId) await tx.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
+          if (item.productId)
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            });
         }
       }
       return result;
@@ -122,16 +146,26 @@ export function registerSellerRoutes(
     const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
     if (!seller) return;
     const days = Number((request.query as { days?: string }).days ?? '30');
-    if (![7, 30, 90].includes(days)) return reply.code(400).send({ error: 'days must be 7, 30 or 90.' });
+    if (![7, 30, 90].includes(days))
+      return reply.code(400).send({ error: 'days must be 7, 30 or 90.' });
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const where = seller.role === 'ADMIN'
-      ? { createdAt: { gte: since } }
-      : { sellerId: seller.id, createdAt: { gte: since } };
-    const orders = await prisma.order.findMany({ where, include: { items: { include: { product: true } } } });
+    const where =
+      seller.role === 'ADMIN'
+        ? { createdAt: { gte: since } }
+        : { sellerId: seller.id, createdAt: { gte: since } };
+    const orders = await prisma.order.findMany({
+      where,
+      include: { items: { include: { product: true } } },
+    });
     const paidOrders = orders.filter((order) => order.paymentStatus === 'PAID');
     const revenueCents = paidOrders.reduce((sum, order) => sum + order.totalCents, 0);
-    const unitsSold = orders.reduce((sum, order) => sum + order.items.reduce((subtotal, item) => subtotal + item.quantity, 0), 0);
-    const products = await prisma.product.findMany({ where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id } });
+    const unitsSold = orders.reduce(
+      (sum, order) => sum + order.items.reduce((subtotal, item) => subtotal + item.quantity, 0),
+      0,
+    );
+    const products = await prisma.product.findMany({
+      where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id },
+    });
     return {
       periodDays: days,
       revenueCents,

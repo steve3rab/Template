@@ -9,8 +9,14 @@ import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas } from '../shared/api/client';
 
 function isCart(value: unknown): value is Record<string, number> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    && Object.entries(value).every(([id, quantity]) => id.length > 0 && Number.isInteger(quantity) && quantity >= 0);
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.entries(value).every(
+      ([id, quantity]) => id.length > 0 && Number.isInteger(quantity) && quantity >= 0,
+    )
+  );
 }
 
 function isFavorites(value: unknown): value is string[] {
@@ -122,8 +128,12 @@ export function App() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [cart, setCart] = useState<Record<string, number>>(() => readStoredJson('atelier-cart', {}, isCart));
-  const [favorites, setFavorites] = useState<string[]>(() => readStoredJson('atelier-favorites', [], isFavorites));
+  const [cart, setCart] = useState<Record<string, number>>(() =>
+    readStoredJson('atelier-cart', {}, isCart),
+  );
+  const [favorites, setFavorites] = useState<string[]>(() =>
+    readStoredJson('atelier-favorites', [], isFavorites),
+  );
   const [cartHydrated, setCartHydrated] = useState(false);
   const cartSyncQueue = useRef<Promise<void>>(Promise.resolve());
   const cartSyncVersion = useRef(0);
@@ -212,27 +222,31 @@ export function App() {
     void apiRequest('/api/products', apiSchemas.products)
       .then((payload) => {
         if (!active) return;
-        setCatalog(payload.products.map((item) => {
-          const fallback = products.find((product) => product.id === item.id);
-          return {
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            category: item.category,
-            price: item.priceCents / 100,
-            color: fallback?.color ?? 'sand',
-            icon: fallback?.icon ?? '📦',
-            ...(fallback?.oldPrice !== undefined ? { oldPrice: fallback.oldPrice } : {}),
-            ...(fallback?.tag !== undefined ? { tag: fallback.tag } : {}),
-          };
-        }));
+        setCatalog(
+          payload.products.map((item) => {
+            const fallback = products.find((product) => product.id === item.id);
+            return {
+              id: item.id,
+              name: item.name,
+              description: item.description,
+              category: item.category,
+              price: item.priceCents / 100,
+              color: fallback?.color ?? 'sand',
+              icon: fallback?.icon ?? '📦',
+              ...(fallback?.oldPrice !== undefined ? { oldPrice: fallback.oldPrice } : {}),
+              ...(fallback?.tag !== undefined ? { tag: fallback.tag } : {}),
+            };
+          }),
+        );
       })
       .catch(() => {
         // Never present hard-coded demo products as if they came from the live catalogue.
         if (!active) return;
         setCatalog([]);
         setToastKind('error');
-        setNotice('Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.');
+        setNotice(
+          'Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.',
+        );
       });
     // Resolve authentication only from explicit session outcomes. A 5xx/network
     // failure must not be interpreted as logout or overwrite a valid client state.
@@ -241,12 +255,16 @@ export function App() {
         if (!active) return;
         if (response.ok) {
           setIsAuthenticated(true);
-          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: true } }));
+          window.dispatchEvent(
+            new CustomEvent('template-auth-changed', { detail: { authenticated: true } }),
+          );
           return;
         }
         if (response.status === 401) {
           setIsAuthenticated(false);
-          window.dispatchEvent(new CustomEvent('template-auth-changed', { detail: { authenticated: false } }));
+          window.dispatchEvent(
+            new CustomEvent('template-auth-changed', { detail: { authenticated: false } }),
+          );
           return;
         }
         setToastKind('error');
@@ -257,7 +275,9 @@ export function App() {
         setToastKind('error');
         setNotice('Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.');
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
   useEffect(() => {
     writeStoredJson('atelier-cart', cart);
@@ -278,12 +298,15 @@ export function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: snapshot }),
         });
-        if (!response.ok) throw new Error('Impossible de synchroniser le panier avec votre compte.');
+        if (!response.ok)
+          throw new Error('Impossible de synchroniser le panier avec votre compte.');
       })
       .catch(() => {
         if (epoch === authEpoch.current && version === cartSyncVersion.current) {
           setToastKind('error');
-          setNotice('Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.');
+          setNotice(
+            'Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.',
+          );
         }
       });
   }, [cart, isAuthenticated, cartHydrated]);
@@ -311,9 +334,13 @@ export function App() {
         if (!active) return;
         setCartHydrated(false);
         setToastKind('error');
-        setNotice('Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.');
+        setNotice(
+          'Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.',
+        );
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [isAuthenticated]);
   async function openSeller() {
     try {
@@ -350,9 +377,11 @@ export function App() {
     const isFavorite = favorites.includes(productId);
     const epoch = authEpoch.current;
     if (!isAuthenticated) {
-      setFavorites((current) => isFavorite
-        ? current.filter((item) => item !== productId)
-        : [...new Set([...current, productId])]);
+      setFavorites((current) =>
+        isFavorite
+          ? current.filter((item) => item !== productId)
+          : [...new Set([...current, productId])],
+      );
       return;
     }
 
@@ -364,18 +393,24 @@ export function App() {
         credentials: 'include',
       });
       if (!response.ok) {
-        throw new Error(response.status === 401
-          ? 'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.'
-          : 'Impossible de mettre à jour vos favoris. Réessayez.');
+        throw new Error(
+          response.status === 401
+            ? 'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.'
+            : 'Impossible de mettre à jour vos favoris. Réessayez.',
+        );
       }
       if (epoch !== authEpoch.current) return;
-      setFavorites((current) => isFavorite
-        ? current.filter((item) => item !== productId)
-        : [...new Set([...current, productId])]);
+      setFavorites((current) =>
+        isFavorite
+          ? current.filter((item) => item !== productId)
+          : [...new Set([...current, productId])],
+      );
     } catch (error) {
       if (epoch !== authEpoch.current) return;
       setToastKind('error');
-      setNotice(error instanceof Error ? error.message : 'Impossible de mettre à jour vos favoris.');
+      setNotice(
+        error instanceof Error ? error.message : 'Impossible de mettre à jour vos favoris.',
+      );
     } finally {
       favoriteRequests.current.delete(productId);
     }
@@ -386,7 +421,7 @@ export function App() {
     try {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
-        const payload = await response.json() as { user?: { email: string } };
+        const payload = (await response.json()) as { user?: { email: string } };
         setOrderEmail(payload.user?.email ?? '');
         setCheckoutPending(false);
         setView('checkout');
@@ -405,48 +440,86 @@ export function App() {
     setNotice('');
     try {
       const cartResponse = await fetch('/api/customer/cart', {
-        method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: Object.entries(cart).map(([productId, quantity]) => ({ productId: String(productId), quantity })) }),
-      });
-      if (!cartResponse.ok) throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
-      const addressResponse = await fetch('/api/customer/addresses', {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          label: 'Livraison', recipient: String(form.get('recipient') ?? ''),
-          line1: String(form.get('line1') ?? ''), line2: String(form.get('line2') ?? '') || null, postalCode: String(form.get('postalCode') ?? ''),
-          city: String(form.get('city') ?? ''), country: 'FR', isDefault: true,
+          items: Object.entries(cart).map(([productId, quantity]) => ({
+            productId: String(productId),
+            quantity,
+          })),
         }),
       });
-      const addressPayload = await addressResponse.json() as { address?: { id: string }; error?: string };
-      if (!addressResponse.ok || !addressPayload.address) throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
+      if (!cartResponse.ok)
+        throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
+      const addressResponse = await fetch('/api/customer/addresses', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          label: 'Livraison',
+          recipient: String(form.get('recipient') ?? ''),
+          line1: String(form.get('line1') ?? ''),
+          line2: String(form.get('line2') ?? '') || null,
+          postalCode: String(form.get('postalCode') ?? ''),
+          city: String(form.get('city') ?? ''),
+          country: 'FR',
+          isDefault: true,
+        }),
+      });
+      const addressPayload = (await addressResponse.json()) as {
+        address?: { id: string };
+        error?: string;
+      };
+      if (!addressResponse.ok || !addressPayload.address)
+        throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
       const orderResponse = await fetch('/api/customer/orders', {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ addressId: addressPayload.address.id }),
       });
-      const orderPayload = await orderResponse.json() as { order?: { id: string }; orders?: { id: string }[]; error?: string };
-      if (!orderResponse.ok || !orderPayload.order) throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
+      const orderPayload = (await orderResponse.json()) as {
+        order?: { id: string };
+        orders?: { id: string }[];
+        error?: string;
+      };
+      if (!orderResponse.ok || !orderPayload.order)
+        throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
       try {
-        const checkoutPayload = await apiRequest('/api/customer/checkout', apiSchemas.checkoutSession, {
-          method: 'POST',
-          body: JSON.stringify({ orderIds }),
-        });
+        const checkoutPayload = await apiRequest(
+          '/api/customer/checkout',
+          apiSchemas.checkoutSession,
+          {
+            method: 'POST',
+            body: JSON.stringify({ orderIds }),
+          },
+        );
         window.location.assign(checkoutPayload.checkoutUrl);
       } catch (error) {
         // The order has already been persisted. Keep it visible and explain that
         // payment still needs to be completed instead of reporting order creation as failed.
-        setNotice(error instanceof Error ? error.message : 'Commande enregistrée, mais paiement indisponible.');
+        setNotice(
+          error instanceof Error
+            ? error.message
+            : 'Commande enregistrée, mais paiement indisponible.',
+        );
         setCheckoutDone(true);
         setView('checkout');
       }
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.');
+      setNotice(
+        error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.',
+      );
     }
   }
   return (
     <main className="store-app">
-      <div className="announcement">SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE</div>
+      <div className="announcement">
+        SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE
+      </div>
       <header className="store-header">
         <a
           className="store-brand"
@@ -482,7 +555,9 @@ export function App() {
             Vêtements
           </button>
           <button
-            className={view === 'shop' && category === 'Chaussures' ? 'nav-link active' : 'nav-link'}
+            className={
+              view === 'shop' && category === 'Chaussures' ? 'nav-link active' : 'nav-link'
+            }
             onClick={() => {
               setView('shop');
               setCategory('Chaussures');
@@ -491,7 +566,9 @@ export function App() {
             Chaussures
           </button>
           <button
-            className={view === 'shop' && category === 'Accessoires' ? 'nav-link active' : 'nav-link'}
+            className={
+              view === 'shop' && category === 'Accessoires' ? 'nav-link active' : 'nav-link'
+            }
             onClick={() => {
               setView('shop');
               setCategory('Accessoires');
@@ -518,7 +595,10 @@ export function App() {
         </div>
       </header>
       {notice && (
-        <div className={`toast toast-${toastKind}`} role={toastKind === 'error' ? 'alert' : 'status'}>
+        <div
+          className={`toast toast-${toastKind}`}
+          role={toastKind === 'error' ? 'alert' : 'status'}
+        >
           {notice}
           <button aria-label="Fermer le message" onClick={() => setNotice('')}>
             ×
@@ -757,8 +837,9 @@ export function App() {
                 Merci pour votre commande<span className="brand-period">.</span>
               </h1>
               <p>
-                Votre commande est enregistrée pour {orderEmail}. Aucun paiement n’a été effectué pour le moment.
-                Si le paiement n’a pas pu être préparé, retrouvez cette commande dans votre compte pour réessayer.
+                Votre commande est enregistrée pour {orderEmail}. Aucun paiement n’a été effectué
+                pour le moment. Si le paiement n’a pas pu être préparé, retrouvez cette commande
+                dans votre compte pour réessayer.
               </p>
               <button
                 className="dark-button"
@@ -777,7 +858,8 @@ export function App() {
                 Finaliser ma commande<span className="brand-period">.</span>
               </h1>
               <p className="workspace-intro">
-                Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.
+                Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe.
+                L’expédition ne démarre qu’après confirmation du paiement.
               </p>
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeCheckout}>
@@ -796,29 +878,54 @@ export function App() {
                   <div className="form-two-col">
                     <label>
                       Destinataire (prénom et nom)
-                      <input required name="recipient" autoComplete="name" placeholder="Prénom et nom du destinataire" />
+                      <input
+                        required
+                        name="recipient"
+                        autoComplete="name"
+                        placeholder="Prénom et nom du destinataire"
+                      />
                     </label>
                     <label>
                       Complément d’adresse (facultatif)
-                      <input name="line2" autoComplete="address-line2" placeholder="Appartement, bâtiment…" />
+                      <input
+                        name="line2"
+                        autoComplete="address-line2"
+                        placeholder="Appartement, bâtiment…"
+                      />
                     </label>
                   </div>
                   <label>
                     Adresse
-                    <input required name="line1" autoComplete="street-address" placeholder="Numéro et rue" />
+                    <input
+                      required
+                      name="line1"
+                      autoComplete="street-address"
+                      placeholder="Numéro et rue"
+                    />
                   </label>
                   <div className="form-two-col">
                     <label>
                       Code postal
-                      <input required name="postalCode" autoComplete="postal-code" placeholder="75000" />
+                      <input
+                        required
+                        name="postalCode"
+                        autoComplete="postal-code"
+                        placeholder="75000"
+                      />
                     </label>
                     <label>
                       Ville
-                      <input required name="city" autoComplete="address-level2" placeholder="Paris" />
+                      <input
+                        required
+                        name="city"
+                        autoComplete="address-level2"
+                        placeholder="Paris"
+                      />
                     </label>
                   </div>
                   <label className="checkbox-line">
-                    <input type="checkbox" required /> Je confirme que les informations de livraison sont exactes.
+                    <input type="checkbox" required /> Je confirme que les informations de livraison
+                    sont exactes.
                   </label>
                   <button className="dark-button full-button" type="submit">
                     Enregistrer la commande ↗
@@ -850,7 +957,8 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p className="summary-note">
-                    Les frais de livraison ne sont pas encore configurés pour cette boutique de démonstration.
+                    Les frais de livraison ne sont pas encore configurés pour cette boutique de
+                    démonstration.
                   </p>
                 </aside>
               </div>
@@ -861,13 +969,27 @@ export function App() {
       {view === 'seller' && (
         <>
           <div className="seller-range-control">
-            <label>Période <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}><option value="7">7 jours</option><option value="30">30 jours</option><option value="90">90 jours</option></select></label>
+            <label>
+              Période{' '}
+              <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}>
+                <option value="7">7 jours</option>
+                <option value="30">30 jours</option>
+                <option value="90">90 jours</option>
+              </select>
+            </label>
           </div>
           <SellerWorkspace range={sellerRange} />
         </>
       )}
       {view === 'legal' && <LegalPage page={legalPage} onBack={() => setView('shop')} />}
-      {view === 'reset' && <ResetPassword onDone={() => { window.history.replaceState({}, '', '/'); setView('account'); }} />}
+      {view === 'reset' && (
+        <ResetPassword
+          onDone={() => {
+            window.history.replaceState({}, '', '/');
+            setView('account');
+          }}
+        />
+      )}
       <footer className="store-footer">
         <a
           className="store-brand"
@@ -888,9 +1010,30 @@ export function App() {
           <button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>
             Aide & contact
           </button>
-          <button onClick={() => { setLegalPage('terms'); setView('legal'); }}>Conditions générales de vente</button>
-          <button onClick={() => { setLegalPage('privacy'); setView('legal'); }}>Confidentialité</button>
-          <button onClick={() => { setLegalPage('returns'); setView('legal'); }}>Retours et remboursements</button>
+          <button
+            onClick={() => {
+              setLegalPage('terms');
+              setView('legal');
+            }}
+          >
+            Conditions générales de vente
+          </button>
+          <button
+            onClick={() => {
+              setLegalPage('privacy');
+              setView('legal');
+            }}
+          >
+            Confidentialité
+          </button>
+          <button
+            onClick={() => {
+              setLegalPage('returns');
+              setView('legal');
+            }}
+          >
+            Retours et remboursements
+          </button>
         </div>
         <span className="copyright">© 2026 atelier. · Démonstration</span>
       </footer>
@@ -975,9 +1118,7 @@ export function App() {
                     <span>Sous-total</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
-                  <p>
-                    'Les frais de livraison ne sont pas encore configurés pour cette boutique.'
-                  </p>
+                  <p>'Les frais de livraison ne sont pas encore configurés pour cette boutique.'</p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
                   </button>

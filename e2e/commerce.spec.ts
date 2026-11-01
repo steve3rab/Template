@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test';
 
 test('customer can register and persist a real unpaid order', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /ajouter au panier/i }).first().click();
+  await page
+    .getByRole('button', { name: /ajouter au panier/i })
+    .first()
+    .click();
   await page.getByRole('button', { name: /passer à la commande/i }).click();
 
   await expect(page.getByRole('heading', { name: /bonjour, bienvenue/i })).toBeVisible();
@@ -33,10 +36,18 @@ test('legal pages are accessible from the storefront footer', async ({ page }) =
   await page.goto('/');
   await page.getByRole('button', { name: 'Conditions générales de vente' }).click();
   await expect(page.getByRole('heading', { name: /conditions générales de vente/i })).toBeVisible();
-  await page.getByRole('button', { name: /retour à la boutique/i }).first().click();
+  await page
+    .getByRole('button', { name: /retour à la boutique/i })
+    .first()
+    .click();
   await page.getByRole('button', { name: 'Confidentialité' }).click();
   await expect(page.getByRole('heading', { name: /politique de confidentialité/i })).toBeVisible();
-  await page.getByRole('button', { name: /retour à la boutique/i }).first().click();
+  await page
+    .getByRole('button', { name: /retour à la boutique/i })
+    .first()
+    .click();
   await page.getByRole('button', { name: 'Retours et remboursements' }).click();
-  await expect(page.getByRole('heading', { name: /livraison, retours et remboursements/i })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /livraison, retours et remboursements/i }),
+  ).toBeVisible();
 });

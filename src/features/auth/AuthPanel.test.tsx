@@ -178,16 +178,20 @@ describe('AuthPanel', () => {
       if (event instanceof CustomEvent) authEvents.push(event.detail?.authenticated);
     };
     window.addEventListener('template-auth-changed', onAuthChanged);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(false, { error: 'Temporary failure.' }, 500)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(response(false, { error: 'Temporary failure.' }, 500)),
+    );
 
     try {
       render(<AuthPanel language="en" />);
-      await waitFor(() => expect(toastMessages).toContain('Something went wrong. Please try again.'));
+      await waitFor(() =>
+        expect(toastMessages).toContain('Something went wrong. Please try again.'),
+      );
       expect(authEvents).toEqual([]);
       expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     } finally {
       window.removeEventListener('template-auth-changed', onAuthChanged);
     }
   });
-
 });

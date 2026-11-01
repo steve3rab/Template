@@ -104,16 +104,23 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   }
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.PASSWORD_RESET_WEBHOOK_URL || !process.env.PASSWORD_RESET_WEBHOOK_TOKEN) {
-      throw new Error('PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.');
+      throw new Error(
+        'PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.',
+      );
     }
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-      throw new Error('STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be configured in production.');
+      throw new Error(
+        'STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be configured in production.',
+      );
     }
     let resetWebhook: URL;
-    try { resetWebhook = new URL(process.env.PASSWORD_RESET_WEBHOOK_URL); } catch {
+    try {
+      resetWebhook = new URL(process.env.PASSWORD_RESET_WEBHOOK_URL);
+    } catch {
       throw new Error('PASSWORD_RESET_WEBHOOK_URL must be an absolute HTTPS URL.');
     }
-    if (resetWebhook.protocol !== 'https:') throw new Error('PASSWORD_RESET_WEBHOOK_URL must use HTTPS.');
+    if (resetWebhook.protocol !== 'https:')
+      throw new Error('PASSWORD_RESET_WEBHOOK_URL must use HTTPS.');
   }
 
   const app = Fastify({
@@ -206,7 +213,9 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   app.post(
     '/api/auth/register',
     {
-      config: { rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 5, timeWindow: '1 minute' } },
+      config: {
+        rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 5, timeWindow: '1 minute' },
+      },
     },
     async (request, reply) => {
       const credentials = parseCredentials(request.body);
@@ -242,7 +251,9 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   app.post(
     '/api/auth/login',
     {
-      config: { rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 8, timeWindow: '1 minute' } },
+      config: {
+        rateLimit: { max: process.env.E2E_TEST === 'true' ? 100 : 8, timeWindow: '1 minute' },
+      },
     },
     async (request, reply) => {
       const body = request.body;

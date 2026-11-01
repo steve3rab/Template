@@ -24,7 +24,9 @@ try {
   await prisma.session.deleteMany({ where: { userId: user.id } });
   console.info(`Updated ${user.email} to role ${user.role}; existing sessions revoked.`);
 } catch {
-  console.error('Could not update role. Verify that the account exists and the database is migrated.');
+  console.error(
+    'Could not update role. Verify that the account exists and the database is migrated.',
+  );
   process.exitCode = 1;
 } finally {
   await prisma.$disconnect();

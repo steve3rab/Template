@@ -36,16 +36,17 @@ export function CustomerAccountData() {
       // last known data and show a recoverable error instead of erasing the UI.
       if (version !== loadVersion.current) return;
       setLoadFailed(true);
-      setMessage('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.');
+      setMessage(
+        'Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.',
+      );
     }
   }, []);
 
   useEffect(() => {
     let active = true;
     const refresh = (event?: Event) => {
-      const authenticated = event instanceof CustomEvent
-        ? event.detail?.authenticated === true
-        : false;
+      const authenticated =
+        event instanceof CustomEvent ? event.detail?.authenticated === true : false;
       if (!event) {
         void fetch('/api/auth/me', { credentials: 'include' })
           .then((response) => {
@@ -111,9 +112,13 @@ export function CustomerAccountData() {
       await apiRequest('/api/customer/addresses', apiSchemas.addressCreated, {
         method: 'POST',
         body: JSON.stringify({
-          label: String(form.get('label') ?? 'Domicile'), recipient: String(form.get('recipient') ?? ''),
-          line1: String(form.get('line1') ?? ''), postalCode: String(form.get('postalCode') ?? ''),
-          city: String(form.get('city') ?? ''), country: 'FR', isDefault: addresses.length === 0,
+          label: String(form.get('label') ?? 'Domicile'),
+          recipient: String(form.get('recipient') ?? ''),
+          line1: String(form.get('line1') ?? ''),
+          postalCode: String(form.get('postalCode') ?? ''),
+          city: String(form.get('city') ?? ''),
+          country: 'FR',
+          isDefault: addresses.length === 0,
         }),
       });
     } catch {
@@ -127,7 +132,9 @@ export function CustomerAccountData() {
 
   async function removeAddress(id: string) {
     try {
-      await apiRequestVoid(`/api/customer/addresses/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await apiRequestVoid(`/api/customer/addresses/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       await load();
     } catch {
       setMessage('Impossible de supprimer cette adresse.');
@@ -137,36 +144,93 @@ export function CustomerAccountData() {
   return (
     <section className="seller-panel" style={{ marginTop: 24 }}>
       <h2>Mes commandes et adresses</h2>
-      {!available && !loadFailed ? <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p> : loadFailed ? (
+      {!available && !loadFailed ? (
+        <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p>
+      ) : loadFailed ? (
         <p role="alert">{message}</p>
       ) : (
         <>
           <h3>Historique des commandes</h3>
-          {orders.some((order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING') && (
-            <button className="dark-button" type="button" disabled={checkoutPending} onClick={() => void payUnpaidOrders()}>
+          {orders.some(
+            (order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING',
+          ) && (
+            <button
+              className="dark-button"
+              type="button"
+              disabled={checkoutPending}
+              onClick={() => void payUnpaidOrders()}
+            >
               {checkoutPending ? 'Préparation du paiement…' : 'Payer mes commandes en attente'}
             </button>
           )}
-          {orders.length === 0 ? <p>Vous n’avez pas encore de commande.</p> : orders.map((order) => (
-            <article className="best-seller-row" key={order.id}>
-              <div className="best-seller-name"><strong>Commande {order.id.slice(-8)}</strong><span>{new Date(order.createdAt).toLocaleDateString('fr-FR')} · {order.status} · Paiement : {order.paymentStatus}</span><span>{order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}</span></div>
-              <strong>{formatCents(order.totalCents)}</strong>
-            </article>
-          ))}
+          {orders.length === 0 ? (
+            <p>Vous n’avez pas encore de commande.</p>
+          ) : (
+            orders.map((order) => (
+              <article className="best-seller-row" key={order.id}>
+                <div className="best-seller-name">
+                  <strong>Commande {order.id.slice(-8)}</strong>
+                  <span>
+                    {new Date(order.createdAt).toLocaleDateString('fr-FR')} · {order.status} ·
+                    Paiement : {order.paymentStatus}
+                  </span>
+                  <span>
+                    {order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}
+                  </span>
+                </div>
+                <strong>{formatCents(order.totalCents)}</strong>
+              </article>
+            ))
+          )}
           <h3 style={{ marginTop: 24 }}>Adresses enregistrées</h3>
           {addresses.map((address) => (
             <article className="best-seller-row" key={address.id}>
-              <div className="best-seller-name"><strong>{address.label}{address.isDefault ? ' · Par défaut' : ''}</strong><span>{address.recipient}, {address.line1}, {address.postalCode} {address.city}, {address.country}</span></div>
-              <button className="text-action" onClick={() => void removeAddress(address.id)}>Supprimer</button>
+              <div className="best-seller-name">
+                <strong>
+                  {address.label}
+                  {address.isDefault ? ' · Par défaut' : ''}
+                </strong>
+                <span>
+                  {address.recipient}, {address.line1}, {address.postalCode} {address.city},{' '}
+                  {address.country}
+                </span>
+              </div>
+              <button className="text-action" onClick={() => void removeAddress(address.id)}>
+                Supprimer
+              </button>
             </article>
           ))}
-          <form className="checkout-form" onSubmit={(event) => void addAddress(event)} style={{ marginTop: 16 }}>
+          <form
+            className="checkout-form"
+            onSubmit={(event) => void addAddress(event)}
+            style={{ marginTop: 16 }}
+          >
             <h3>Ajouter une adresse</h3>
-            <label>Libellé<input name="label" defaultValue="Domicile" required maxLength={60} /></label>
-            <label>Destinataire<input name="recipient" required minLength={2} maxLength={120} /></label>
-            <label>Adresse<input name="line1" required minLength={3} maxLength={180} /></label>
-            <div className="form-two-col"><label>Code postal<input name="postalCode" required maxLength={20} /></label><label>Ville<input name="city" required maxLength={100} /></label></div>
-            <button className="dark-button" type="submit">Enregistrer l’adresse</button>
+            <label>
+              Libellé
+              <input name="label" defaultValue="Domicile" required maxLength={60} />
+            </label>
+            <label>
+              Destinataire
+              <input name="recipient" required minLength={2} maxLength={120} />
+            </label>
+            <label>
+              Adresse
+              <input name="line1" required minLength={3} maxLength={180} />
+            </label>
+            <div className="form-two-col">
+              <label>
+                Code postal
+                <input name="postalCode" required maxLength={20} />
+              </label>
+              <label>
+                Ville
+                <input name="city" required maxLength={100} />
+              </label>
+            </div>
+            <button className="dark-button" type="submit">
+              Enregistrer l’adresse
+            </button>
           </form>
         </>
       )}

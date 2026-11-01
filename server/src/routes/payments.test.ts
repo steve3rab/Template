@@ -14,7 +14,9 @@ const order = {
   paymentStatus: 'UNPAID',
   totalCents: 5000,
   currency: 'EUR',
-  items: [{ productId: 'product-1', productName: 'Test product', unitPriceCents: 2500, quantity: 2 }],
+  items: [
+    { productId: 'product-1', productName: 'Test product', unitPriceCents: 2500, quantity: 2 },
+  ],
 };
 
 let app: FastifyInstance;
@@ -31,7 +33,9 @@ function setup() {
       updateMany,
     },
     product: { updateMany: productUpdateMany },
-    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback(transaction)),
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(transaction),
+    ),
   };
   app = Fastify({ logger: false });
   app.removeContentTypeParser('application/json');
@@ -49,10 +53,7 @@ function setup() {
 }
 
 function signatureFor(rawBody: Buffer, secret: string, timestamp = Math.floor(Date.now() / 1000)) {
-  const digest = createHmac('sha256', secret)
-    .update(`${timestamp}.`)
-    .update(rawBody)
-    .digest('hex');
+  const digest = createHmac('sha256', secret).update(`${timestamp}.`).update(rawBody).digest('hex');
   return `t=${timestamp},v1=${digest}`;
 }
 
@@ -67,10 +68,19 @@ describe('Stripe payment routes', () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');
     const prisma = setup();
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
-      id: 'cs_test_123',
-      url: 'https://checkout.stripe.com/c/pay/cs_test_123',
-    }), { status: 200, headers: { 'content-type': 'application/json' } })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              id: 'cs_test_123',
+              url: 'https://checkout.stripe.com/c/pay/cs_test_123',
+            }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
+      ),
+    );
     await app.ready();
 
     const response = await app.inject({
@@ -87,26 +97,38 @@ describe('Stripe payment routes', () => {
       include: { items: true },
     });
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['order-1'] }, userId: customer.id, paymentStatus: 'UNPAID', status: 'PENDING', paymentReference: null },
+      where: {
+        id: { in: ['order-1'] },
+        userId: customer.id,
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+        paymentReference: null,
+      },
       data: { paymentReference: 'cs_test_123' },
     });
     const request = vi.mocked(fetch).mock.calls[0]?.[1];
-    expect(String(request?.body)).toContain('line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=2500');
+    expect(String(request?.body)).toContain(
+      'line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=2500',
+    );
   });
 
   it('accepts only signed Stripe events and marks the matching unpaid order as paid', async () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     const prisma = setup();
     await app.ready();
-    const rawBody = Buffer.from(JSON.stringify({
-      id: 'evt_test_123',
-      type: 'checkout.session.completed',
-      data: { object: {
-        id: 'cs_test_123',
-        payment_status: 'paid',
-        metadata: { orderIds: 'order-1' },
-      } },
-    }));
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        id: 'evt_test_123',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_test_123',
+            payment_status: 'paid',
+            metadata: { orderIds: 'order-1' },
+          },
+        },
+      }),
+    );
     const response = await app.inject({
       method: 'POST',
       url: '/api/webhooks/stripe',
@@ -120,7 +142,12 @@ describe('Stripe payment routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ received: true });
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: { in: ['order-1'] }, paymentReference: 'cs_test_123', paymentStatus: 'UNPAID', status: 'PENDING' },
+      where: {
+        id: { in: ['order-1'] },
+        paymentReference: 'cs_test_123',
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+      },
       data: { paymentStatus: 'PAID' },
     });
     expect(prisma.order.findMany).not.toHaveBeenCalled();
@@ -130,15 +157,19 @@ describe('Stripe payment routes', () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     setup();
     await app.ready();
-    const rawBody = Buffer.from(JSON.stringify({
-      id: 'evt_expired_123',
-      type: 'checkout.session.expired',
-      data: { object: {
-        id: 'cs_test_123',
-        payment_status: 'unpaid',
-        metadata: { orderIds: 'order-1' },
-      } },
-    }));
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        id: 'evt_expired_123',
+        type: 'checkout.session.expired',
+        data: {
+          object: {
+            id: 'cs_test_123',
+            payment_status: 'unpaid',
+            metadata: { orderIds: 'order-1' },
+          },
+        },
+      }),
+    );
     const response = await app.inject({
       method: 'POST',
       url: '/api/webhooks/stripe',
@@ -169,11 +200,13 @@ describe('Stripe payment routes', () => {
     setup();
     const rawBody = Buffer.from('{"type":"checkout.session.completed"}');
     expect(verifyStripeSignature(rawBody, 't=1,v1=deadbeef', 'whsec_test_example')).toBe(false);
-    expect(verifyStripeSignature(
-      rawBody,
-      signatureFor(rawBody, 'whsec_test_example', Math.floor(Date.now() / 1000) - 600),
-      'whsec_test_example',
-    )).toBe(false);
+    expect(
+      verifyStripeSignature(
+        rawBody,
+        signatureFor(rawBody, 'whsec_test_example', Math.floor(Date.now() / 1000) - 600),
+        'whsec_test_example',
+      ),
+    ).toBe(false);
   });
 
   it('does not create a payment session when Stripe is not configured', async () => {

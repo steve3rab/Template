@@ -14,9 +14,11 @@ function makePrisma() {
     cartItem: { findMany: vi.fn(async () => []), deleteMany: vi.fn(async () => ({ count: 0 })) },
     order: { findMany: vi.fn(async () => []) },
     product: { findFirst: vi.fn(async () => null), updateMany: vi.fn(async () => ({ count: 1 })) },
-    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback({
-      product: { updateMany: vi.fn(async () => ({ count: 1 })) },
-    })),
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        product: { updateMany: vi.fn(async () => ({ count: 1 })) },
+      }),
+    ),
   };
 }
 
@@ -28,11 +30,7 @@ describe('customer order access control', () => {
   it('rejects order history requests without an authenticated user', async () => {
     const prisma = makePrisma();
     app = Fastify({ logger: false });
-    registerCustomerOrderRoutes(
-      app,
-      prisma as unknown as PrismaClient,
-      async () => null,
-    );
+    registerCustomerOrderRoutes(app, prisma as unknown as PrismaClient, async () => null);
     await app.ready();
 
     const response = await app.inject({ method: 'GET', url: '/api/customer/orders' });
@@ -44,11 +42,7 @@ describe('customer order access control', () => {
   it('scopes order history to the authenticated customer', async () => {
     const prisma = makePrisma();
     app = Fastify({ logger: false });
-    registerCustomerOrderRoutes(
-      app,
-      prisma as unknown as PrismaClient,
-      async () => user,
-    );
+    registerCustomerOrderRoutes(app, prisma as unknown as PrismaClient, async () => user);
     await app.ready();
 
     const response = await app.inject({ method: 'GET', url: '/api/customer/orders' });
@@ -64,11 +58,7 @@ describe('customer order access control', () => {
   it('cannot create an order using another customer’s address', async () => {
     const prisma = makePrisma();
     app = Fastify({ logger: false });
-    registerCustomerOrderRoutes(
-      app,
-      prisma as unknown as PrismaClient,
-      async () => user,
-    );
+    registerCustomerOrderRoutes(app, prisma as unknown as PrismaClient, async () => user);
     await app.ready();
 
     const response = await app.inject({

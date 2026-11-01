@@ -40,11 +40,11 @@ Le refus d'inscription pour une adresse déjà utilisée utilise un message gén
 
 Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes dans la base configurée par `DATABASE_URL` :
 
-| Rôle | Identifiant |
-| --- | --- |
-| Client (`CUSTOMER`) | `test.customer@example.com` |
-| Vendeur (`SELLER`) | `test.seller@example.com` |
-| Administrateur (`ADMIN`) | `test.admin@example.com` |
+| Rôle                     | Identifiant                 |
+| ------------------------ | --------------------------- |
+| Client (`CUSTOMER`)      | `test.customer@example.com` |
+| Vendeur (`SELLER`)       | `test.seller@example.com`   |
+| Administrateur (`ADMIN`) | `test.admin@example.com`    |
 
 Choisissez un mot de passe de test (12 à 128 caractères), puis lancez ces commandes dans PowerShell depuis la racine du dépôt :
 
@@ -149,12 +149,12 @@ scripts/                 # commandes PowerShell
 
 Le projet fournit une base sécurisée, pas une certification de sécurité. Les limites à traiter avant une exposition publique sont : vérification/récupération d'e-mail, MFA si le risque le justifie, autorisations métier explicites, limitation de débit distribuée (le stockage mémoire est local à chaque instance), journalisation/alerting, sauvegardes et tests de charge. En production, `APP_ORIGIN` doit être une origine HTTPS exacte et `SESSION_SECRET` doit être un secret aléatoire d'au moins 32 caractères. Avant une mise en production réelle : configurer secrets et HTTPS, ajouter journalisation/monitoring et sauvegardes, effectuer des tests de sécurité et de charge, définir les règles d'autorisation, et mettre en place les parcours de récupération de compte. Ne jamais exposer le port de développement directement sur Internet.
 
-
 ## Boutique, clients et vendeurs
 
 Les données de catalogue, panier client authentifié, favoris, adresses et commandes sont maintenant persistées via Prisma. Le catalogue de démonstration est inséré par migration. Les clients peuvent consulter l'historique et le statut de leurs commandes ; les vendeurs autorisés disposent d'un tableau de bord calculé à partir des commandes, peuvent créer/modifier/masquer leurs produits et mettre à jour les statuts de commande. Les commandes multi-vendeurs sont séparées par vendeur pour éviter d'exposer les articles d'un autre vendeur.
 
 Principales routes :
+
 - Public : `GET /api/products`
 - Administration : `POST /api/admin/users/:id/role` (ADMIN uniquement, rôles CUSTOMER/SELLER)
 - Vendeur : `GET /api/seller/dashboard?days=7|30|90`, `GET/POST /api/seller/products`, `PATCH/DELETE /api/seller/products/:id`, `GET /api/seller/orders`, `PATCH /api/seller/orders/:id/status`

@@ -300,7 +300,6 @@ describe('authentication API', () => {
     expect(invalid.json().error).toBe('Invalid email or password.');
   });
 
-
   it('accepts a legacy account password shorter than the registration minimum', async () => {
     const registered = await register();
     expect(registered.statusCode).toBe(201);

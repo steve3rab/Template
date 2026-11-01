@@ -17,7 +17,13 @@ const orderItemSchema = z.object({
   unitPriceCents: z.number().int().optional(),
 });
 
-export const orderStatusSchema = z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']);
+export const orderStatusSchema = z.enum([
+  'PENDING',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+]);
 
 const orderSchema = z.object({
   id: z.string(),
@@ -42,7 +48,15 @@ const addressSchema = z.object({
 
 export const apiSchemas = {
   products: z.object({ products: z.array(productSchema) }),
-  customerCart: z.object({ items: z.array(z.object({ productId: z.string(), quantity: z.number().int(), product: productSchema.optional() })) }),
+  customerCart: z.object({
+    items: z.array(
+      z.object({
+        productId: z.string(),
+        quantity: z.number().int(),
+        product: productSchema.optional(),
+      }),
+    ),
+  }),
   customerFavorites: z.object({ favorites: z.array(z.object({ productId: z.string() })) }),
   productResult: z.object({ product: productSchema }),
   sellerDashboard: z.object({

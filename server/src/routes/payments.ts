@@ -23,16 +23,23 @@ const stripeSessionLookupSchema = z.object({
   status: z.enum(['open', 'complete', 'expired']),
 });
 
-const stripeEventSchema = z.object({
-  type: z.string(),
-  data: z.object({ object: z.unknown() }),
-}).passthrough();
+const stripeEventSchema = z
+  .object({
+    type: z.string(),
+    data: z.object({ object: z.unknown() }),
+  })
+  .passthrough();
 
-const stripeCheckoutCompletedSchema = z.object({
-  id: z.string().min(1),
-  payment_status: z.string(),
-  metadata: z.object({ orderIds: z.string().min(1) }).nullable().optional(),
-}).passthrough();
+const stripeCheckoutCompletedSchema = z
+  .object({
+    id: z.string().min(1),
+    payment_status: z.string(),
+    metadata: z
+      .object({ orderIds: z.string().min(1) })
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
 
 export function verifyStripeSignature(
   rawBody: Buffer,
@@ -47,10 +54,7 @@ export function verifyStripeSignature(
     return false;
   }
 
-  const expected = createHmac('sha256', secret)
-    .update(`${timestamp}.`)
-    .update(rawBody)
-    .digest();
+  const expected = createHmac('sha256', secret).update(`${timestamp}.`).update(rawBody).digest();
   return parts
     .filter(([key]) => key === 'v1')
     .some(([, value]) => {
@@ -84,11 +88,20 @@ export function registerPaymentRoutes(
     if (orders.length !== body.data.orderIds.length) {
       return reply.code(404).send({ error: 'One or more orders were not found.' });
     }
-    if (orders.some((order) => order.paymentStatus !== 'UNPAID' || order.status !== 'PENDING' || order.items.length === 0)) {
+    if (
+      orders.some(
+        (order) =>
+          order.paymentStatus !== 'UNPAID' ||
+          order.status !== 'PENDING' ||
+          order.items.length === 0,
+      )
+    ) {
       return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
     }
 
-    const existingReferences = orders.map((order) => order.paymentReference).filter((value): value is string => Boolean(value));
+    const existingReferences = orders
+      .map((order) => order.paymentReference)
+      .filter((value): value is string => Boolean(value));
     if (existingReferences.length > 0) {
       if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
         return reply.code(409).send({ error: 'Orders are linked to different payment sessions.' });
@@ -101,13 +114,20 @@ export function registerPaymentRoutes(
         );
       } catch {
         request.log.error('Stripe Checkout session lookup failed.');
-        return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement. Réessayez.' });
+        return reply
+          .code(502)
+          .send({ error: 'Impossible de vérifier la session de paiement. Réessayez.' });
       }
       if (!existingResponse.ok) {
-        request.log.error({ statusCode: existingResponse.status }, 'Stripe Checkout session lookup was rejected.');
+        request.log.error(
+          { statusCode: existingResponse.status },
+          'Stripe Checkout session lookup was rejected.',
+        );
         return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement.' });
       }
-      const existingSession = stripeSessionLookupSchema.safeParse(await existingResponse.json().catch(() => null));
+      const existingSession = stripeSessionLookupSchema.safeParse(
+        await existingResponse.json().catch(() => null),
+      );
       if (!existingSession.success) {
         return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
       }
@@ -115,13 +135,22 @@ export function registerPaymentRoutes(
         return reply.send({ checkoutUrl: existingSession.data.url });
       }
       if (existingSession.data.status === 'complete') {
-        return reply.code(409).send({ error: 'Le paiement est en cours de confirmation. Actualisez votre compte dans quelques instants.' });
+        return reply.code(409).send({
+          error:
+            'Le paiement est en cours de confirmation. Actualisez votre compte dans quelques instants.',
+        });
       }
-      return reply.code(409).send({ error: 'Cette session de paiement a expiré. Créez une nouvelle commande pour réessayer.' });
+      return reply.code(409).send({
+        error: 'Cette session de paiement a expiré. Créez une nouvelle commande pour réessayer.',
+      });
     }
 
     const currency = orders[0]?.currency.toLowerCase();
-    if (!currency || !/^[a-z]{3}$/.test(currency) || orders.some((order) => order.currency.toLowerCase() !== currency)) {
+    if (
+      !currency ||
+      !/^[a-z]{3}$/.test(currency) ||
+      orders.some((order) => order.currency.toLowerCase() !== currency)
+    ) {
       return reply.code(409).send({ error: 'Orders must use the same supported currency.' });
     }
 
@@ -129,7 +158,8 @@ export function registerPaymentRoutes(
     if (!origin) return reply.code(503).send({ error: 'Checkout origin is not configured.' });
 
     const totalLineItems = orders.reduce((sum, order) => sum + order.items.length, 0);
-    if (totalLineItems > 100) return reply.code(400).send({ error: 'Too many line items for one checkout.' });
+    if (totalLineItems > 100)
+      return reply.code(400).send({ error: 'Too many line items for one checkout.' });
 
     for (const order of orders) {
       let itemsTotal = 0;
@@ -165,8 +195,14 @@ export function registerPaymentRoutes(
     for (const order of orders) {
       for (const item of order.items) {
         params.set(`line_items[${lineIndex}][price_data][currency]`, currency);
-        params.set(`line_items[${lineIndex}][price_data][unit_amount]`, String(item.unitPriceCents));
-        params.set(`line_items[${lineIndex}][price_data][product_data][name]`, item.productName.slice(0, 250));
+        params.set(
+          `line_items[${lineIndex}][price_data][unit_amount]`,
+          String(item.unitPriceCents),
+        );
+        params.set(
+          `line_items[${lineIndex}][price_data][product_data][name]`,
+          item.productName.slice(0, 250),
+        );
         params.set(`line_items[${lineIndex}][quantity]`, String(item.quantity));
         lineIndex += 1;
       }
@@ -189,12 +225,19 @@ export function registerPaymentRoutes(
       });
     } catch {
       request.log.error('Stripe Checkout request failed.');
-      return reply.code(502).send({ error: 'Impossible de joindre le service de paiement. Réessayez.' });
+      return reply
+        .code(502)
+        .send({ error: 'Impossible de joindre le service de paiement. Réessayez.' });
     }
 
     if (!response.ok) {
-      request.log.error({ statusCode: response.status }, 'Stripe Checkout rejected the session request.');
-      return reply.code(502).send({ error: 'Le service de paiement n’a pas pu préparer la transaction.' });
+      request.log.error(
+        { statusCode: response.status },
+        'Stripe Checkout rejected the session request.',
+      );
+      return reply
+        .code(502)
+        .send({ error: 'Le service de paiement n’a pas pu préparer la transaction.' });
     }
 
     const session = stripeSessionSchema.safeParse(await response.json().catch(() => null));
@@ -204,7 +247,13 @@ export function registerPaymentRoutes(
     }
 
     const saved = await prisma.order.updateMany({
-      where: { id: { in: orderIds }, userId: user.id, paymentStatus: 'UNPAID', status: 'PENDING', paymentReference: null },
+      where: {
+        id: { in: orderIds },
+        userId: user.id,
+        paymentStatus: 'UNPAID',
+        status: 'PENDING',
+        paymentReference: null,
+      },
       data: { paymentReference: session.data.id },
     });
     if (saved.count !== orderIds.length) {
@@ -228,17 +277,28 @@ export function registerPaymentRoutes(
 
   app.post('/api/webhooks/stripe', async (request, reply) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) return reply.code(503).send({ error: 'Payment webhook is not configured.' });
+    if (!webhookSecret)
+      return reply.code(503).send({ error: 'Payment webhook is not configured.' });
 
     const rawBody = request.rawBody;
     const signature = request.headers['stripe-signature'];
-    if (!rawBody || typeof signature !== 'string' || !verifyStripeSignature(rawBody, signature, webhookSecret)) {
+    if (
+      !rawBody ||
+      typeof signature !== 'string' ||
+      !verifyStripeSignature(rawBody, signature, webhookSecret)
+    ) {
       return reply.code(400).send({ error: 'Invalid webhook signature.' });
     }
 
     const event = stripeEventSchema.safeParse(request.body);
     if (!event.success) return reply.code(400).send({ error: 'Invalid webhook payload.' });
-    if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired'].includes(event.data.type)) {
+    if (
+      ![
+        'checkout.session.completed',
+        'checkout.session.async_payment_succeeded',
+        'checkout.session.expired',
+      ].includes(event.data.type)
+    ) {
       return reply.send({ received: true });
     }
 

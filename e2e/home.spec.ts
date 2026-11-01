@@ -8,7 +8,9 @@ test('storefront renders the Atelier catalogue and filters products', async ({ p
 
   await page.locator('.main-nav').getByRole('button', { name: 'Chaussures', exact: true }).click();
   await expect(page.locator('.product-card')).toHaveCount(2);
-  await expect(page.locator('.product-meta h3', { hasText: /sneakers everyday|baskets city/i }).first()).toBeVisible();
+  await expect(
+    page.locator('.product-meta h3', { hasText: /sneakers everyday|baskets city/i }).first(),
+  ).toBeVisible();
 });
 
 test('storefront keeps its declared French language', async ({ page }) => {
@@ -24,7 +26,9 @@ test('storefront stays usable without horizontal overflow at common viewport wid
   await page.goto('/');
   for (const width of viewportWidths) {
     await page.setViewportSize({ width, height: 900 });
-    await expect(page.getByRole('heading', { name: /le style, en toute simplicité/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /le style, en toute simplicité/i }),
+    ).toBeVisible();
 
     const dimensions = await page.evaluate(() => ({
       documentWidth: document.documentElement.scrollWidth,

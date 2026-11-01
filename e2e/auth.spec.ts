@@ -22,10 +22,12 @@ test('a customer can register, sign out, sign in again and keep the session', as
   await page.getByRole('button', { name: 'Se connecter' }).click();
 
   await expect(page.getByText(email)).toBeVisible();
-  await expect.poll(async () => {
-    const response = await page.request.get('/api/auth/me');
-    if (!response.ok()) return response.status();
-    const payload = await response.json() as { user?: { email?: string } };
-    return payload.user?.email;
-  }).toBe(email);
+  await expect
+    .poll(async () => {
+      const response = await page.request.get('/api/auth/me');
+      if (!response.ok()) return response.status();
+      const payload = (await response.json()) as { user?: { email?: string } };
+      return payload.user?.email;
+    })
+    .toBe(email);
 });

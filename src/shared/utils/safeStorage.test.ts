@@ -4,8 +4,10 @@ import { readStoredJson, writeStoredJson } from './safeStorage';
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string');
 const isCart = (value: unknown): value is Record<string, number> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-  && Object.values(value).every((quantity) => Number.isInteger(quantity) && quantity >= 0);
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.values(value).every((quantity) => Number.isInteger(quantity) && quantity >= 0);
 
 describe('safe browser storage', () => {
   beforeEach(() => {
