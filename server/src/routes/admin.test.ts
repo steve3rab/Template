@@ -99,7 +99,7 @@ describe('admin role management', () => {
   });
 
   it('updates the role safely and invalidates all sessions for the target account', async () => {
-    const { userFindUnique, userUpdate, sessionDeleteMany } = setup();
+    const { userUpdate, sessionDeleteMany } = setup();
     await app.ready();
 
     const response = await app.inject({
