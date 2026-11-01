@@ -6,11 +6,11 @@ import type { FastifyInstance } from 'fastify';
 import { createApp } from './app.js';
 
 // Keep API tests deterministic and fast by replacing the native Argon2 implementation.
-const argon2TestDouble = {
+const argon2TestDouble = vi.hoisted(() => ({
   argon2id: 2,
   hash: vi.fn(async (password: string) => `test-hash:${password}`),
   verify: vi.fn(async (hash: string, password: string) => hash === `test-hash:${password}`),
-};
+}));
 
 vi.mock('argon2', () => ({
   ...argon2TestDouble,
