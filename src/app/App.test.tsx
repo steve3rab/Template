@@ -110,7 +110,7 @@ describe('Fashion storefront', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /les pièces du moment/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Veste Studio' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Espace vendeur' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Espace vendeur/ })).toBeInTheDocument();
   });
 
   it('filters the catalogue by category and search query', async () => {
@@ -155,7 +155,7 @@ describe('Fashion storefront', () => {
         headers: { 'Content-Type': 'application/json' },
       })) as typeof fetch;
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Espace vendeur' }));
+    await user.click(screen.getByRole('button', { name: /Espace vendeur/ }));
     expect(screen.queryByRole('heading', { name: /vue d’ensemble/i })).not.toBeInTheDocument();
     expect(
       screen.getByText(/accès refusé : cet espace est réservé aux comptes vendeurs autorisés/i),
