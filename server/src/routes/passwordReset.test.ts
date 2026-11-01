@@ -226,7 +226,10 @@ describe('password reset routes', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/auth/password-reset/complete',
-        payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
+        payload: {
+          token: 'token-value-that-is-at-least-32-chars',
+          password: 'a-very-long-new-password',
+        },
       });
 
       expect(response.statusCode).toBe(400);
@@ -242,7 +245,10 @@ describe('password reset routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/password-reset/complete',
-      payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
+      payload: {
+        token: 'token-value-that-is-at-least-32-chars',
+        password: 'a-very-long-new-password',
+      },
     });
 
     expect(response.statusCode).toBe(400);
@@ -258,7 +264,10 @@ describe('password reset routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/password-reset/complete',
-      payload: { token: 'token-value-that-is-at-least-32-chars', password: 'a-very-long-new-password' },
+      payload: {
+        token: 'token-value-that-is-at-least-32-chars',
+        password: 'a-very-long-new-password',
+      },
     });
 
     expect(response.statusCode).toBe(200);

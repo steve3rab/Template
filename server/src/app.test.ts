@@ -260,6 +260,46 @@ describe('authentication API', () => {
     expect(deniedOrders.statusCode).toBe(403);
   });
 
+  it('rate-limits repeated registration attempts', async () => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        headers: validHeaders,
+        payload: { email: 'invalid', password: 'short' },
+      });
+      expect(response.statusCode).toBe(400);
+    }
+
+    const limited = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      headers: validHeaders,
+      payload: { email: 'invalid', password: 'short' },
+    });
+    expect(limited.statusCode).toBe(429);
+  });
+
+  it('rate-limits repeated password-reset requests', async () => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/password-reset/request',
+        headers: validHeaders,
+        payload: { email: 'invalid' },
+      });
+      expect(response.statusCode).toBe(400);
+    }
+
+    const limited = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      headers: validHeaders,
+      payload: { email: 'invalid' },
+    });
+    expect(limited.statusCode).toBe(429);
+  });
+
   it('rate-limits repeated failed login attempts', async () => {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const response = await app.inject({
