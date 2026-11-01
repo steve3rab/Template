@@ -99,7 +99,7 @@ export function AuthPanel({
       if (submittedMode === 'reset') {
         setPassword('');
         showToast(
-          'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
+          t.authResetNotice,
           'success',
         );
         return;
@@ -197,9 +197,9 @@ export function AuthPanel({
           )}
           <button className="primary-button" type="submit" disabled={busy || checkingSession}>
             {busy
-              ? '…'
+              ? t.authSubmitting
               : mode === 'reset'
-                ? 'Envoyer le lien'
+                ? t.authReset
                 : mode === 'register'
                   ? t.authRegister
                   : t.authLogin}
@@ -214,7 +214,7 @@ export function AuthPanel({
             disabled={busy}
           >
             {mode === 'reset'
-              ? 'Retour à la connexion'
+              ? t.authBackToLogin
               : mode === 'register'
                 ? t.authSwitchLogin
                 : t.authSwitchRegister}
@@ -226,7 +226,7 @@ export function AuthPanel({
               onClick={() => setMode('reset')}
               disabled={busy}
             >
-              Mot de passe oublié ?
+              {t.authForgotPassword}
             </button>
           )}
         </form>
