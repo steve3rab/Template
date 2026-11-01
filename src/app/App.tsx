@@ -7,6 +7,7 @@ import { CustomerAccountData } from '../features/account/CustomerAccountData';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas } from '../shared/api/client';
+import { PRODUCT_CATEGORIES } from '../shared/categories';
 
 function isCart(value: unknown): value is Record<string, number> {
   return (
@@ -23,7 +24,7 @@ function isFavorites(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-type Category = 'Tout' | 'Vêtements' | 'Chaussures' | 'Accessoires';
+type Category = 'Tout' | (typeof PRODUCT_CATEGORIES)[number];
 type Product = {
   id: string;
   name: string;
@@ -549,7 +550,9 @@ export function App() {
         </a>
         <nav className="main-nav" aria-label="Navigation principale">
           <button
+            type="button"
             className={view === 'shop' && category === 'Tout' ? 'nav-link active' : 'nav-link'}
+            aria-current={view === 'shop' && category === 'Tout' ? 'page' : undefined}
             onClick={() => {
               setView('shop');
               setCategory('Tout');
@@ -557,37 +560,20 @@ export function App() {
           >
             Collection
           </button>
-          <button
-            className={view === 'shop' && category === 'Vêtements' ? 'nav-link active' : 'nav-link'}
-            onClick={() => {
-              setView('shop');
-              setCategory('Vêtements');
-            }}
-          >
-            Vêtements
-          </button>
-          <button
-            className={
-              view === 'shop' && category === 'Chaussures' ? 'nav-link active' : 'nav-link'
-            }
-            onClick={() => {
-              setView('shop');
-              setCategory('Chaussures');
-            }}
-          >
-            Chaussures
-          </button>
-          <button
-            className={
-              view === 'shop' && category === 'Accessoires' ? 'nav-link active' : 'nav-link'
-            }
-            onClick={() => {
-              setView('shop');
-              setCategory('Accessoires');
-            }}
-          >
-            Accessoires
-          </button>
+          {PRODUCT_CATEGORIES.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={view === 'shop' && category === item ? 'nav-link active' : 'nav-link'}
+              aria-current={view === 'shop' && category === item ? 'page' : undefined}
+              onClick={() => {
+                setView('shop');
+                setCategory(item);
+              }}
+            >
+              {item}
+            </button>
+          ))}
         </nav>
         <div className="header-actions">
           <div className="language-toggle" aria-label="Langue">
@@ -855,7 +841,7 @@ export function App() {
           />
           <CustomerAccountData />
           <p className="fine-print">
-            La création de compte et la connexion utilisent le service d’authentification existant.
+            Retrouvez vos commandes et vos adresses depuis votre espace client.
           </p>
         </section>
       )}
@@ -999,8 +985,7 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p className="summary-note">
-                    Les frais de livraison ne sont pas encore configurés pour cette boutique de
-                    démonstration.
+                    Frais de livraison non configurés : seul le sous-total des articles est affiché.
                   </p>
                 </aside>
               </div>
@@ -1160,7 +1145,7 @@ export function App() {
                     <span>Sous-total</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
-                  <p>'Les frais de livraison ne sont pas encore configurés pour cette boutique.'</p>
+                  <p>Frais de livraison non configurés : seul le sous-total des articles est affiché.</p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
                   </button>
