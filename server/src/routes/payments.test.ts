@@ -2,6 +2,7 @@
 
 import { createHmac } from 'node:crypto';
 import Fastify, { type FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient, User } from '@prisma/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { registerPaymentRoutes, verifyStripeSignature } from './payments.js';
@@ -38,6 +39,7 @@ function setup() {
     ),
   };
   app = Fastify({ logger: false });
+  app.register(rateLimit, { global: false });
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
@@ -64,6 +66,24 @@ afterEach(async () => {
 });
 
 describe('Stripe payment routes', () => {
+  it('rate-limits repeated checkout attempts per client IP', async () => {
+    setup();
+    await app.ready();
+
+    const responses = await Promise.all(
+      Array.from({ length: 11 }, () =>
+        app.inject({
+          method: 'POST',
+          url: '/api/customer/checkout',
+          payload: { orderIds: ['order-1'] },
+        }),
+      ),
+    );
+
+    expect(responses.slice(0, 10).every((response) => response.statusCode === 503)).toBe(true);
+    expect(responses[10]?.statusCode).toBe(429);
+  });
+
   it('creates a server-priced Checkout Session and records its reference', async () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');

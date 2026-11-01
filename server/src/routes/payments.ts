@@ -69,211 +69,217 @@ export function registerPaymentRoutes(
   prisma: PrismaClient,
   resolveUser: ResolveUser,
 ): void {
-  app.post('/api/customer/checkout', async (request, reply) => {
-    const user = await requireUser(request, reply, prisma, resolveUser);
-    if (!user) return;
+  app.post(
+    '/api/customer/checkout',
+    {
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+    },
+    async (request, reply) => {
+      const user = await requireUser(request, reply, prisma, resolveUser);
+      if (!user) return;
 
-    const body = checkoutInputSchema.safeParse(request.body);
-    if (!body.success) return reply.code(400).send({ error: 'Invalid checkout request.' });
+      const body = checkoutInputSchema.safeParse(request.body);
+      if (!body.success) return reply.code(400).send({ error: 'Invalid checkout request.' });
 
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) {
-      return reply.code(503).send({ error: 'Le paiement en ligne n’est pas encore configuré.' });
-    }
-
-    const orders = await prisma.order.findMany({
-      where: { id: { in: body.data.orderIds }, userId: user.id },
-      include: { items: true },
-    });
-    if (orders.length !== body.data.orderIds.length) {
-      return reply.code(404).send({ error: 'One or more orders were not found.' });
-    }
-    if (
-      orders.some(
-        (order) =>
-          order.paymentStatus !== 'UNPAID' ||
-          order.status !== 'PENDING' ||
-          order.items.length === 0,
-      )
-    ) {
-      return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
-    }
-
-    const existingReferences = orders
-      .map((order) => order.paymentReference)
-      .filter((value): value is string => Boolean(value));
-    if (existingReferences.length > 0) {
-      if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
-        return reply.code(409).send({ error: 'Orders are linked to different payment sessions.' });
+      const secretKey = process.env.STRIPE_SECRET_KEY;
+      if (!secretKey) {
+        return reply.code(503).send({ error: 'Le paiement en ligne n’est pas encore configuré.' });
       }
-      let existingResponse: Response;
-      try {
-        existingResponse = await fetch(
-          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(existingReferences[0] ?? '')}`,
-          { headers: { Authorization: `Bearer ${secretKey}` }, signal: AbortSignal.timeout(10000) },
+
+      const orders = await prisma.order.findMany({
+        where: { id: { in: body.data.orderIds }, userId: user.id },
+        include: { items: true },
+      });
+      if (orders.length !== body.data.orderIds.length) {
+        return reply.code(404).send({ error: 'One or more orders were not found.' });
+      }
+      if (
+        orders.some(
+          (order) =>
+            order.paymentStatus !== 'UNPAID' ||
+            order.status !== 'PENDING' ||
+            order.items.length === 0,
+        )
+      ) {
+        return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
+      }
+
+      const existingReferences = orders
+        .map((order) => order.paymentReference)
+        .filter((value): value is string => Boolean(value));
+      if (existingReferences.length > 0) {
+        if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
+          return reply.code(409).send({ error: 'Orders are linked to different payment sessions.' });
+        }
+        let existingResponse: Response;
+        try {
+          existingResponse = await fetch(
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(existingReferences[0] ?? '')}`,
+            { headers: { Authorization: `Bearer ${secretKey}` }, signal: AbortSignal.timeout(10000) },
+          );
+        } catch {
+          request.log.error('Stripe Checkout session lookup failed.');
+          return reply
+            .code(502)
+            .send({ error: 'Impossible de vérifier la session de paiement. Réessayez.' });
+        }
+        if (!existingResponse.ok) {
+          request.log.error(
+            { statusCode: existingResponse.status },
+            'Stripe Checkout session lookup was rejected.',
+          );
+          return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement.' });
+        }
+        const existingSession = stripeSessionLookupSchema.safeParse(
+          await existingResponse.json().catch(() => null),
         );
-      } catch {
-        request.log.error('Stripe Checkout session lookup failed.');
-        return reply
-          .code(502)
-          .send({ error: 'Impossible de vérifier la session de paiement. Réessayez.' });
-      }
-      if (!existingResponse.ok) {
-        request.log.error(
-          { statusCode: existingResponse.status },
-          'Stripe Checkout session lookup was rejected.',
-        );
-        return reply.code(502).send({ error: 'Impossible de vérifier la session de paiement.' });
-      }
-      const existingSession = stripeSessionLookupSchema.safeParse(
-        await existingResponse.json().catch(() => null),
-      );
-      if (!existingSession.success) {
-        return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
-      }
-      if (existingSession.data.status === 'open' && existingSession.data.url) {
-        return reply.send({ checkoutUrl: existingSession.data.url });
-      }
-      if (existingSession.data.status === 'complete') {
+        if (!existingSession.success) {
+          return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
+        }
+        if (existingSession.data.status === 'open' && existingSession.data.url) {
+          return reply.send({ checkoutUrl: existingSession.data.url });
+        }
+        if (existingSession.data.status === 'complete') {
+          return reply.code(409).send({
+            error:
+              'Le paiement est en cours de confirmation. Actualisez votre compte dans quelques instants.',
+          });
+        }
         return reply.code(409).send({
-          error:
-            'Le paiement est en cours de confirmation. Actualisez votre compte dans quelques instants.',
+          error: 'Cette session de paiement a expiré. Créez une nouvelle commande pour réessayer.',
         });
       }
-      return reply.code(409).send({
-        error: 'Cette session de paiement a expiré. Créez une nouvelle commande pour réessayer.',
-      });
-    }
 
-    const currency = orders[0]?.currency.toLowerCase();
-    if (
-      !currency ||
-      !/^[a-z]{3}$/.test(currency) ||
-      orders.some((order) => order.currency.toLowerCase() !== currency)
-    ) {
-      return reply.code(409).send({ error: 'Orders must use the same supported currency.' });
-    }
+      const currency = orders[0]?.currency.toLowerCase();
+      if (
+        !currency ||
+        !/^[a-z]{3}$/.test(currency) ||
+        orders.some((order) => order.currency.toLowerCase() !== currency)
+      ) {
+        return reply.code(409).send({ error: 'Orders must use the same supported currency.' });
+      }
 
-    const origin = process.env.APP_ORIGIN;
-    if (!origin) return reply.code(503).send({ error: 'Checkout origin is not configured.' });
+      const origin = process.env.APP_ORIGIN;
+      if (!origin) return reply.code(503).send({ error: 'Checkout origin is not configured.' });
 
-    const totalLineItems = orders.reduce((sum, order) => sum + order.items.length, 0);
-    if (totalLineItems > 100)
-      return reply.code(400).send({ error: 'Too many line items for one checkout.' });
+      const totalLineItems = orders.reduce((sum, order) => sum + order.items.length, 0);
+      if (totalLineItems > 100)
+        return reply.code(400).send({ error: 'Too many line items for one checkout.' });
 
-    for (const order of orders) {
-      let itemsTotal = 0;
-      for (const item of order.items) {
-        if (
-          !Number.isSafeInteger(item.unitPriceCents) ||
-          item.unitPriceCents < 1 ||
-          !Number.isSafeInteger(item.quantity) ||
-          item.quantity < 1
-        ) {
-          return reply.code(409).send({ error: 'Order contains invalid item pricing.' });
+      for (const order of orders) {
+        let itemsTotal = 0;
+        for (const item of order.items) {
+          if (
+            !Number.isSafeInteger(item.unitPriceCents) ||
+            item.unitPriceCents < 1 ||
+            !Number.isSafeInteger(item.quantity) ||
+            item.quantity < 1
+          ) {
+            return reply.code(409).send({ error: 'Order contains invalid item pricing.' });
+          }
+          itemsTotal += item.unitPriceCents * item.quantity;
         }
-        itemsTotal += item.unitPriceCents * item.quantity;
+        if (!Number.isSafeInteger(itemsTotal) || itemsTotal !== order.totalCents) {
+          return reply.code(409).send({ error: 'Order total does not match its items.' });
+        }
       }
-      if (!Number.isSafeInteger(itemsTotal) || itemsTotal !== order.totalCents) {
-        return reply.code(409).send({ error: 'Order total does not match its items.' });
-      }
-    }
 
-    const orderIds = orders.map((order) => order.id).sort();
-    // Round expiry to a minute so retries with the same idempotency key use identical parameters.
-    const expiresAt = Math.floor(Date.now() / 60_000) * 60 + 60 * 60;
-    const params = new URLSearchParams({
-      mode: 'payment',
-      client_reference_id: orderIds[0] ?? '',
-      success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/?payment=cancelled`,
-      expires_at: String(expiresAt),
-      'payment_method_types[0]': 'card',
-      'metadata[orderIds]': orderIds.join(','),
-    });
-    let lineIndex = 0;
-    for (const order of orders) {
-      for (const item of order.items) {
-        params.set(`line_items[${lineIndex}][price_data][currency]`, currency);
-        params.set(
-          `line_items[${lineIndex}][price_data][unit_amount]`,
-          String(item.unitPriceCents),
-        );
-        params.set(
-          `line_items[${lineIndex}][price_data][product_data][name]`,
-          item.productName.slice(0, 250),
-        );
-        params.set(`line_items[${lineIndex}][quantity]`, String(item.quantity));
-        lineIndex += 1;
-      }
-    }
-
-    const idempotencyKey = createHmac('sha256', secretKey)
-      .update(`${orderIds.join(':')}:${expiresAt}`)
-      .digest('hex');
-    let response: Response;
-    try {
-      response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${secretKey}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Idempotency-Key': idempotencyKey,
-        },
-        body: params,
-        signal: AbortSignal.timeout(10000),
+      const orderIds = orders.map((order) => order.id).sort();
+      // Round expiry to a minute so retries with the same idempotency key use identical parameters.
+      const expiresAt = Math.floor(Date.now() / 60_000) * 60 + 60 * 60;
+      const params = new URLSearchParams({
+        mode: 'payment',
+        client_reference_id: orderIds[0] ?? '',
+        success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/?payment=cancelled`,
+        expires_at: String(expiresAt),
+        'payment_method_types[0]': 'card',
+        'metadata[orderIds]': orderIds.join(','),
       });
-    } catch {
-      request.log.error('Stripe Checkout request failed.');
-      return reply
-        .code(502)
-        .send({ error: 'Impossible de joindre le service de paiement. Réessayez.' });
-    }
-
-    if (!response.ok) {
-      request.log.error(
-        { statusCode: response.status },
-        'Stripe Checkout rejected the session request.',
-      );
-      return reply
-        .code(502)
-        .send({ error: 'Le service de paiement n’a pas pu préparer la transaction.' });
-    }
-
-    const session = stripeSessionSchema.safeParse(await response.json().catch(() => null));
-    if (!session.success) {
-      request.log.error('Stripe Checkout returned an invalid session response.');
-      return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
-    }
-
-    const saved = await prisma.order.updateMany({
-      where: {
-        id: { in: orderIds },
-        userId: user.id,
-        paymentStatus: 'UNPAID',
-        status: 'PENDING',
-        paymentReference: null,
-      },
-      data: { paymentReference: session.data.id },
-    });
-    if (saved.count !== orderIds.length) {
-      try {
-        await fetch(
-          `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session.data.id)}/expire`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${secretKey}` },
-            signal: AbortSignal.timeout(10000),
-          },
-        );
-      } catch {
-        request.log.error('Unable to expire an unlinked Stripe Checkout session.');
+      let lineIndex = 0;
+      for (const order of orders) {
+        for (const item of order.items) {
+          params.set(`line_items[${lineIndex}][price_data][currency]`, currency);
+          params.set(
+            `line_items[${lineIndex}][price_data][unit_amount]`,
+            String(item.unitPriceCents),
+          );
+          params.set(
+            `line_items[${lineIndex}][price_data][product_data][name]`,
+            item.productName.slice(0, 250),
+          );
+          params.set(`line_items[${lineIndex}][quantity]`, String(item.quantity));
+          lineIndex += 1;
+        }
       }
-      return reply.code(409).send({ error: 'Orders changed while checkout was being prepared.' });
-    }
 
-    return reply.send({ checkoutUrl: session.data.url });
-  });
+      const idempotencyKey = createHmac('sha256', secretKey)
+        .update(`${orderIds.join(':')}:${expiresAt}`)
+        .digest('hex');
+      let response: Response;
+      try {
+        response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: params,
+          signal: AbortSignal.timeout(10000),
+        });
+      } catch {
+        request.log.error('Stripe Checkout request failed.');
+        return reply
+          .code(502)
+          .send({ error: 'Impossible de joindre le service de paiement. Réessayez.' });
+      }
+
+      if (!response.ok) {
+        request.log.error(
+          { statusCode: response.status },
+          'Stripe Checkout rejected the session request.',
+        );
+        return reply
+          .code(502)
+          .send({ error: 'Le service de paiement n’a pas pu préparer la transaction.' });
+      }
+
+      const session = stripeSessionSchema.safeParse(await response.json().catch(() => null));
+      if (!session.success) {
+        request.log.error('Stripe Checkout returned an invalid session response.');
+        return reply.code(502).send({ error: 'Réponse invalide du service de paiement.' });
+      }
+
+      const saved = await prisma.order.updateMany({
+        where: {
+          id: { in: orderIds },
+          userId: user.id,
+          paymentStatus: 'UNPAID',
+          status: 'PENDING',
+          paymentReference: null,
+        },
+        data: { paymentReference: session.data.id },
+      });
+      if (saved.count !== orderIds.length) {
+        try {
+          await fetch(
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session.data.id)}/expire`,
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${secretKey}` },
+              signal: AbortSignal.timeout(10000),
+            },
+          );
+        } catch {
+          request.log.error('Unable to expire an unlinked Stripe Checkout session.');
+        }
+        return reply.code(409).send({ error: 'Orders changed while checkout was being prepared.' });
+      }
+
+      return reply.send({ checkoutUrl: session.data.url });
+    },
+  );
 
   app.post('/api/webhooks/stripe', async (request, reply) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

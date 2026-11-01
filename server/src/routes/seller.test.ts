@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient, User } from '@prisma/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { registerSellerRoutes } from './seller.js';
@@ -37,6 +38,7 @@ function setup(resolveUser = async () => seller) {
     ),
   };
   app = Fastify({ logger: false });
+  app.register(rateLimit, { global: false });
   registerSellerRoutes(app, prisma as unknown as PrismaClient, resolveUser as never);
   return {
     prisma,
@@ -56,6 +58,24 @@ afterEach(async () => {
 });
 
 describe('seller data isolation and route validation', () => {
+  it('rate-limits repeated seller product writes per client IP', async () => {
+    setup();
+    await app.ready();
+
+    const responses = await Promise.all(
+      Array.from({ length: 21 }, () =>
+        app.inject({
+          method: 'POST',
+          url: '/api/seller/products',
+          payload: { name: 'x', category: 'Clothing', priceCents: -1, stock: -1 },
+        }),
+      ),
+    );
+
+    expect(responses.slice(0, 20).every((response) => response.statusCode === 400)).toBe(true);
+    expect(responses[20]?.statusCode).toBe(429);
+  });
+
   it('limits product listing to the authenticated seller', async () => {
     const { productFindMany } = setup();
     await app.ready();
