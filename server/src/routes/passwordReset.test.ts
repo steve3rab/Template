@@ -171,26 +171,26 @@ describe('password reset routes', () => {
   );
 
   it('handles a failed reset delivery without disclosing account details', async () => {
-      vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
-      vi.stubGlobal(
-        'fetch',
-        vi.fn(async () => {
-          throw new Error('network down');
-        }),
-      );
-      setup();
-      await app.ready();
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('network down');
+      }),
+    );
+    setup();
+    await app.ready();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/auth/password-reset/request',
-        payload: { email: user.email },
-      });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
 
-      expect(response.statusCode).toBe(200);
-      expect(response.json().message).toContain('Si cette adresse');
-    },
-  );
+    expect(response.statusCode).toBe(200);
+    expect(response.json().message).toContain('Si cette adresse');
+
+  });
 
   it('rejects malformed completion requests', async () => {
     const { resetFindUnique } = setup();
@@ -246,21 +246,21 @@ describe('password reset routes', () => {
   });
 
   it('rejects a token that another concurrent request already claimed', async () => {
-      const { prisma, userUpdate, sessionDeleteMany } = setup({ claimedCount: 0 });
-      await app.ready();
+    const { prisma, userUpdate, sessionDeleteMany } = setup({ claimedCount: 0 });
+    await app.ready();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/auth/password-reset/complete',
-        payload: { token: 'token-value', password: 'a-very-long-new-password' },
-      });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/complete',
+      payload: { token: 'token-value', password: 'a-very-long-new-password' },
+    });
 
-      expect(response.statusCode).toBe(400);
-      expect(prisma.$transaction).toHaveBeenCalledOnce();
-      expect(userUpdate).not.toHaveBeenCalled();
-      expect(sessionDeleteMany).not.toHaveBeenCalled();
-    },
-  );
+    expect(response.statusCode).toBe(400);
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    expect(userUpdate).not.toHaveBeenCalled();
+    expect(sessionDeleteMany).not.toHaveBeenCalled();
+
+  });
 
   it(
     'changes the password, deletes sibling reset tokens, and invalidates all sessions',
