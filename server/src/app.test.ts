@@ -190,7 +190,7 @@ describe('authentication API', () => {
     const logout = await app.inject({
       method: 'POST',
       url: '/api/auth/logout',
-      headers: { ...validHeaders, cookie },
+      headers: { origin: allowedOrigin, cookie },
     });
     expect(logout.statusCode).toBe(204);
     expect(store.sessions.size).toBe(0);
