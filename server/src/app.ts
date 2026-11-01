@@ -231,7 +231,9 @@ export async function createApp(
         });
       }
 
-      const passwordHash = await passwordCrypto.hash(credentials.password, { type: passwordCrypto.argon2id });
+      const passwordHash = await passwordCrypto.hash(credentials.password, {
+        type: passwordCrypto.argon2id,
+      });
       try {
         const user = await prisma.user.create({
           data: { email: credentials.email, passwordHash },
@@ -269,7 +271,9 @@ export async function createApp(
 
       const user = await prisma.user.findUnique({ where: { email: credentials.data.email } });
       const validPassword = user
-        ? await passwordCrypto.verify(user.passwordHash, credentials.data.password).catch(() => false)
+        ? await passwordCrypto
+            .verify(user.passwordHash, credentials.data.password)
+            .catch(() => false)
         : false;
 
       if (!user || !validPassword) {
