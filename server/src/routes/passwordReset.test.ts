@@ -25,12 +25,10 @@ function setup(
   const userFindUnique = vi.fn(async () =>
     options.foundUser === undefined ? user : options.foundUser,
   );
-  const resetCreate = vi.fn(
-    async ({ data }: { data: Record<string, unknown> }) => ({
-      id: 'reset-1',
-      ...data,
-    }),
-  );
+  const resetCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+    id: 'reset-1',
+    ...data,
+  }));
   const resetFindUnique = vi.fn(async () =>
     options.reset === undefined
       ? {
@@ -63,9 +61,7 @@ function setup(
       deleteMany: resetDeleteMany,
     },
     session: { deleteMany: sessionDeleteMany },
-    $transaction: vi.fn(
-      async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx),
-    ),
+    $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
   };
   app = Fastify({ logger: false });
   registerPasswordResetRoutes(app, prisma as unknown as PrismaClient);
@@ -155,9 +151,7 @@ describe('password reset routes', () => {
       });
       const delivery = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}'));
       expect(delivery.email).toBe(user.email);
-      expect(delivery.resetUrl).toMatch(
-        /^http:\/\/localhost:5173\/reset-password\?token=/,
-      );
+      expect(delivery.resetUrl).toMatch(/^http:\/\/localhost:5173\/reset-password\?token=/);
       expect(fetchMock).toHaveBeenCalledWith(
         'https://mailer.example.test/reset',
         expect.objectContaining({
@@ -274,11 +268,7 @@ describe('password reset routes', () => {
 
       expect(response.statusCode).toBe(200);
       expect(resetUpdateMany).toHaveBeenCalledWith({
-        where: {
-          id: 'reset-1',
-          usedAt: null,
-          expiresAt: { gt: expect.any(Date) },
-        },
+        where: { id: 'reset-1', usedAt: null, expiresAt: { gt: expect.any(Date) } },
         data: { usedAt: expect.any(Date) },
       });
       expect(userUpdate).toHaveBeenCalledWith({
