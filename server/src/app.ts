@@ -170,7 +170,14 @@ export async function createApp(prisma = new PrismaClient()): Promise<FastifyIns
   });
   await app.register(cookie);
   await app.register(cors, { origin: allowedOrigin, credentials: true });
-  await app.register(rateLimit, { global: true, max: 120, timeWindow: '1 minute' });
+  // The E2E suite shares one API process and IP across all browser projects and retries.
+  // Keep production throttling intact, but prevent unrelated test requests from exhausting
+  // the global bucket before registration/checkout flows are exercised.
+  await app.register(rateLimit, {
+    global: true,
+    max: process.env.E2E_TEST === 'true' ? 1000 : 120,
+    timeWindow: '1 minute',
+  });
 
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
