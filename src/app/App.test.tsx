@@ -113,6 +113,20 @@ describe('Fashion storefront', () => {
     expect(screen.getByRole('button', { name: /Espace vendeur/ })).toBeInTheDocument();
   });
 
+  it('uses product photography with accessible text alternatives', () => {
+    render(<App />);
+    const photo = screen.getByRole('img', { name: 'Veste Studio' });
+    expect(photo).toHaveAttribute('src', expect.stringContaining('images.unsplash.com'));
+    expect(photo).toHaveAttribute('loading', 'eager');
+  });
+
+  it('offers the Maison category in the storefront navigation', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Maison' }));
+    expect(screen.getByRole('button', { name: 'Maison' })).toHaveClass('active');
+  });
+
   it('filters the catalogue by category and search query', async () => {
     const user = userEvent.setup();
     render(<App />);
