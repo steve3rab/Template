@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
+import { PRODUCT_CATEGORIES } from '../../shared/categories';
 
 import {
   apiRequest,
@@ -229,10 +230,11 @@ export function SellerWorkspace({ range }: { range: string }) {
             <label>
               Catégorie
               <select value={category} onChange={(event) => setCategory(event.target.value)}>
-                <option>Vêtements</option>
-                <option>Chaussures</option>
-                <option>Accessoires</option>
-                <option>Maison</option>
+                {PRODUCT_CATEGORIES.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
