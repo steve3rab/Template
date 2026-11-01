@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidateSet('Build', 'Run', 'Stop', 'Logs')]
     [string]$Action = 'Build',
