@@ -9,6 +9,19 @@ import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas } from '../shared/api/client';
 import { PRODUCT_CATEGORIES } from '../shared/categories';
 
+function imageForCategory(category: string): string {
+  switch (category) {
+    case 'Chaussures':
+      return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85';
+    case 'Accessoires':
+      return 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85';
+    case 'Maison':
+      return 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85';
+    default:
+      return 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85';
+  }
+}
+
 function isCart(value: unknown): value is Record<string, number> {
   return (
     typeof value === 'object' &&
@@ -33,6 +46,7 @@ type Product = {
   oldPrice?: number;
   color: string;
   icon: string;
+  image: string;
   tag?: string;
   description: string;
 };
@@ -45,6 +59,7 @@ const products: Product[] = [
     oldPrice: 120,
     color: 'sand',
     icon: '🧥',
+    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85',
     tag: 'BEST-SELLER',
     description: 'Une coupe structurée, facile à porter du matin au soir.',
   },
@@ -55,6 +70,7 @@ const products: Product[] = [
     price: 74,
     color: 'mint',
     icon: '👟',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
     tag: 'NOUVEAU',
     description: 'Le confort au quotidien, avec une silhouette minimaliste.',
   },
@@ -65,6 +81,7 @@ const products: Product[] = [
     price: 59,
     color: 'rose',
     icon: '👜',
+    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85',
     description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
   },
   {
@@ -74,6 +91,7 @@ const products: Product[] = [
     price: 65,
     color: 'lavender',
     icon: '🧶',
+    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=85',
     description: 'Une maille douce et une coupe décontractée.',
   },
   {
@@ -84,6 +102,7 @@ const products: Product[] = [
     oldPrice: 45,
     color: 'blue',
     icon: '🕶️',
+    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=85',
     tag: '-22 %',
     description: 'Une touche graphique pour les journées ensoleillées.',
   },
@@ -94,6 +113,7 @@ const products: Product[] = [
     price: 92,
     color: 'peach',
     icon: '👞',
+    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=85',
     description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
   },
   {
@@ -103,6 +123,7 @@ const products: Product[] = [
     price: 48,
     color: 'blue',
     icon: '👔',
+    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=900&q=85',
     description: 'Une chemise légère pensée pour les superpositions.',
   },
   {
@@ -112,6 +133,7 @@ const products: Product[] = [
     price: 25,
     color: 'sand',
     icon: '🧢',
+    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=900&q=85',
     tag: 'ESSENTIEL',
     description: 'La finition simple qui change un look.',
   },
@@ -242,7 +264,8 @@ export function App() {
               category: item.category,
               price: item.priceCents / 100,
               color: fallback?.color ?? 'sand',
-              icon: fallback?.icon ?? '📦',
+              icon: fallback?.icon ?? '🛍️',
+              image: fallback?.image ?? imageForCategory(item.category),
               ...(fallback?.oldPrice !== undefined ? { oldPrice: fallback.oldPrice } : {}),
               ...(fallback?.tag !== undefined ? { tag: fallback.tag } : {}),
             };
@@ -651,10 +674,16 @@ export function App() {
                 </span>
               </div>
             </div>
-            <div className="hero-art" aria-label="Illustration de pièces mode">
+            <div className="hero-art" aria-label="Sélection mode de la nouvelle collection">
+              <img
+                className="hero-photo"
+                src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=90"
+                alt="Silhouette en tenue contemporaine dans des tons neutres"
+                loading="eager"
+                decoding="async"
+              />
               <div className="hero-shape shape-one" />
               <div className="hero-shape shape-two" />
-              <div className="hero-product">🧥</div>
               <div className="hero-sticker">
                 NOUVELLE
                 <br />
@@ -732,6 +761,13 @@ export function App() {
                     <span className={`product-emoji product-emoji-${index % 4}`} aria-hidden="true">
                       {product.icon}
                     </span>
+                    <img
+                      className="product-photo"
+                      src={product.image}
+                      alt={product.name}
+                      loading={index < 4 ? 'eager' : 'lazy'}
+                      decoding="async"
+                    />
                     <span className="visual-label">{product.category.toUpperCase()}</span>
                     <button className="quick-add" onClick={() => addToCart(product)}>
                       Ajouter au panier <span>＋</span>
@@ -969,7 +1005,9 @@ export function App() {
                     .filter((product) => cart[product.id])
                     .map((product) => (
                       <div className="summary-item" key={product.id}>
-                        <span className={`summary-thumb ${product.color}`}>{product.icon}</span>
+                        <span className={`summary-thumb ${product.color}`}>
+                          <img src={product.image} alt="" loading="lazy" />
+                        </span>
                         <div>
                           <strong>{product.name}</strong>
                           <p>Quantité : {cart[product.id] ?? 0}</p>
@@ -1115,7 +1153,7 @@ export function App() {
                     .map((product) => (
                       <div className="drawer-item" key={product.id}>
                         <span className={`drawer-product-icon ${product.color}`}>
-                          {product.icon}
+                          <img src={product.image} alt="" loading="lazy" />
                         </span>
                         <div className="drawer-product-info">
                           <strong>{product.name}</strong>
