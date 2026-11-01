@@ -76,7 +76,7 @@ async function setSession(reply: FastifyReply, prisma: PrismaClient, userId: str
   await prisma.session.create({
     data: { userId, tokenHash: tokenHash(token), expiresAt },
   });
-  return reply.setCookie(SESSION_COOKIE, token, cookieOptions());
+  reply.setCookie(SESSION_COOKIE, token, cookieOptions());
 }
 
 async function currentUser(request: FastifyRequest, prisma: PrismaClient) {
