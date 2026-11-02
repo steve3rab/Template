@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+function containsControlCharacters(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code < 32 || code === 127) return true;
+  }
+  return false;
+}
+
 /** Normalize email addresses before persistence and lookup to keep identity comparisons consistent. */
 export const emailSchema = z
   .string()
@@ -18,14 +26,14 @@ export const passwordSchema = z
   .min(12)
   .max(128)
   .refine((password) => password.trim().length > 0, 'Password must not be whitespace only.')
-  .refine((password) => !/[\u0000-\u001F\u007F]/.test(password), 'Password contains control characters.');
+  .refine((password) => !containsControlCharacters(password), 'Password contains control characters.');
 
 /** Login keeps compatibility with legacy accounts whose password predates the current minimum. */
 export const loginPasswordSchema = z
   .string()
   .min(1)
   .max(128)
-  .refine((password) => !/[\u0000-\u001F\u007F]/.test(password), 'Password contains control characters.');
+  .refine((password) => !containsControlCharacters(password), 'Password contains control characters.');
 
 export const registrationCredentialsSchema = z.object({
   email: emailSchema,
