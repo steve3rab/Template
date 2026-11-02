@@ -39,7 +39,13 @@ function setup(rateLimitMax = 1000) {
     ),
   };
   app = Fastify({ logger: false });
-  app.register(rateLimit, { global: true, max: rateLimitMax, timeWindow: '1 minute', keyGenerator: () => 'test-client' });
+  app.register(async (testApp) => {
+    testApp.register(rateLimit, {
+      global: true,
+      max: rateLimitMax,
+      timeWindow: '1 minute',
+      keyGenerator: () => 'test-client',
+    });
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
@@ -50,7 +56,8 @@ function setup(rateLimitMax = 1000) {
       done(error instanceof Error ? error : new Error('Invalid JSON body'));
     }
   });
-  registerPaymentRoutes(app, prisma as unknown as PrismaClient, async () => customer);
+    registerPaymentRoutes(testApp, prisma as unknown as PrismaClient, async () => customer);
+  });
   return prisma;
 }
 
