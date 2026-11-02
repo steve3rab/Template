@@ -59,7 +59,8 @@ const products: Product[] = [
     oldPrice: 120,
     color: 'sand',
     icon: '🧥',
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85',
     tag: 'BEST-SELLER',
     description: 'Une coupe structurée, facile à porter du matin au soir.',
   },
@@ -70,7 +71,8 @@ const products: Product[] = [
     price: 74,
     color: 'mint',
     icon: '👟',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
     tag: 'NOUVEAU',
     description: 'Le confort au quotidien, avec une silhouette minimaliste.',
   },
@@ -81,7 +83,8 @@ const products: Product[] = [
     price: 59,
     color: 'rose',
     icon: '👜',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85',
     description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
   },
   {
@@ -91,7 +94,8 @@ const products: Product[] = [
     price: 65,
     color: 'lavender',
     icon: '🧶',
-    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=85',
     description: 'Une maille douce et une coupe décontractée.',
   },
   {
@@ -102,7 +106,8 @@ const products: Product[] = [
     oldPrice: 45,
     color: 'blue',
     icon: '🕶️',
-    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=85',
     tag: '-22 %',
     description: 'Une touche graphique pour les journées ensoleillées.',
   },
@@ -113,7 +118,8 @@ const products: Product[] = [
     price: 92,
     color: 'peach',
     icon: '👞',
-    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=85',
     description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
   },
   {
@@ -123,7 +129,8 @@ const products: Product[] = [
     price: 48,
     color: 'blue',
     icon: '👔',
-    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=900&q=85',
     description: 'Une chemise légère pensée pour les superpositions.',
   },
   {
@@ -133,7 +140,8 @@ const products: Product[] = [
     price: 25,
     color: 'sand',
     icon: '🧢',
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=900&q=85',
+    image:
+      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=900&q=85',
     tag: 'ESSENTIEL',
     description: 'La finition simple qui change un look.',
   },
@@ -513,9 +521,7 @@ export function App() {
       });
       if (!cartResponse.ok)
         throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
-      const selectedAddress = checkoutAddresses.find(
-        (address) => address.id === checkoutAddressId,
-      );
+      const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
       let addressId = selectedAddress?.id ?? '';
       if (!selectedAddress) {
         const addressResponse = await fetch('/api/customer/addresses', {
@@ -1013,12 +1019,7 @@ export function App() {
                   )}
                   <label>
                     Adresse e-mail du compte
-                    <input
-                      type="email"
-                      autoComplete="email"
-                      value={orderEmail}
-                      readOnly
-                    />
+                    <input type="email" autoComplete="email" value={orderEmail} readOnly />
                   </label>
                   {(!checkoutAddressId ||
                     !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
@@ -1119,8 +1120,9 @@ export function App() {
                     <strong>Non configurée</strong>
                   </div>
                   <p className="summary-note">
-                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de
-                    livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.
+                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun
+                    frais de livraison n’est ajouté. Les conditions de retour sont disponibles en
+                    pied de page.
                   </p>
                 </aside>
               </div>

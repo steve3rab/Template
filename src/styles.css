@@ -2994,7 +2994,6 @@ button {
   }
 }
 
-
 /* Tablet header: keep navigation on its own scrollable row before the mobile breakpoint. */
 @media (min-width: 761px) and (max-width: 850px) {
   .store-header {

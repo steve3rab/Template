@@ -235,9 +235,9 @@ describe('Fashion storefront', () => {
     expect(
       await screen.findByRole('heading', { name: /finaliser ma commande/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('combobox', { name: 'Choisir une adresse enregistrée' }),
-    ).toHaveValue('address-1');
+    expect(screen.getByRole('combobox', { name: 'Choisir une adresse enregistrée' })).toHaveValue(
+      'address-1',
+    );
     expect(screen.getByDisplayValue('client@example.com')).toHaveAttribute('readOnly');
     expect(screen.queryByPlaceholderText('Numéro et rue')).not.toBeInTheDocument();
     expect(screen.getByText(/aucun frais de livraison n’est ajouté/i)).toBeInTheDocument();
@@ -248,8 +248,7 @@ describe('Fashion storefront', () => {
     ).toBeInTheDocument();
     expect(
       requests.some(
-        (request) =>
-          request.url === '/api/customer/addresses' && request.method === 'POST',
+        (request) => request.url === '/api/customer/addresses' && request.method === 'POST',
       ),
     ).toBe(false);
     const orderRequest = requests.find(

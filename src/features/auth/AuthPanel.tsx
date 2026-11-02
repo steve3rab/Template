@@ -98,10 +98,7 @@ export function AuthPanel({
       }
       if (submittedMode === 'reset') {
         setPassword('');
-        showToast(
-          t.authResetNotice,
-          'success',
-        );
+        showToast(t.authResetNotice, 'success');
         return;
       }
       if (!('user' in payload)) throw new Error(t.authError);

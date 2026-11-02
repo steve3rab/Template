@@ -26,14 +26,20 @@ export const passwordSchema = z
   .min(12)
   .max(128)
   .refine((password) => password.trim().length > 0, 'Password must not be whitespace only.')
-  .refine((password) => !containsControlCharacters(password), 'Password contains control characters.');
+  .refine(
+    (password) => !containsControlCharacters(password),
+    'Password contains control characters.',
+  );
 
 /** Login keeps compatibility with legacy accounts whose password predates the current minimum. */
 export const loginPasswordSchema = z
   .string()
   .min(1)
   .max(128)
-  .refine((password) => !containsControlCharacters(password), 'Password contains control characters.');
+  .refine(
+    (password) => !containsControlCharacters(password),
+    'Password contains control characters.',
+  );
 
 export const registrationCredentialsSchema = z.object({
   email: emailSchema,

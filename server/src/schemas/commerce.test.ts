@@ -95,9 +95,9 @@ describe('commerce input schemas', () => {
         })),
       }).success,
     ).toBe(false);
-    expect(
-      cartInputSchema.safeParse({ items: [{ productId: 'p1', quantity: 101 }] }).success,
-    ).toBe(false);
+    expect(cartInputSchema.safeParse({ items: [{ productId: 'p1', quantity: 101 }] }).success).toBe(
+      false,
+    );
   });
 
   it('rejects duplicate, blank and excessive checkout order ids', () => {

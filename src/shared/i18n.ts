@@ -38,7 +38,8 @@ export const translations = {
     authReset: 'Envoyer le lien',
     authBackToLogin: 'Retour à la connexion',
     authForgotPassword: 'Mot de passe oublié ?',
-    authResetNotice: 'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
+    authResetNotice:
+      'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
     authSubmitting: 'Veuillez patienter…',
   },
   en: {

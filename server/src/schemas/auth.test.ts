@@ -48,16 +48,12 @@ describe('password validator', () => {
     expect(passwordSchema.safeParse('a secure phrase 2026!').success).toBe(true);
   });
 
-  it.each([
-    '',
-    'short',
-    '12345678901',
-    ' '.repeat(12),
-    'password\u0000unsafe',
-    'x'.repeat(129),
-  ])('rejects weak or malformed password input: %s', (password) => {
-    expect(passwordSchema.safeParse(password).success).toBe(false);
-  });
+  it.each(['', 'short', '12345678901', ' '.repeat(12), 'password\u0000unsafe', 'x'.repeat(129)])(
+    'rejects weak or malformed password input: %s',
+    (password) => {
+      expect(passwordSchema.safeParse(password).success).toBe(false);
+    },
+  );
 
   it('validates login credentials and normalizes the email', () => {
     expect(
