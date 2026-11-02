@@ -61,11 +61,7 @@ function setup(rateLimitMax = 1000) {
   return prisma;
 }
 
-function signatureFor(
-  rawBody: Buffer,
-  secret: string,
-  timestamp = Math.floor(Date.now() / 1000),
-) {
+function signatureFor(rawBody: Buffer, secret: string, timestamp = Math.floor(Date.now() / 1000)) {
   const digest = createHmac('sha256', secret).update(`${timestamp}.`).update(rawBody).digest('hex');
   return `t=${timestamp},v1=${digest}`;
 }
