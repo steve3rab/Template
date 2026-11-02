@@ -908,8 +908,28 @@ export function App() {
           <AuthPanel
             language={language}
             initialMode={checkoutPending ? 'login' : 'register'}
-            onAuthenticated={() => {
+            onAuthenticated={async (user) => {
+              setOrderEmail(user.email);
               if (checkoutPending) {
+                try {
+                  const addressPayload = await apiRequest(
+                    '/api/customer/addresses',
+                    apiSchemas.customerAddresses,
+                  );
+                  setCheckoutAddresses(addressPayload.addresses);
+                  setCheckoutAddressId(
+                    addressPayload.addresses.find((address) => address.isDefault)?.id ??
+                      addressPayload.addresses[0]?.id ??
+                      '',
+                  );
+                } catch {
+                  setCheckoutAddresses([]);
+                  setCheckoutAddressId('');
+                  setToastKind('error');
+                  setNotice(
+                    'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+                  );
+                }
                 setCheckoutPending(false);
                 setView('checkout');
               }
