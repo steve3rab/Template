@@ -6,7 +6,7 @@ import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { CustomerAccountData } from '../features/account/CustomerAccountData';
 import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
-import { apiRequest, apiSchemas } from '../shared/api/client';
+import { apiRequest, apiSchemas, type CustomerAddress } from '../shared/api/client';
 import { PRODUCT_CATEGORIES } from '../shared/categories';
 
 function imageForCategory(category: string): string {
@@ -181,6 +181,10 @@ export function App() {
   const [checkoutDone, setCheckoutDone] = useState(false);
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [orderEmail, setOrderEmail] = useState('');
+  const [checkoutAddresses, setCheckoutAddresses] = useState<CustomerAddress[]>([]);
+  const [checkoutAddressId, setCheckoutAddressId] = useState('');
+  const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  const checkoutSubmitRef = useRef(false);
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   useEffect(() => {
@@ -457,6 +461,16 @@ export function App() {
       if (response.ok) {
         const payload = (await response.json()) as { user?: { email: string } };
         setOrderEmail(payload.user?.email ?? '');
+        try {
+          const addressPayload = await apiRequest('/api/customer/addresses', apiSchemas.customerAddresses);
+          setCheckoutAddresses(addressPayload.addresses);
+          setCheckoutAddressId(addressPayload.addresses.find((address) => address.isDefault)?.id ?? addressPayload.addresses[0]?.id ?? '');
+        } catch {
+          setCheckoutAddresses([]);
+          setCheckoutAddressId('');
+          setToastKind('error');
+          setNotice('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.');
+        }
         setCheckoutPending(false);
         setView('checkout');
         return;
@@ -471,6 +485,9 @@ export function App() {
   }
   async function completeCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (checkoutSubmitRef.current) return;
+    checkoutSubmitRef.current = true;
+    setCheckoutSubmitting(true);
     const form = new FormData(event.currentTarget);
     setNotice('');
     try {
@@ -487,32 +504,37 @@ export function App() {
       });
       if (!cartResponse.ok)
         throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
-      const addressResponse = await fetch('/api/customer/addresses', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          label: 'Livraison',
-          recipient: String(form.get('recipient') ?? ''),
-          line1: String(form.get('line1') ?? ''),
-          line2: String(form.get('line2') ?? '') || null,
-          postalCode: String(form.get('postalCode') ?? ''),
-          city: String(form.get('city') ?? ''),
-          country: 'FR',
-          isDefault: true,
-        }),
-      });
-      const addressPayload = (await addressResponse.json()) as {
-        address?: { id: string };
-        error?: string;
-      };
-      if (!addressResponse.ok || !addressPayload.address)
-        throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
+      const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
+      let addressId = selectedAddress?.id ?? '';
+      if (!selectedAddress) {
+        const addressResponse = await fetch('/api/customer/addresses', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            label: 'Livraison',
+            recipient: String(form.get('recipient') ?? ''),
+            line1: String(form.get('line1') ?? ''),
+            line2: String(form.get('line2') ?? '') || null,
+            postalCode: String(form.get('postalCode') ?? ''),
+            city: String(form.get('city') ?? ''),
+            country: 'FR',
+            isDefault: checkoutAddresses.length === 0,
+          }),
+        });
+        const addressPayload = (await addressResponse.json()) as {
+          address?: { id: string };
+          error?: string;
+        };
+        if (!addressResponse.ok || !addressPayload.address)
+          throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
+        addressId = addressPayload.address.id;
+      }
       const orderResponse = await fetch('/api/customer/orders', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ addressId: addressPayload.address.id }),
+        body: JSON.stringify({ addressId }),
       });
       const orderPayload = (await orderResponse.json()) as {
         order?: { id: string };
@@ -544,11 +566,15 @@ export function App() {
         );
         setCheckoutDone(true);
         setView('checkout');
+        setCheckoutSubmitting(false);
+        checkoutSubmitRef.current = false;
       }
     } catch (error) {
       setNotice(
         error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.',
       );
+      setCheckoutSubmitting(false);
+      checkoutSubmitRef.current = false;
     }
   }
   return (
@@ -931,6 +957,20 @@ export function App() {
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeCheckout}>
                   <h2>Informations de livraison</h2>
+                  {checkoutAddresses.length > 0 && (
+                    <label>
+                      Choisir une adresse enregistrée
+                      <select aria-label="Choisir une adresse enregistrée" value={checkoutAddressId || '__new__'} onChange={(event) => setCheckoutAddressId(event.target.value === '__new__' ? '' : event.target.value)}>
+                        {checkoutAddresses.map((address) => (
+                          <option key={address.id} value={address.id}>
+                            {address.label}{address.isDefault ? ' · Par défaut' : ''} — {address.recipient}, {address.line1}, {address.postalCode} {address.city}
+                          </option>
+                        ))}
+                        <option value="__new__">Utiliser une nouvelle adresse</option>
+                      </select>
+                    </label>
+                  )}
+                  {(!checkoutAddressId || !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
                   <label>
                     Adresse e-mail
                     <input
@@ -990,12 +1030,13 @@ export function App() {
                       />
                     </label>
                   </div>
+                  )}
                   <label className="checkbox-line">
                     <input type="checkbox" required /> Je confirme que les informations de livraison
                     sont exactes.
                   </label>
-                  <button className="dark-button full-button" type="submit">
-                    Enregistrer la commande ↗
+                  <button className="dark-button full-button" type="submit" disabled={checkoutSubmitting}>
+                    {checkoutSubmitting ? 'Enregistrement en cours…' : 'Enregistrer la commande et continuer vers le paiement ↗'}
                   </button>
                   <p className="fine-print">
                     Le paiement sécurisé sera effectué sur Stripe après validation de cette étape.
@@ -1025,8 +1066,12 @@ export function App() {
                     <span>Sous-total</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
+                  <div className="summary-total">
+                    <span>Livraison</span>
+                    <strong>Non configurée</strong>
+                  </div>
                   <p className="summary-note">
-                    Frais de livraison non configurés : seul le sous-total des articles est affiché.
+                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.
                   </p>
                 </aside>
               </div>
@@ -1186,7 +1231,7 @@ export function App() {
                     <span>Sous-total</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
-                  <p>Frais de livraison non configurés : seul le sous-total des articles est affiché.</p>
+                  <p>Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.</p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
                   </button>
