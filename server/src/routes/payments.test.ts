@@ -70,15 +70,16 @@ describe('Stripe payment routes', () => {
     setup();
     await app.ready();
 
-    const responses = await Promise.all(
-      Array.from({ length: 11 }, () =>
-        app.inject({
+    const responses = [];
+    for (let index = 0; index < 11; index += 1) {
+      responses.push(
+        await app.inject({
           method: 'POST',
           url: '/api/customer/checkout',
           payload: { orderIds: ['order-1'] },
         }),
-      ),
-    );
+      );
+    }
 
     expect(responses.slice(0, 10).every((response) => response.statusCode === 503)).toBe(true);
     expect(responses[10]?.statusCode).toBe(429);
@@ -346,6 +347,7 @@ describe('Stripe payment routes', () => {
 
   it('requires a configured application origin before calling Stripe', async () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    vi.stubEnv('APP_ORIGIN', '');
     const prisma = setup();
     vi.stubGlobal('fetch', vi.fn());
     await app.ready();
@@ -396,7 +398,7 @@ describe('Stripe payment routes', () => {
       payload: { orderIds: ['order-1'] },
     });
     expect(response.statusCode).toBe(502);
-    expect(response.json().error).toMatch(/join the payment service/i);
+    expect(response.json().error).toMatch(/joindre le service de paiement/i);
   });
 
   it('returns a gateway error when Stripe rejects the checkout request', async () => {
@@ -414,7 +416,7 @@ describe('Stripe payment routes', () => {
       payload: { orderIds: ['order-1'] },
     });
     expect(response.statusCode).toBe(502);
-    expect(response.json().error).toMatch(/could not prepare/i);
+    expect(response.json().error).toMatch(/n’a pas pu préparer/i);
   });
 
   it('expires a Stripe session if the order changes before its reference is saved', async () => {
