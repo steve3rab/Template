@@ -1003,54 +1003,54 @@ export function App() {
                   {(!checkoutAddressId ||
                     !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
                     <>
-                  <div className="form-two-col">
-                    <label>
-                      Destinataire (prénom et nom)
-                      <input
-                        required
-                        name="recipient"
-                        autoComplete="name"
-                        placeholder="Prénom et nom du destinataire"
-                      />
-                    </label>
-                    <label>
-                      Complément d’adresse (facultatif)
-                      <input
-                        name="line2"
-                        autoComplete="address-line2"
-                        placeholder="Appartement, bâtiment…"
-                      />
-                    </label>
-                  </div>
-                  <label>
-                    Adresse
-                    <input
-                      required
-                      name="line1"
-                      autoComplete="street-address"
-                      placeholder="Numéro et rue"
-                    />
-                  </label>
-                  <div className="form-two-col">
-                    <label>
-                      Code postal
-                      <input
-                        required
-                        name="postalCode"
-                        autoComplete="postal-code"
-                        placeholder="75000"
-                      />
-                    </label>
-                    <label>
-                      Ville
-                      <input
-                        required
-                        name="city"
-                        autoComplete="address-level2"
-                        placeholder="Paris"
-                      />
-                    </label>
-                  </div>
+                      <div className="form-two-col">
+                        <label>
+                          Destinataire (prénom et nom)
+                          <input
+                            required
+                            name="recipient"
+                            autoComplete="name"
+                            placeholder="Prénom et nom du destinataire"
+                          />
+                        </label>
+                        <label>
+                          Complément d’adresse (facultatif)
+                          <input
+                            name="line2"
+                            autoComplete="address-line2"
+                            placeholder="Appartement, bâtiment…"
+                          />
+                        </label>
+                      </div>
+                      <label>
+                        Adresse
+                        <input
+                          required
+                          name="line1"
+                          autoComplete="street-address"
+                          placeholder="Numéro et rue"
+                        />
+                      </label>
+                      <div className="form-two-col">
+                        <label>
+                          Code postal
+                          <input
+                            required
+                            name="postalCode"
+                            autoComplete="postal-code"
+                            placeholder="75000"
+                          />
+                        </label>
+                        <label>
+                          Ville
+                          <input
+                            required
+                            name="city"
+                            autoComplete="address-level2"
+                            placeholder="Paris"
+                          />
+                        </label>
+                      </div>
                     </>
                   )}
                   <label className="checkbox-line">
