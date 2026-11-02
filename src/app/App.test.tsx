@@ -204,9 +204,15 @@ describe('Fashion storefront', () => {
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
         const method = (init?.method ?? 'GET').toUpperCase();
-        requests.push({ url, method, ...(typeof init?.body === 'string' ? { body: init.body } : {}) });
+        requests.push({
+          url,
+          method,
+          ...(typeof init?.body === 'string' ? { body: init.body } : {}),
+        });
         if (url === '/api/products') return apiResponse({ products: catalogue });
-        if (url === '/api/auth/me') return apiResponse({ user: { email: 'client@example.com' } });
+        if (url === '/api/auth/me') {
+          return apiResponse({ user: { email: 'client@example.com' } });
+        }
         if (url === '/api/customer/cart' && method === 'GET')
           return apiResponse({ items: [{ productId: '1', quantity: 1 }] });
         if (url === '/api/customer/favorites') return apiResponse({ favorites: [] });
@@ -226,16 +232,29 @@ describe('Fashion storefront', () => {
     render(<App />);
     await user.click(await screen.findByRole('button', { name: 'Panier, 1 article(s)' }));
     await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
-    expect(await screen.findByRole('heading', { name: /finaliser ma commande/i })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Choisir une adresse enregistrée' })).toHaveValue('address-1');
+    expect(
+      await screen.findByRole('heading', { name: /finaliser ma commande/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'Choisir une adresse enregistrée' }),
+    ).toHaveValue('address-1');
     expect(screen.getByDisplayValue('client@example.com')).toHaveAttribute('readOnly');
     expect(screen.queryByPlaceholderText('Numéro et rue')).not.toBeInTheDocument();
     expect(screen.getByText(/aucun frais de livraison n’est ajouté/i)).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
-    expect(await screen.findByRole('heading', { name: /merci pour votre commande/i })).toBeInTheDocument();
-    expect(requests.some((request) => request.url === '/api/customer/addresses' && request.method === 'POST')).toBe(false);
-    const orderRequest = requests.find((request) => request.url === '/api/customer/orders' && request.method === 'POST');
+    expect(
+      await screen.findByRole('heading', { name: /merci pour votre commande/i }),
+    ).toBeInTheDocument();
+    expect(
+      requests.some(
+        (request) =>
+          request.url === '/api/customer/addresses' && request.method === 'POST',
+      ),
+    ).toBe(false);
+    const orderRequest = requests.find(
+      (request) => request.url === '/api/customer/orders' && request.method === 'POST',
+    );
     expect(orderRequest?.body).toContain('"addressId":"address-1"');
   });
 
