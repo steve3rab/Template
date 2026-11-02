@@ -38,14 +38,14 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
     ),
   };
   app = Fastify({ logger: false });
-  app.register(async (testApp) => {
-    testApp.register(rateLimit, {
-      global: true,
-      max: rateLimitMax,
-      timeWindow: '1 minute',
-      keyGenerator: () => 'test-client',
-    });
-    registerSellerRoutes(testApp, prisma as unknown as PrismaClient, resolveUser as never);
+  app.register(rateLimit, {
+    global: true,
+    max: rateLimitMax,
+    timeWindow: '1 minute',
+    keyGenerator: () => 'test-client',
+  });
+  app.after(() => {
+    registerSellerRoutes(app, prisma as unknown as PrismaClient, resolveUser as never);
   });
   return {
     prisma,
