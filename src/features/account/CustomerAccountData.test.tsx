@@ -63,7 +63,7 @@ describe('CustomerAccountData', () => {
     expect(screen.getByText(/Paiement : À régler/)).toBeInTheDocument();
     expect(screen.getByText(/Expédiée/)).toBeInTheDocument();
     expect(screen.getByText(/Paiement confirmé · préparation à venir/)).toBeInTheDocument();
-    expect(screen.getByText(/Paiement : Payé/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Paiement : Payé/)).toHaveLength(2);
     expect(screen.queryByText('UNPAID')).not.toBeInTheDocument();
     expect(screen.queryByText('SHIPPED')).not.toBeInTheDocument();
   });
