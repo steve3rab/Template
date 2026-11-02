@@ -24,7 +24,7 @@ let app: FastifyInstance;
 let updateMany: ReturnType<typeof vi.fn>;
 let productUpdateMany: ReturnType<typeof vi.fn>;
 
-function setup() {
+function setup(rateLimitMax = 1000) {
   updateMany = vi.fn(async () => ({ count: 1 }));
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
   const transaction = { order: { updateMany }, product: { updateMany: productUpdateMany } };
@@ -39,7 +39,7 @@ function setup() {
     ),
   };
   app = Fastify({ logger: false });
-  app.register(rateLimit, { max: 1000, timeWindow: '1 minute' });
+  app.register(rateLimit, { max: rateLimitMax, timeWindow: '1 minute' });
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
@@ -67,7 +67,7 @@ afterEach(async () => {
 
 describe('Stripe payment routes', () => {
   it('rate-limits repeated checkout attempts per client IP', async () => {
-    setup();
+    setup(10);
     await app.ready();
 
     const responses = [];
