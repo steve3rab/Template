@@ -2993,3 +2993,29 @@ button {
     transform: none;
   }
 }
+
+
+/* Tablet header: keep navigation on its own scrollable row before the mobile breakpoint. */
+@media (min-width: 761px) and (max-width: 850px) {
+  .store-header {
+    flex-wrap: wrap;
+  }
+
+  .main-nav {
+    order: 3;
+    flex: 0 0 100%;
+    min-width: 0;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 3px 0 1px;
+    scrollbar-width: none;
+  }
+
+  .main-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+}
