@@ -58,8 +58,13 @@ export function registerSellerRoutes(
       const seller = await requireUser(request, reply, prisma, resolveUser, ['SELLER', 'ADMIN']);
       if (!seller) return;
       const params = resourceIdParamsSchema.safeParse(request.params);
+      const hasUpdateFields =
+        typeof request.body === 'object' &&
+        request.body !== null &&
+        !Array.isArray(request.body) &&
+        Object.keys(request.body).length > 0;
       const body = productInputSchema.partial().safeParse(request.body);
-      if (!params.success || !body.success || Object.keys(body.data).length === 0) {
+      if (!params.success || !body.success || !hasUpdateFields || Object.keys(body.data).length === 0) {
         return reply.code(400).send({ error: 'Invalid product update.' });
       }
       const existing = await prisma.product.findFirst({
