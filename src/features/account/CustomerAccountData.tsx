@@ -9,10 +9,15 @@ import {
   type SellerOrder as Order,
 } from '../../shared/api/client';
 
-function orderStatusLabel(status: Order['status']): string {
+function orderStatusLabel(status: Order['status'], paymentStatus: string): string {
   switch (status) {
     case 'PENDING':
-      return 'En attente de paiement';
+      if (paymentStatus.toUpperCase() === 'PAID') {
+        return 'Paiement confirmé · préparation à venir';
+      }
+      return paymentStatus.toUpperCase() === 'UNPAID'
+        ? 'En attente de paiement'
+        : 'Commande en cours de confirmation';
     case 'PROCESSING':
       return 'En préparation';
     case 'SHIPPED':
@@ -202,7 +207,7 @@ export function CustomerAccountData() {
                   <strong>Commande {order.id.slice(-8)}</strong>
                   <span>
                     {new Date(order.createdAt).toLocaleDateString('fr-FR')} ·{' '}
-                    {orderStatusLabel(order.status)} · Paiement :{' '}
+                    {orderStatusLabel(order.status, order.paymentStatus)} · Paiement :{' '}
                     {paymentStatusLabel(order.paymentStatus)}
                   </span>
                   <span>
