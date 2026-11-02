@@ -38,7 +38,7 @@ function setup(resolveUser = async () => seller) {
     ),
   };
   app = Fastify({ logger: false });
-  app.register(rateLimit, { global: false });
+  app.register(rateLimit, { max: 1000, timeWindow: '1 minute' });
   registerSellerRoutes(app, prisma as unknown as PrismaClient, resolveUser as never);
   return {
     prisma,
