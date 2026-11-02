@@ -35,6 +35,14 @@ describe('CustomerAccountData', () => {
                 items: [{ id: 'item-1', productName: 'Veste Studio', quantity: 1 }],
               },
               {
+                id: 'order-paid-pending-11223344',
+                status: 'PENDING',
+                paymentStatus: 'PAID',
+                totalCents: 6500,
+                createdAt: '2026-11-01T12:00:00.000Z',
+                items: [{ id: 'item-3', productName: 'Pull Essentiel', quantity: 1 }],
+              },
+              {
                 id: 'order-shipped-87654321',
                 status: 'SHIPPED',
                 paymentStatus: 'PAID',
@@ -54,6 +62,7 @@ describe('CustomerAccountData', () => {
     expect(await screen.findByText(/En attente de paiement/)).toBeInTheDocument();
     expect(screen.getByText(/Paiement : À régler/)).toBeInTheDocument();
     expect(screen.getByText(/Expédiée/)).toBeInTheDocument();
+    expect(screen.getByText(/Paiement confirmé · préparation à venir/)).toBeInTheDocument();
     expect(screen.getByText(/Paiement : Payé/)).toBeInTheDocument();
     expect(screen.queryByText('UNPAID')).not.toBeInTheDocument();
     expect(screen.queryByText('SHIPPED')).not.toBeInTheDocument();
