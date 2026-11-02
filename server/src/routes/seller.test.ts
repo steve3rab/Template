@@ -10,7 +10,7 @@ const seller = { id: 'seller-1', role: 'SELLER' } as User;
 const admin = { id: 'admin-1', role: 'ADMIN' } as User;
 let app: FastifyInstance;
 
-function setup(resolveUser = async () => seller) {
+function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
   const productFindMany = vi.fn(async () => []);
   const productFindFirst = vi.fn(async () => null);
   const productCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
@@ -59,7 +59,7 @@ afterEach(async () => {
 
 describe('seller data isolation and route validation', () => {
   it('rate-limits repeated seller product writes per client IP', async () => {
-    setup(20);
+    setup(async () => seller, 20);
     await app.ready();
 
     const responses = [];
