@@ -9,6 +9,36 @@ import {
   type SellerOrder as Order,
 } from '../../shared/api/client';
 
+function orderStatusLabel(status: Order['status']): string {
+  switch (status) {
+    case 'PENDING':
+      return 'En attente de paiement';
+    case 'PROCESSING':
+      return 'En préparation';
+    case 'SHIPPED':
+      return 'Expédiée';
+    case 'DELIVERED':
+      return 'Livrée';
+    case 'CANCELLED':
+      return 'Annulée';
+  }
+}
+
+function paymentStatusLabel(status: string): string {
+  switch (status.toUpperCase()) {
+    case 'PAID':
+      return 'Payé';
+    case 'UNPAID':
+      return 'À régler';
+    case 'REFUNDED':
+      return 'Remboursé';
+    case 'FAILED':
+      return 'Échec du paiement';
+    default:
+      return 'Statut indisponible';
+  }
+}
+
 export function CustomerAccountData() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -171,8 +201,9 @@ export function CustomerAccountData() {
                 <div className="best-seller-name">
                   <strong>Commande {order.id.slice(-8)}</strong>
                   <span>
-                    {new Date(order.createdAt).toLocaleDateString('fr-FR')} · {order.status} ·
-                    Paiement : {order.paymentStatus}
+                    {new Date(order.createdAt).toLocaleDateString('fr-FR')} ·{' '}
+                    {orderStatusLabel(order.status)} · Paiement :{' '}
+                    {paymentStatusLabel(order.paymentStatus)}
                   </span>
                   <span>
                     {order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}
