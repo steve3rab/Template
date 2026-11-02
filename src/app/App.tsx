@@ -462,14 +462,23 @@ export function App() {
         const payload = (await response.json()) as { user?: { email: string } };
         setOrderEmail(payload.user?.email ?? '');
         try {
-          const addressPayload = await apiRequest('/api/customer/addresses', apiSchemas.customerAddresses);
+          const addressPayload = await apiRequest(
+            '/api/customer/addresses',
+            apiSchemas.customerAddresses,
+          );
           setCheckoutAddresses(addressPayload.addresses);
-          setCheckoutAddressId(addressPayload.addresses.find((address) => address.isDefault)?.id ?? addressPayload.addresses[0]?.id ?? '');
+          setCheckoutAddressId(
+            addressPayload.addresses.find((address) => address.isDefault)?.id ??
+              addressPayload.addresses[0]?.id ??
+              '',
+          );
         } catch {
           setCheckoutAddresses([]);
           setCheckoutAddressId('');
           setToastKind('error');
-          setNotice('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.');
+          setNotice(
+            'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+          );
         }
         setCheckoutPending(false);
         setView('checkout');
@@ -504,7 +513,9 @@ export function App() {
       });
       if (!cartResponse.ok)
         throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
-      const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
+      const selectedAddress = checkoutAddresses.find(
+        (address) => address.id === checkoutAddressId,
+      );
       let addressId = selectedAddress?.id ?? '';
       if (!selectedAddress) {
         const addressResponse = await fetch('/api/customer/addresses', {
@@ -960,10 +971,20 @@ export function App() {
                   {checkoutAddresses.length > 0 && (
                     <label>
                       Choisir une adresse enregistrée
-                      <select aria-label="Choisir une adresse enregistrée" value={checkoutAddressId || '__new__'} onChange={(event) => setCheckoutAddressId(event.target.value === '__new__' ? '' : event.target.value)}>
+                      <select
+                        aria-label="Choisir une adresse enregistrée"
+                        value={checkoutAddressId || '__new__'}
+                        onChange={(event) =>
+                          setCheckoutAddressId(
+                            event.target.value === '__new__' ? '' : event.target.value,
+                          )
+                        }
+                      >
                         {checkoutAddresses.map((address) => (
                           <option key={address.id} value={address.id}>
-                            {address.label}{address.isDefault ? ' · Par défaut' : ''} — {address.recipient}, {address.line1}, {address.postalCode} {address.city}
+                            {address.label}
+                            {address.isDefault ? ' · Par défaut' : ''} — {address.recipient},{' '}
+                            {address.line1}, {address.postalCode} {address.city}
                           </option>
                         ))}
                         <option value="__new__">Utiliser une nouvelle adresse</option>
@@ -979,7 +1000,8 @@ export function App() {
                       readOnly
                     />
                   </label>
-                  {(!checkoutAddressId || !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
+                  {(!checkoutAddressId ||
+                    !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
                     <>
                   <div className="form-two-col">
                     <label>
@@ -1035,8 +1057,14 @@ export function App() {
                     <input type="checkbox" required /> Je confirme que les informations de livraison
                     sont exactes.
                   </label>
-                  <button className="dark-button full-button" type="submit" disabled={checkoutSubmitting}>
-                    {checkoutSubmitting ? 'Enregistrement en cours…' : 'Enregistrer la commande et continuer vers le paiement ↗'}
+                  <button
+                    className="dark-button full-button"
+                    type="submit"
+                    disabled={checkoutSubmitting}
+                  >
+                    {checkoutSubmitting
+                      ? 'Enregistrement en cours…'
+                      : 'Enregistrer la commande et continuer vers le paiement ↗'}
                   </button>
                   <p className="fine-print">
                     Le paiement sécurisé sera effectué sur Stripe après validation de cette étape.
@@ -1071,7 +1099,8 @@ export function App() {
                     <strong>Non configurée</strong>
                   </div>
                   <p className="summary-note">
-                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.
+                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de
+                    livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.
                   </p>
                 </aside>
               </div>
@@ -1231,7 +1260,10 @@ export function App() {
                     <span>Sous-total</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
-                  <p>Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.</p>
+                  <p>
+                    Livraison non configurée : aucun frais de livraison n’est ajouté au montant des
+                    articles.
+                  </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     Passer à la commande ↗
                   </button>
