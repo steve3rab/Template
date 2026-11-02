@@ -970,18 +970,17 @@ export function App() {
                       </select>
                     </label>
                   )}
-                  {(!checkoutAddressId || !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
                   <label>
-                    Adresse e-mail
+                    Adresse e-mail du compte
                     <input
-                      required
                       type="email"
                       autoComplete="email"
                       value={orderEmail}
-                      onChange={(event) => setOrderEmail(event.target.value)}
-                      placeholder="vous@exemple.fr"
+                      readOnly
                     />
                   </label>
+                  {(!checkoutAddressId || !checkoutAddresses.some((address) => address.id === checkoutAddressId)) && (
+                    <>
                   <div className="form-two-col">
                     <label>
                       Destinataire (prénom et nom)
@@ -1030,6 +1029,7 @@ export function App() {
                       />
                     </label>
                   </div>
+                    </>
                   )}
                   <label className="checkbox-line">
                     <input type="checkbox" required /> Je confirme que les informations de livraison
