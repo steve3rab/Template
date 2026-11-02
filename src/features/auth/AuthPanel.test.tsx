@@ -54,7 +54,7 @@ describe('AuthPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Créer un compte' }));
 
     expect(await screen.findByText('test@example.com')).toBeInTheDocument();
-    expect(toastMessages).toContain('Compte créé et connecté.');
+    expect(toastMessages).toContain('Votre compte a été créé. Vous êtes connecté.');
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       '/api/auth/register',
