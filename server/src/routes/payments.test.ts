@@ -39,7 +39,7 @@ function setup() {
     ),
   };
   app = Fastify({ logger: false });
-  app.register(rateLimit, { global: false });
+  app.register(rateLimit, { max: 1000, timeWindow: '1 minute' });
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
