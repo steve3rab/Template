@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npx prettier --write .
       - name: Commit formatting fixes directly to main
         run: |
