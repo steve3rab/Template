@@ -16,13 +16,13 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByRole('button', { name: 'Créer un compte' }).click();
 
   await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
-  await page.getByLabel('Adresse e-mail').fill(email);
+  await expect(page.getByLabel('Adresse e-mail du compte')).toHaveValue(email);
   await page.getByLabel(/destinataire/i).fill('Test Client');
   await page.getByLabel('Adresse', { exact: true }).fill('10 rue du Test');
   await page.getByLabel('Code postal').fill('75001');
   await page.getByLabel('Ville').fill('Paris');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: /enregistrer la commande/i }).click();
+  await page.getByRole('button', { name: /enregistrer la commande et continuer/i }).click();
 
   await expect(page.getByRole('heading', { name: /merci pour votre commande/i })).toBeVisible();
   await expect(page.getByText(/aucun paiement n’a été effectué/i)).toBeVisible();
