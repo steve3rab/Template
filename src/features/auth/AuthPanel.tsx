@@ -12,7 +12,7 @@ export function AuthPanel({
   initialMode = 'register',
 }: {
   language: Language;
-  onAuthenticated?: () => void;
+  onAuthenticated?: (user: User) => void;
   initialMode?: Mode;
 }) {
   const t = translations[language];
@@ -109,7 +109,7 @@ export function AuthPanel({
       window.dispatchEvent(
         new CustomEvent('template-auth-changed', { detail: { authenticated: true } }),
       );
-      onAuthenticated?.();
+      onAuthenticated?.(payload.user);
       setPassword('');
       if (submittedMode === 'register') showToast(t.authSuccess, 'success');
     } catch {
