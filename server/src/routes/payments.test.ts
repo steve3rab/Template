@@ -47,15 +47,19 @@ function setup(rateLimitMax = 1000) {
       keyGenerator: () => 'test-client',
     });
     testApp.removeContentTypeParser('application/json');
-    testApp.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
-      const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
-      request.rawBody = rawBody;
-      try {
-        done(null, JSON.parse(rawBody.toString('utf8')));
-      } catch (error) {
-        done(error instanceof Error ? error : new Error('Invalid JSON body'));
-      }
-    });
+    testApp.addContentTypeParser(
+      'application/json',
+      { parseAs: 'buffer' },
+      (request, body, done) => {
+        const rawBody = Buffer.isBuffer(body) ? body : Buffer.from(body);
+        request.rawBody = rawBody;
+        try {
+          done(null, JSON.parse(rawBody.toString('utf8')));
+        } catch (error) {
+          done(error instanceof Error ? error : new Error('Invalid JSON body'));
+        }
+      },
+    );
     registerPaymentRoutes(testApp, prisma as unknown as PrismaClient, async () => customer);
   });
   return prisma;
