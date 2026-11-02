@@ -68,12 +68,12 @@ describe('seller data isolation and route validation', () => {
         await app.inject({
           method: 'POST',
           url: '/api/seller/products',
-          payload: { name: 'x', category: 'Clothing', priceCents: -1, stock: -1 },
+          payload: { name: 'Test product', category: 'Clothing', priceCents: 1000, stock: 1 },
         }),
       );
     }
 
-    expect(responses.slice(0, 20).every((response) => response.statusCode === 400)).toBe(true);
+    expect(responses.slice(0, 20).every((response) => response.statusCode === 201)).toBe(true);
     expect(responses[20]?.statusCode).toBe(429);
   });
 
