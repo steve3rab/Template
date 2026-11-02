@@ -62,15 +62,16 @@ describe('seller data isolation and route validation', () => {
     setup();
     await app.ready();
 
-    const responses = await Promise.all(
-      Array.from({ length: 21 }, () =>
-        app.inject({
+    const responses = [];
+    for (let index = 0; index < 21; index += 1) {
+      responses.push(
+        await app.inject({
           method: 'POST',
           url: '/api/seller/products',
           payload: { name: 'x', category: 'Clothing', priceCents: -1, stock: -1 },
         }),
-      ),
-    );
+      );
+    }
 
     expect(responses.slice(0, 20).every((response) => response.statusCode === 400)).toBe(true);
     expect(responses[20]?.statusCode).toBe(429);
@@ -252,7 +253,7 @@ describe('seller data isolation and route validation', () => {
     const response = await app.inject({
       method: 'PATCH',
       url: '/api/seller/orders/order-1/status',
-      payload: { status: 'DELIVERED' },
+      payload: { status: 'NOT_A_VALID_STATUS' },
     });
     expect(response.statusCode).toBe(400);
     expect(orderFindFirst).not.toHaveBeenCalled();
