@@ -261,8 +261,8 @@ export function SellerWorkspace({ range }: { range: string }) {
                   files.map(
                     (file) =>
                       new Promise<string>((resolve, reject) => {
-                        if (file.size > 2_800_000) {
-                          reject(new Error(`${file.name} dépasse 2,8 Mo.`));
+                        if (file.size > 1_200_000) {
+                          reject(new Error(`${file.name} dépasse 1,2 Mo.`));
                           return;
                         }
                         const reader = new FileReader();
@@ -288,7 +288,7 @@ export function SellerWorkspace({ range }: { range: string }) {
                   );
               }}
             />
-            <span className="field-hint">PNG, JPEG ou WebP · 2,8 Mo maximum par photo.</span>
+            <span className="field-hint">PNG, JPEG ou WebP · 1,2 Mo maximum par photo.</span>
             {images.length > 0 && (
               <div className="product-image-previews">
                 {images.map((image, index) => (
