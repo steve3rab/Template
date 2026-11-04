@@ -304,6 +304,19 @@ describe('authentication API', () => {
     expect(response.headers['content-security-policy']).toContain("img-src 'self' data: https:");
   });
 
+  it('rejects malformed JSON with a sanitized client error', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      headers: validHeaders,
+      payload: '{"email":',
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: 'Invalid request.' });
+    expect(response.body).not.toContain('Unexpected end of JSON');
+  });
+
   it('rejects malformed registration input without creating a user', async () => {
     const response = await app.inject({
       method: 'POST',
