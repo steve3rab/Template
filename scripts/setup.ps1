@@ -5,6 +5,34 @@ param(
 
 . (Join-Path $PSScriptRoot 'common.ps1')
 
+# Prisma replaces generated native engine files during "prisma generate".
+# Windows refuses that rename while a project Node.js process has the engine loaded.
+try {
+    $projectNodeProcesses = @(
+        Get-CimInstance -ClassName Win32_Process -Filter "Name = 'node.exe'" |
+            Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine.IndexOf(
+                    $script:ProjectRoot,
+                    [System.StringComparison]::OrdinalIgnoreCase
+                ) -ge 0
+            }
+    )
+}
+catch {
+    Write-Warning "Impossible de vérifier les processus Node.js : $($_.Exception.Message)"
+    $projectNodeProcesses = @()
+}
+
+if ($projectNodeProcesses.Count -gt 0) {
+    Write-Host ''
+    Write-Host 'Préparation interrompue : des processus Node.js de ce projet sont encore actifs.' -ForegroundColor Yellow
+    foreach ($process in $projectNodeProcesses) {
+        Write-Host ("  PID {0} : {1}" -f $process.ProcessId, $process.CommandLine) -ForegroundColor DarkYellow
+    }
+    throw 'Fermez les serveurs frontend/backend et les tests de ce projet, puis relancez le menu. Cela évite le verrouillage des fichiers natifs Prisma (EPERM rename).'
+}
+
 Test-ExternalCommand -Name 'node'
 Test-ExternalCommand -Name 'npm'
 
