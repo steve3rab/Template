@@ -183,6 +183,25 @@ describe('password reset routes', () => {
     expect(resetDeleteMany).toHaveBeenCalledWith({ where: { id: 'reset-1' } });
   });
 
+  it('never sends reset links to a webhook without its authentication token', async () => {
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', '');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { resetDeleteMany } = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(resetDeleteMany).toHaveBeenCalledWith({ where: { id: 'reset-1' } });
+  });
+
   it('removes reset tokens when the email provider rejects delivery', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 503 })));
