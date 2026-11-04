@@ -34,7 +34,7 @@ Sous Windows, le menu interactif `.\\scripts\\menu.ps1` propose aussi :
 - **1** : préparer le projet (installation, génération Prisma et migrations), sans lancer de tests.
 - **17** : exécuter les mêmes étapes que l'option 1, puis créer/réinitialiser les comptes de test locaux avec `npm run db:seed:test-users`.
 
-L'option 17 est réservée au développement local. Le seed refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Il utilise le mot de passe de démonstration documenté dans le README ; ne le réutilisez jamais hors de votre machine de développement.
+L'option 17 est réservée au développement local. Le seed refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Si `APP_ORIGIN` est absent, le menu fournit temporairement une origine loopback ; une origine déjà configurée est conservée afin que le seed puisse refuser une cible distante. Le seed utilise le mot de passe de démonstration documenté dans le README ; ne le réutilisez jamais hors de votre machine de développement.
 
 Pour installer Chromium la première fois :
 
