@@ -196,6 +196,15 @@ afterEach(async () => {
 });
 
 describe('authentication API', () => {
+  it('never returns a development verification code in staging-like environments', async () => {
+    process.env.NODE_ENV = 'staging';
+    const response = await register('staging@example.com');
+    expect(response.statusCode).toBe(503);
+    expect(response.json().developmentCode).toBeUndefined();
+    expect(store.registrations.has('staging@example.com')).toBe(false);
+    process.env.NODE_ENV = 'test';
+  });
+
   it('rejects an incorrect verification code and counts failed attempts', async () => {
     const registration = await register('wrong-code@example.com');
     expect(registration.statusCode).toBe(202);
