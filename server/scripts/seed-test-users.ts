@@ -1,6 +1,7 @@
 import { config } from 'dotenv';
 config({ path: 'server/.env' });
 config({ path: '.env' });
+import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
 
@@ -55,7 +56,11 @@ try {
   for (const user of testUsers) {
     const savedUser = await prisma.user.upsert({
       where: { email: user.email },
-      create: { ...user, passwordHash },
+      create: {
+        ...user,
+        publicId: `USR-${randomBytes(6).toString('hex').toUpperCase()}`,
+        passwordHash,
+      },
       update: { role: user.role, passwordHash },
       select: { id: true, email: true, role: true },
     });
