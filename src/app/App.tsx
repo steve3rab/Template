@@ -325,7 +325,7 @@ export function App() {
     // Resolve authentication only from explicit session outcomes. A 5xx/network
     // failure must not be interpreted as logout or overwrite a valid client state.
     void fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
-      .then((response) => {
+      .then(async (response) => {
         if (!active) return;
         if (response.ok) {
           setIsAuthenticated(true);
