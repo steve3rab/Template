@@ -148,6 +148,31 @@ describe('seller data isolation and route validation', () => {
     expect(response.json().product.sellerId).toBe(seller.id);
   });
 
+  it('stores uploaded product photos, sizes and dimensions', async () => {
+    const { productCreate } = setup();
+    await app.ready();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/seller/products',
+      payload: {
+        name: 'Canvas tote',
+        category: 'Accessories',
+        priceCents: 2500,
+        stock: 8,
+        imageUrls: ['data:image/png;base64,aGVsbG8='],
+        sizes: ['Small', 'Medium'],
+        dimensions: { length: 32, width: 28, height: 12, unit: 'cm' },
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const createCall = productCreate.mock.calls[0]?.[0] as { data: Record<string, unknown> };
+    expect(createCall.data.imageUrl).toBe('data:image/png;base64,aGVsbG8=');
+    expect(JSON.parse(String(createCall.data.imageUrls))).toEqual(['data:image/png;base64,aGVsbG8=']);
+    expect(JSON.parse(String(createCall.data.sizes))).toEqual(['Small', 'Medium']);
+    expect(JSON.parse(String(createCall.data.dimensions))).toMatchObject({ length: 32, unit: 'cm' });
+  });
+
   it('rejects invalid product creation and does not write to the database', async () => {
     const { productCreate } = setup();
     await app.ready();
