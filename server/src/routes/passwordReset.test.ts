@@ -161,7 +161,7 @@ describe('password reset routes', () => {
     );
   });
 
-  it('handles a failed reset delivery without disclosing account details', async () => {
+  it('removes unusable reset tokens when email delivery fails without disclosing account details', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubGlobal(
       'fetch',
@@ -169,7 +169,7 @@ describe('password reset routes', () => {
         throw new Error('network down');
       }),
     );
-    setup();
+    const { resetDeleteMany } = setup();
     await app.ready();
 
     const response = await app.inject({
@@ -180,6 +180,23 @@ describe('password reset routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().message).toContain('Si cette adresse');
+    expect(resetDeleteMany).toHaveBeenCalledWith({ where: { id: 'reset-1' } });
+  });
+
+  it('removes reset tokens when the email provider rejects delivery', async () => {
+    vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 503 })));
+    const { resetDeleteMany } = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(resetDeleteMany).toHaveBeenCalledWith({ where: { id: 'reset-1' } });
   });
 
   it('rejects malformed completion requests', async () => {
