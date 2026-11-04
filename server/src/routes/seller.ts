@@ -42,6 +42,10 @@ export function registerSellerRoutes(
       const productData = Object.fromEntries(
         Object.entries(body.data).filter(([, value]) => value !== undefined),
       ) as unknown as Prisma.ProductUncheckedCreateInput;
+      if (typeof productData.imageUrls === 'string') {
+        const images = JSON.parse(productData.imageUrls) as string[];
+        if (images.length > 0 && !productData.imageUrl) productData.imageUrl = images[0] ?? null;
+      }
       const product = await prisma.product.create({
         data: { ...productData, sellerId: seller.id },
       });
@@ -79,6 +83,11 @@ export function registerSellerRoutes(
       const productData = Object.fromEntries(
         Object.entries(body.data).filter(([, value]) => value !== undefined),
       ) as Prisma.ProductUpdateInput;
+      if (typeof productData.imageUrls === 'string') {
+        const images = JSON.parse(productData.imageUrls) as string[];
+        if (images.length > 0 && productData.imageUrl === undefined)
+          productData.imageUrl = images[0] ?? null;
+      }
       const product = await prisma.product.update({
         where: { id: existing.id },
         data: productData,
