@@ -13,8 +13,8 @@ const deploymentEnvironment = [
   process.env.VERCEL_ENV,
   process.env.RAILWAY_ENVIRONMENT,
 ]
-  .filter(Boolean)
-  .map((value) => value!.trim().toLowerCase());
+  .filter((value): value is string => typeof value === 'string')
+  .map((value) => value.trim().toLowerCase());
 
 const forbiddenEnvironment = deploymentEnvironment.find((value) =>
   /^(production|prod|preproduction|pre-production|preprod|staging|stage)$/.test(value),
