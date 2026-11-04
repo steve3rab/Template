@@ -86,9 +86,24 @@ describe('commerce input schemas', () => {
 
   it('rejects unsupported image data, too many images and invalid dimensions', () => {
     const base = { name: 'Canvas tote', category: 'Accessories', priceCents: 2500, stock: 8 };
-    expect(productInputSchema.safeParse({ ...base, imageUrls: ['data:image/svg+xml;base64,PHN2Zz4='] }).success).toBe(false);
-    expect(productInputSchema.safeParse({ ...base, imageUrls: Array(6).fill('https://example.com/photo.png') }).success).toBe(false);
-    expect(productInputSchema.safeParse({ ...base, dimensions: { length: -1, unit: 'cm' } }).success).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['data:image/svg+xml;base64,PHN2Zz4='],
+      }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: Array(6).fill('https://example.com/photo.png'),
+      }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        dimensions: { length: -1, unit: 'cm' },
+      }).success,
+    ).toBe(false);
   });
 
   it('normalizes country codes and rejects invalid ones', () => {
