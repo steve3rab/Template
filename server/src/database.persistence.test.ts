@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { randomBytes } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -27,6 +28,7 @@ describeWithDatabase('SQLite persistence', () => {
     const user = await firstClient.user.create({
       data: {
         email,
+        publicId: `USR-${randomBytes(6).toString('hex').toUpperCase()}`,
         passwordHash: 'test-password-hash',
         sessions: {
           create: {
@@ -63,13 +65,21 @@ describeWithDatabase('SQLite persistence', () => {
     const client = newClient();
 
     const user = await client.user.create({
-      data: { email, passwordHash: 'test-password-hash' },
+      data: {
+        email,
+        publicId: `USR-${randomBytes(6).toString('hex').toUpperCase()}`,
+        passwordHash: 'test-password-hash',
+      },
     });
 
     try {
       await expect(
         client.user.create({
-          data: { email, passwordHash: 'another-test-hash' },
+          data: {
+            email,
+            publicId: `USR-${randomBytes(6).toString('hex').toUpperCase()}`,
+            passwordHash: 'another-test-hash',
+          },
         }),
       ).rejects.toMatchObject({ code: 'P2002' });
     } finally {
