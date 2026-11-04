@@ -124,13 +124,7 @@ function Invoke-SetupAndSeedTestUsers {
         return
     }
 
-    $previousAppOrigin = $env:APP_ORIGIN
     try {
-        # Supply a local origin only when none is configured. Preserve a configured
-        # non-local origin so the seed can reject preproduction/remote environments.
-        if ([string]::IsNullOrWhiteSpace($env:APP_ORIGIN)) {
-            $env:APP_ORIGIN = 'http://127.0.0.1:5173'
-        }
         Write-Host ''
         Write-Host '> Création / réinitialisation des trois comptes de test' -ForegroundColor Cyan
         & $npmCommand.Source run db:seed:test-users
@@ -141,14 +135,6 @@ function Invoke-SetupAndSeedTestUsers {
     }
     catch {
         Write-Host "Échec du seed : $($_.Exception.Message)" -ForegroundColor Red
-    }
-    finally {
-        if ($null -eq $previousAppOrigin) {
-            Remove-Item Env:APP_ORIGIN -ErrorAction SilentlyContinue
-        }
-        else {
-            $env:APP_ORIGIN = $previousAppOrigin
-        }
     }
 
     Write-Host ''
