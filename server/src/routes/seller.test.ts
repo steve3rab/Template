@@ -242,7 +242,7 @@ describe('seller data isolation and route validation', () => {
     expect(response.statusCode).toBe(200);
     expect(productUpdate).toHaveBeenCalledWith({
       where: { id: 'product-1' },
-      data: { imageUrls: '[]', imageUrl: null },
+      data: { active: true, description: '', imageUrls: '[]', imageUrl: null },
     });
   });
 
