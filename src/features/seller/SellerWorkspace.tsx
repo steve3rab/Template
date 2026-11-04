@@ -22,6 +22,12 @@ export function SellerWorkspace({ range }: { range: string }) {
   const [category, setCategory] = useState('Vêtements');
   const [price, setPrice] = useState('29.90');
   const [stock, setStock] = useState('10');
+  const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState('');
+  const [length, setLength] = useState('');
+  const [width, setWidth] = useState('');
+  const [height, setHeight] = useState('');
+  const [dimensionUnit, setDimensionUnit] = useState('cm');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -88,6 +94,17 @@ export function SellerWorkspace({ range }: { range: string }) {
           category,
           priceCents: Math.round(Number(price) * 100),
           stock: Number(stock),
+          imageUrls: images,
+          sizes: sizes.split(',').map((value) => value.trim()).filter(Boolean),
+          dimensions:
+            length || width || height
+              ? {
+                  ...(length ? { length: Number(length) } : {}),
+                  ...(width ? { width: Number(width) } : {}),
+                  ...(height ? { height: Number(height) } : {}),
+                  unit: dimensionUnit,
+                }
+              : undefined,
           active: true,
         }),
       });
@@ -95,6 +112,12 @@ export function SellerWorkspace({ range }: { range: string }) {
       setDescription('');
       setPrice('29.90');
       setStock('10');
+      setImages([]);
+      setSizes('');
+      setLength('');
+      setWidth('');
+      setHeight('');
+      setDimensionUnit('cm');
       window.dispatchEvent(
         new CustomEvent('template-toast', {
           detail: { message: 'Produit créé.', type: 'success' },
@@ -226,6 +249,86 @@ export function SellerWorkspace({ range }: { range: string }) {
               onChange={(event) => setDescription(event.target.value)}
             />
           </label>
+          <label className="product-image-upload">
+            Photos du produit (5 maximum)
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []).slice(0, 5);
+                void Promise.all(
+                  files.map(
+                    (file) =>
+                      new Promise<string>((resolve, reject) => {
+                        if (file.size > 2_800_000) {
+                          reject(new Error(`${file.name} dépasse 2,8 Mo.`));
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () =>
+                          typeof reader.result === 'string'
+                            ? resolve(reader.result)
+                            : reject(new Error('Lecture de photo impossible.'));
+                        reader.onerror = () => reject(new Error('Lecture de photo impossible.'));
+                        reader.readAsDataURL(file);
+                      }),
+                  ),
+                )
+                  .then(setImages)
+                  .catch((error: unknown) =>
+                    window.dispatchEvent(
+                      new CustomEvent('template-toast', {
+                        detail: {
+                          message: error instanceof Error ? error.message : 'Photo invalide.',
+                          type: 'error',
+                        },
+                      }),
+                    ),
+                  );
+              }}
+            />
+            <span className="field-hint">PNG, JPEG ou WebP · 2,8 Mo maximum par photo.</span>
+            {images.length > 0 && (
+              <div className="product-image-previews">
+                {images.map((image, index) => (
+                  <img key={index} src={image} alt={`Aperçu du produit ${index + 1}`} />
+                ))}
+              </div>
+            )}
+          </label>
+          <label>
+            Tailles disponibles
+            <input
+              value={sizes}
+              placeholder="Ex. XS, S, M, L, XL ou 38, 39, 40"
+              onChange={(event) => setSizes(event.target.value)}
+            />
+            <span className="field-hint">Séparez les tailles par des virgules.</span>
+          </label>
+          <div className="form-two-col product-dimensions">
+            <label>
+              Longueur
+              <input type="number" min="0.01" step="0.01" value={length} onChange={(event) => setLength(event.target.value)} />
+            </label>
+            <label>
+              Largeur
+              <input type="number" min="0.01" step="0.01" value={width} onChange={(event) => setWidth(event.target.value)} />
+            </label>
+            <label>
+              Hauteur
+              <input type="number" min="0.01" step="0.01" value={height} onChange={(event) => setHeight(event.target.value)} />
+            </label>
+            <label>
+              Unité
+              <select value={dimensionUnit} onChange={(event) => setDimensionUnit(event.target.value)}>
+                <option value="mm">mm</option>
+                <option value="cm">cm</option>
+                <option value="m">m</option>
+                <option value="in">in</option>
+              </select>
+            </label>
+          </div>
           <div className="form-two-col">
             <label>
               Catégorie
