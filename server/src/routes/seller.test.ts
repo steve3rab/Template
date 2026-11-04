@@ -228,6 +228,24 @@ describe('seller data isolation and route validation', () => {
     expect(productUpdate).not.toHaveBeenCalled();
   });
 
+  it('clears the legacy image URL when a seller removes every product photo', async () => {
+    const { productFindFirst, productUpdate } = setup();
+    productFindFirst.mockResolvedValueOnce({ id: 'product-1' } as never);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/seller/products/product-1',
+      payload: { imageUrls: [] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(productUpdate).toHaveBeenCalledWith({
+      where: { id: 'product-1' },
+      data: { imageUrls: '[]', imageUrl: null },
+    });
+  });
+
   it('does not allow a seller to modify another seller product', async () => {
     const { productFindFirst, productUpdate } = setup();
     await app.ready();
