@@ -42,7 +42,9 @@ describe('AuthPanel', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(response(false))
-      .mockResolvedValueOnce(response(true, { verificationRequired: true, developmentCode: '1234567890' }, 202))
+      .mockResolvedValueOnce(
+        response(true, { verificationRequired: true, developmentCode: '1234567890' }, 202),
+      )
       .mockResolvedValueOnce(response(true, { user: registeredUser }, 201))
       .mockResolvedValueOnce(response(true, undefined, 204));
     vi.stubGlobal('fetch', fetchMock);
@@ -66,7 +68,10 @@ describe('AuthPanel', () => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'test@example.com', password: 'Correct-horse-battery-2026!' }),
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Correct-horse-battery-2026!',
+        }),
       }),
     );
 
