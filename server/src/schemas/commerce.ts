@@ -34,9 +34,19 @@ export const productInputSchema = z.object({
   priceCents: z.number().int().min(1).max(100_000_000),
   stock: z.number().int().min(0).max(1_000_000),
   imageUrl: httpUrlSchema.optional().nullable(),
-  imageUrls: z.array(productImageSchema).max(5).optional().transform((value) => value ? JSON.stringify(value) : undefined),
-  sizes: z.array(z.string().trim().min(1).max(40)).max(30).optional().transform((value) => value ? JSON.stringify([...new Set(value)]) : undefined),
-  dimensions: productDimensionsSchema.optional().transform((value) => value ? JSON.stringify(value) : undefined),
+  imageUrls: z
+    .array(productImageSchema)
+    .max(5)
+    .optional()
+    .transform((value) => (value ? JSON.stringify(value) : undefined)),
+  sizes: z
+    .array(z.string().trim().min(1).max(40))
+    .max(30)
+    .optional()
+    .transform((value) => (value ? JSON.stringify([...new Set(value)]) : undefined)),
+  dimensions: productDimensionsSchema
+    .optional()
+    .transform((value) => (value ? JSON.stringify(value) : undefined)),
   active: z.boolean().default(true),
 });
 
