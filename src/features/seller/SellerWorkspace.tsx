@@ -297,7 +297,9 @@ export function SellerWorkspace({ range }: { range: string }) {
                     <button
                       type="button"
                       aria-label={`Retirer la photo ${index + 1}`}
-                      onClick={() => setImages((current) => current.filter((_, item) => item !== index))}
+                      onClick={() =>
+                        setImages((current) => current.filter((_, item) => item !== index))
+                      }
                     >
                       ×
                     </button>
@@ -318,19 +320,40 @@ export function SellerWorkspace({ range }: { range: string }) {
           <div className="form-two-col product-dimensions">
             <label>
               Longueur
-              <input type="number" min="0.01" step="0.01" value={length} onChange={(event) => setLength(event.target.value)} />
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={length}
+                onChange={(event) => setLength(event.target.value)}
+              />
             </label>
             <label>
               Largeur
-              <input type="number" min="0.01" step="0.01" value={width} onChange={(event) => setWidth(event.target.value)} />
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={width}
+                onChange={(event) => setWidth(event.target.value)}
+              />
             </label>
             <label>
               Hauteur
-              <input type="number" min="0.01" step="0.01" value={height} onChange={(event) => setHeight(event.target.value)} />
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={height}
+                onChange={(event) => setHeight(event.target.value)}
+              />
             </label>
             <label>
               Unité
-              <select value={dimensionUnit} onChange={(event) => setDimensionUnit(event.target.value)}>
+              <select
+                value={dimensionUnit}
+                onChange={(event) => setDimensionUnit(event.target.value)}
+              >
                 <option value="mm">mm</option>
                 <option value="cm">cm</option>
                 <option value="m">m</option>
