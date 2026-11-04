@@ -3018,3 +3018,88 @@ button {
     margin-left: auto;
   }
 }
+
+
+/* Refined language control and consistent form field spacing. */
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #e5e4da;
+  border-radius: 999px;
+  background: #f1f0e9;
+  box-shadow: inset 0 1px 2px rgb(35 39 29 / 4%);
+}
+
+.language-switcher .language-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 38px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #77796e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.language-switcher .language-button[aria-pressed='true'] {
+  background: #394331;
+  color: #fffef8;
+  box-shadow: 0 2px 7px rgb(35 42 29 / 18%);
+}
+
+.language-switcher .language-button:focus-visible {
+  outline: 2px solid #8b9876;
+  outline-offset: 2px;
+}
+
+.checkout-form label,
+.auth-form label {
+  min-width: 0;
+  gap: 8px;
+}
+
+.checkout-form input:not([type='checkbox']),
+.checkout-form select,
+.checkout-form textarea,
+.auth-form input,
+.best-seller-row input,
+.best-seller-row select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 16px;
+  text-indent: 0;
+  line-height: 1.45;
+}
+
+.checkout-form textarea {
+  min-height: 104px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+@media (max-width: 760px) {
+  .language-switcher {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .language-switcher .language-button {
+    min-width: 34px;
+    min-height: 30px;
+    padding-inline: 8px;
+  }
+
+  .checkout-form input:not([type='checkbox']),
+  .checkout-form select,
+  .checkout-form textarea,
+  .auth-form input {
+    padding-inline: 14px;
+  }
+}
