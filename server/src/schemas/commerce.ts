@@ -14,8 +14,8 @@ const productImageSchema = z
   .string()
   .max(4_500_000)
   .refine((value) => {
-    if (/^https?:\\/\\//i.test(value)) return true;
-    return /^data:image\\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
+    if (/^https?:\/\//i.test(value)) return true;
+    return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
   }, 'Product images must be HTTP(S) URLs or PNG/JPEG/WebP uploads.');
 
 const productDimensionsSchema = z
