@@ -122,7 +122,7 @@ Le contrôle global `npm run check` enchaîne le typage, ESLint, Prettier, les c
 .\scripts\clean.ps1
 ```
 
-Le menu interactif est disponible via `.\scripts\menu.ps1`.
+Le menu interactif est disponible via `.\scripts\menu.ps1`. L'option **17** exécute la préparation de l'option 1, puis crée/réinitialise les trois comptes de test locaux avec le mot de passe indiqué dans la section « Comptes de test ».
 
 ## Architecture
 
