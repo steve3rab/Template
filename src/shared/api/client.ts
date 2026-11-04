@@ -98,7 +98,10 @@ export const apiSchemas = {
   }),
   adminProducts: z.object({
     products: z.array(productSchema.extend({
-      seller: z.object({ id: z.string(), publicId: z.string(), email: z.string().email() }).nullable().optional(),
+      seller: z
+        .object({ id: z.string(), publicId: z.string(), email: z.string().email() })
+        .nullable()
+        .optional(),
     })),
   }),
   adminOrders: z.object({ orders: z.array(orderSchema) }),
