@@ -24,6 +24,10 @@ const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const localSessionSecret = 'local-development-only-change-this-secret';
 
+function createPublicUserId(): string {
+  return `USR-${randomBytes(6).toString('hex').toUpperCase()}`;
+}
+
 function tokenHash(token: string): string {
   const secret = process.env.SESSION_SECRET ?? localSessionSecret;
   return createHmac('sha256', secret).update(token).digest('hex');
@@ -356,7 +360,11 @@ export async function createApp(
 
       try {
         const user = await prisma.user.create({
-          data: { email, passwordHash: pending.passwordHash },
+          data: {
+            email,
+            passwordHash: pending.passwordHash,
+            publicId: createPublicUserId(),
+          },
         });
         await prisma.registrationVerification.deleteMany({ where: { email } });
         await setSession(reply, prisma, user.id);
