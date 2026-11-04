@@ -28,7 +28,7 @@ export const passwordSchema = z
   .refine((password) => /[a-z]/.test(password), 'Add at least one lowercase letter.')
   .refine((password) => /[A-Z]/.test(password), 'Add at least one uppercase letter.')
   .refine((password) => /[0-9]/.test(password), 'Add at least one number.')
-  .refine((password) => /[^A-Za-z0-9\\s]/.test(password), 'Add at least one special character.')
+  .refine((password) => /[^A-Za-z0-9\s]/.test(password), 'Add at least one special character.')
   .refine(
     (password) => !containsControlCharacters(password),
     'Password contains control characters.',
