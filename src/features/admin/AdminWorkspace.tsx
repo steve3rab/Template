@@ -56,11 +56,35 @@ export function AdminWorkspace() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void load();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [load]);
+    let active = true;
+    void Promise.all([
+      apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
+      apiRequest('/api/admin/users', apiSchemas.adminUsers),
+      apiRequest('/api/admin/products', apiSchemas.adminProducts),
+      apiRequest('/api/admin/orders', apiSchemas.adminOrders),
+    ])
+      .then(([stats, userData, productData, orderData]) => {
+        if (!active) return;
+        setDashboard(stats);
+        setUsers(userData.users);
+        setProducts(productData.products);
+        setOrders(orderData.orders);
+      })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : 'Impossible de charger les données administrateur.',
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function updateRole(user: AdminUser, role: 'CUSTOMER' | 'SELLER') {
     setLoading(true);
