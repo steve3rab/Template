@@ -16,6 +16,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\dev-all.ps1
 ```
 
+Sous Windows, arrêtez les serveurs frontend/backend et les tests du projet avant de relancer la préparation ou la génération Prisma. Un processus Node.js qui conserve le moteur Prisma chargé peut empêcher Windows de remplacer les fichiers générés et provoquer `EPERM: operation not permitted, rename`. Le script `setup.ps1` détecte désormais les processus Node.js du projet et interrompt la préparation avec leurs PID au lieu de poursuivre dans un état verrouillé.
+
 Le frontend est disponible sur http://localhost:5173 et l'API sur http://localhost:3001. Le proxy Vite transmet automatiquement les requêtes `/api` vers le backend.
 
 Pour démarrer séparément :
