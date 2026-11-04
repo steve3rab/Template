@@ -32,11 +32,18 @@ Avant d’encaisser en production, exécutez les tests de bout en bout en mode S
 
 ## Validation avant mise en ligne
 
+La CI du dépôt vérifie automatiquement le typage, ESLint, Prettier, les seuils de couverture frontend/backend, les builds frontend/serveur, les parcours Playwright Chromium et la construction de l'image Docker (sans publication). Consultez [CI.md](CI.md) pour le détail et l'historique de validation.
+
+Avant une mise en ligne, exécutez depuis la racine :
+
 ```bash
+npm ci --legacy-peer-deps
+npm run db:generate
 npm run check
 npm run test:e2e
-npm run build:server
 npm run db:deploy
 ```
+
+Le passage de la CI est nécessaire mais ne constitue ni un audit de sécurité, ni un test de charge, ni une validation du parcours Stripe en production. Effectuez ces vérifications en préproduction avec les services et secrets de test.
 
 Exécutez aussi les tests de charge du répertoire tests/load dans un environnement de préproduction et une revue de sécurité manuelle. Aucun test de charge ni audit externe n’est réputé exécuté simplement parce que les scripts sont présents.

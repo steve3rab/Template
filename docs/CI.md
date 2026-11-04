@@ -1,0 +1,66 @@
+# Intégration continue et stratégie de tests
+
+## Déclenchement et jobs
+
+Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `main`, d'une pull request et à la demande (`workflow_dispatch`). Les jobs s'exécutent sur Ubuntu avec Node.js 22.16.0 et npm 10.9.4.
+
+| Job | Contrôles exécutés |
+| --- | --- |
+| `quality` | Installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur |
+| `e2e` | Installation, génération Prisma, migrations, installation de Chromium et tests Playwright |
+| `docker` | Construction de l'image avec Buildx, sans publication (`push: false`) |
+
+La CI utilise une base SQLite éphémère et des secrets de session réservés aux tests. Ces valeurs ne doivent jamais être réutilisées en production.
+
+## Commandes locales
+
+Depuis la racine du dépôt :
+
+```bash
+npm ci --legacy-peer-deps
+npm run db:generate
+npm run db:deploy
+npm run typecheck
+npm run lint
+npm run format:check
+npm run test:coverage
+npm run test:coverage:server
+npm run build
+npm run build:server
+npm run test:e2e
+```
+
+La commande `npm run check` regroupe typecheck, lint, format, couverture frontend et backend, puis les deux builds. Les tests E2E restent séparés.
+
+Pour installer Chromium la première fois :
+
+```bash
+npx playwright install chromium
+```
+
+## Seuils de couverture
+
+Les seuils sont définis dans `vite.config.ts` et sont bloquants :
+
+| Périmètre | Statements | Branches | Functions | Lines |
+| --- | ---: | ---: | ---: | ---: |
+| Ensemble du projet | 45 % | 35 % | 44 % | 47 % |
+| Backend `server/src/**` | 25 % | 20 % | 25 % | 25 % |
+
+Le contrôle frontend inclut les fichiers de test configurés par Vitest ; le backend est également exécuté séparément avec `npm run test:coverage:server`. Les seuils constituent un plancher anti-régression, pas un objectif de couverture finale. Augmentez-les progressivement lorsque de nouveaux tests sont ajoutés. Ne diminuez jamais un seuil pour faire passer une CI sans justification documentée.
+
+## Règles de prévention des régressions
+
+- Toute correction de bug doit inclure un test qui échoue avant la correction et passe après.
+- Toute route protégée doit tester l'absence de session, le rôle incorrect et l'accès autorisé.
+- Les limites de débit doivent vérifier le nombre de requêtes autorisées puis la réponse `429`, avec une clé client déterministe dans les tests.
+- Les flux de paiement doivent tester les signatures webhook, les événements répétés, les expirations et les états de commande.
+- Les changements de schéma doivent inclure une migration Prisma et une vérification sur une base temporaire.
+- Les parcours critiques doivent être couverts par Playwright, sur desktop et mobile lorsque l'interface est concernée.
+- Ne pas modifier les attentes d'un test uniquement pour masquer une régression ; corriger le comportement ou expliquer précisément le contrat attendu.
+
+## Lecture du résultat CI
+
+Un job vert signifie uniquement que les commandes de ce job ont réussi sur le commit testé et dans l'environnement CI. Il ne prouve pas à lui seul la conformité réglementaire, la sécurité de production, la capacité en charge, la délivrabilité des e-mails, ni le bon fonctionnement des intégrations externes en environnement réel.
+
+Le job Docker construit l'image frontend Nginx sans la publier. Selon `docs/PRODUCTION.md`, l'API Fastify doit être déployée comme un service séparé ; le succès de la construction Docker ne signifie donc pas que toute l'application a été déployée.

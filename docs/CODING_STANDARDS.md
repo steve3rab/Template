@@ -54,12 +54,14 @@ Run these commands locally and resolve failures before pushing:
 npm run typecheck
 npm run lint
 npm run format:check
-npm run test
+npm run test:coverage
+npm run test:coverage:server
 npm run build
 npm run build:server
+npm run test:e2e
 ```
 
-For behavior changes, add or update focused unit/API tests. For database and cross-feature flows, add integration or end-to-end coverage. CI is the final verification gate; never describe a check as passing unless its result is visible.
+For behavior changes, add or update focused unit/API tests. For database and cross-feature flows, add integration or end-to-end coverage. `npm run check` regroupe les contrôles qualité, les couvertures frontend/backend et les builds. `npm run test:e2e` est un contrôle séparé. CI is the final verification gate; never describe a check as passing unless its result is visible.
 
 ## Pull request / commit hygiene
 

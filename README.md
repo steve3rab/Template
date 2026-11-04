@@ -4,7 +4,7 @@ Socle full-stack construit avec React, TypeScript strict, Vite, Fastify et Prism
 
 ## Prérequis
 
-- Node.js 22.12+
+- Node.js 22.16+
 - npm 10.9+
 - Docker (optionnel)
 
@@ -87,7 +87,7 @@ Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
 
 ## Contrôles qualité
 
-Les tests couvrent les scénarios d'API (inscription, connexion, déconnexion, expiration de session, validation, cookies, origine, limitation de débit et erreurs internes) ainsi que les interactions du formulaire frontend. Les tests API utilisent un faux dépôt Prisma pour rester rapides et déterministes ; ajoutez en complément des tests d'intégration contre une base SQLite temporaire avant les déploiements majeurs.
+Les tests couvrent les composants et parcours frontend, les routes API (authentification, sessions, autorisations, validation, cookies, origine, limitation de débit, paiements et erreurs), ainsi que les parcours utilisateur Playwright. Les tests unitaires/API isolent les dépendances lorsque c'est pertinent ; les tests de persistance et les parcours E2E complètent ces vérifications. Les seuils de couverture sont contrôlés séparément pour le frontend et le backend.
 
 ```bash
 npm run typecheck
@@ -95,6 +95,7 @@ npm run lint
 npm run format:check
 npm run test
 npm run test:coverage
+npm run test:coverage:server
 npm run test:e2e
 npm run build
 npm run build:server
@@ -106,6 +107,8 @@ Installer les navigateurs Playwright lors de la première utilisation E2E :
 ```bash
 npx playwright install chromium
 ```
+
+Le contrôle global `npm run check` enchaîne le typage, ESLint, Prettier, les couvertures frontend/backend et les builds frontend/serveur. La CI GitHub exécute aussi les tests Playwright Chromium et construit l'image Docker sans la publier. Voir [docs/CI.md](docs/CI.md) pour le détail des jobs, seuils et commandes.
 
 ## Scripts PowerShell (Windows)
 
@@ -165,7 +168,7 @@ Les comptes publics sont toujours créés en CUSTOMER. Pour attribuer un rôle d
 
 ## Configuration de production et tests commerciaux
 
-Voir [docs/PRODUCTION.md](docs/PRODUCTION.md) et [server/.env.production.example](server/.env.production.example). En production, l’application exige une origine HTTPS, un secret de session fort et un webhook de livraison de réinitialisation de mot de passe en HTTPS. Le cookie de session couvre désormais les routes API d'authentification et de commerce.
+Voir [docs/PRODUCTION.md](docs/PRODUCTION.md), [docs/CI.md](docs/CI.md) et [server/.env.production.example](server/.env.production.example). En production, l’application exige une origine HTTPS, un secret de session fort et un webhook de livraison de réinitialisation de mot de passe en HTTPS. Le cookie de session couvre désormais les routes API d'authentification et de commerce.
 
 Les pages CGV, confidentialité et retours/remboursements sont des **modèles à compléter et faire valider** avant toute vente. Les coordonnées de l'entreprise, du médiateur, les durées de conservation, les prestataires et les modalités de livraison doivent être exacts.
 
