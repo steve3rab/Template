@@ -29,7 +29,8 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
   const productFindMany = vi.fn(async () => []);
   const productUpdate = vi.fn(async () => ({ id: 'product-1', active: false }));
   const orderCount = vi.fn(async () => 7);
-  const orderFindMany = vi.fn(async () => [{ totalCents: 1000 }, { totalCents: 2000 }]);
+  const orderFindMany = vi.fn(async () => []);
+  const orderAggregate = vi.fn(async () => ({ _count: { _all: 2 }, _sum: { totalCents: 3000 } }));
   const prisma = {
     user: {
       findUnique: userFindUnique,
@@ -38,7 +39,7 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
       findMany: userFindMany,
     },
     product: { count: productCount, findMany: productFindMany, update: productUpdate },
-    order: { count: orderCount, findMany: orderFindMany },
+    order: { count: orderCount, findMany: orderFindMany, aggregate: orderAggregate },
     session: { deleteMany: sessionDeleteMany },
     ...overrides,
   };
@@ -56,6 +57,7 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     productUpdate,
     orderCount,
     orderFindMany,
+    orderAggregate,
   };
 }
 
@@ -79,7 +81,7 @@ describe('admin role management', () => {
   });
 
   it('returns global administrator KPIs, including confirmed revenue only', async () => {
-    const { userCount, productCount, orderCount, orderFindMany } = setup('ADMIN');
+    const { userCount, productCount, orderCount, orderAggregate } = setup('ADMIN');
     await app.ready();
     const response = await app.inject({ method: 'GET', url: '/api/admin/dashboard' });
     expect(response.statusCode).toBe(200);
@@ -95,12 +97,26 @@ describe('admin role management', () => {
     expect(userCount).toHaveBeenCalledTimes(2);
     expect(productCount).toHaveBeenCalledTimes(2);
     expect(orderCount).toHaveBeenCalledTimes(1);
-    expect(orderFindMany).toHaveBeenCalledWith({
+    expect(orderAggregate).toHaveBeenCalledWith({
       where: { paymentStatus: 'PAID' },
-      select: { totalCents: true },
+      _count: { _all: true },
+      _sum: { totalCents: true },
     });
   });
 
+
+  it('returns zero revenue when no paid orders exist', async () => {
+    const { orderAggregate } = setup('ADMIN');
+    orderAggregate.mockResolvedValueOnce({
+      _count: { _all: 0 },
+      _sum: { totalCents: null },
+    });
+    await app.ready();
+
+    const response = await app.inject({ method: 'GET', url: '/api/admin/dashboard' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ paidOrders: 0, revenueCents: 0 });
+  });
 
   it('lists user accounts with their stable public identifiers', async () => {
     const { userFindMany } = setup('ADMIN');
