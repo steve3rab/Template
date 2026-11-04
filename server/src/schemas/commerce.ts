@@ -7,8 +7,8 @@ const httpUrlSchema = z
   .max(2048)
   .refine((value) => {
     const protocol = new URL(value).protocol;
-    return protocol === 'http:' || protocol === 'https:';
-  }, 'URL must use HTTP or HTTPS.');
+    return protocol === 'https:';
+  }, 'URL must use HTTPS.');
 
 function hasValidImageSignature(value: string): boolean {
   const match = value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/i);
