@@ -102,6 +102,15 @@ export async function createApp(
         'EMAIL_VERIFICATION_WEBHOOK_URL and EMAIL_VERIFICATION_WEBHOOK_TOKEN must be configured in production.',
       );
     }
+    let verificationWebhook: URL;
+    try {
+      verificationWebhook = new URL(process.env.EMAIL_VERIFICATION_WEBHOOK_URL);
+    } catch {
+      throw new Error('EMAIL_VERIFICATION_WEBHOOK_URL must be an absolute HTTPS URL.');
+    }
+    if (verificationWebhook.protocol !== 'https:') {
+      throw new Error('EMAIL_VERIFICATION_WEBHOOK_URL must use HTTPS.');
+    }
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
       throw new Error(
         'STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be configured in production.',
