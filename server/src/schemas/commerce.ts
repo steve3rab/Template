@@ -6,8 +6,12 @@ const httpUrlSchema = z
   .url()
   .max(2048)
   .refine((value) => {
-    const url = new URL(value);
-    return url.protocol === 'https:' && !url.username && !url.password;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && !url.username && !url.password;
+    } catch {
+      return false;
+    }
   }, 'URL must use HTTPS and must not contain embedded credentials.');
 
 function hasValidImageSignature(value: string): boolean {
