@@ -123,6 +123,18 @@ describe('commerce input schemas', () => {
         imageUrls: ['data:image/jpeg;base64,/9j/'],
       }).success,
     ).toBe(true);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['data:image/webp;base64,UklGRjAwMDBXRUJQ'],
+      }).success,
+    ).toBe(true);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['data:image/webp;base64,aGVsbG8='],
+      }).success,
+    ).toBe(false);
   });
 
   it('rejects unsupported image data, too many images and invalid dimensions', () => {
