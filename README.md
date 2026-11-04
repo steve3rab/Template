@@ -53,6 +53,7 @@ npm run db:seed:test-users
 ```
 
 Le script hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse explicitement de s'exécuter si l'environnement est déclaré `production`, `preproduction`, `preprod` ou `staging` via `NODE_ENV`, `APP_ENV`, `DEPLOYMENT_ENV`, `ENVIRONMENT`, `VERCEL_ENV` ou `RAILWAY_ENVIRONMENT`. Il exige également que `APP_ORIGIN` soit défini et pointe vers `localhost`, `127.0.0.1` ou `::1`. **Ces comptes et ce mot de passe sont exclusivement réservés au développement local et ne doivent jamais être utilisés en production ou en préproduction.**
+
 ## Base de données Prisma + SQLite
 
 Le fichier SQLite local est créé dans `server/prisma/dev.db` par défaut. Les migrations versionnées sont sous `server/prisma/migrations`.
