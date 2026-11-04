@@ -1,5 +1,7 @@
 # Template React — socle full-stack TypeScript
 
+[![CI](https://github.com/steve3rab/Template/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/steve3rab/Template/actions/workflows/ci.yml) [![Security](https://github.com/steve3rab/Template/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/steve3rab/Template/actions/workflows/security.yml)
+
 Socle full-stack construit avec React, TypeScript strict, Vite, Fastify et Prisma. Le frontend utilise une API HTTP typée et un backend modulaire. SQLite est configuré pour le démarrage local ; Prisma permet d'évoluer vers PostgreSQL, MySQL et d'autres moteurs pris en charge en adaptant le provider et la migration.
 
 ## Prérequis
