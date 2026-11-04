@@ -92,6 +92,12 @@ export const addressInputSchema = z.object({
   isDefault: z.boolean().default(false),
 });
 
+export const productVisibilitySchema = z
+  .object({
+    active: z.boolean(),
+  })
+  .strict();
+
 export const roleInputSchema = z.object({
   role: z.enum(['CUSTOMER', 'SELLER']),
 });
