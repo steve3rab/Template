@@ -265,7 +265,11 @@ describe('authentication API', () => {
       payload: { email: 'secure@example.com', password: 'Correct-horse-battery1!' },
     });
     expect(login.statusCode).toBe(200);
-    expect(String(login.headers['set-cookie'])).toContain('Secure;');
+    const loginCookie = String(login.headers['set-cookie']);
+    expect(loginCookie).toContain('Secure;');
+    expect(loginCookie).toContain('HttpOnly;');
+    expect(loginCookie).toContain('SameSite=Lax');
+    expect(loginCookie).toContain('Path=/;');
 
     const logout = await app.inject({
       method: 'POST',
@@ -274,6 +278,8 @@ describe('authentication API', () => {
     });
     expect(logout.statusCode).toBe(204);
     expect(String(logout.headers['set-cookie'])).toContain('Secure;');
+    expect(String(logout.headers['set-cookie'])).toContain('HttpOnly;');
+    expect(String(logout.headers['set-cookie'])).toContain('SameSite=Lax');
     expect(String(logout.headers['set-cookie'])).toContain('Max-Age=0');
   });
 
