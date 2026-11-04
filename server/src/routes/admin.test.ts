@@ -27,6 +27,7 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     async ({ where }: { where?: { active?: boolean } } = {}) => (where?.active ? 18 : 25),
   );
   const productFindMany = vi.fn(async () => []);
+  const productFindUnique = vi.fn(async () => ({ id: 'product-1' }));
   const productUpdate = vi.fn(async () => ({ id: 'product-1', active: false }));
   const orderCount = vi.fn(async () => 7);
   const orderFindMany = vi.fn(async () => []);
@@ -38,7 +39,12 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
       count: userCount,
       findMany: userFindMany,
     },
-    product: { count: productCount, findMany: productFindMany, update: productUpdate },
+    product: {
+      count: productCount,
+      findMany: productFindMany,
+      findUnique: productFindUnique,
+      update: productUpdate,
+    },
     order: { count: orderCount, findMany: orderFindMany, aggregate: orderAggregate },
     session: { deleteMany: sessionDeleteMany },
     ...overrides,
@@ -54,6 +60,7 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     userFindMany,
     productCount,
     productFindMany,
+    productFindUnique,
     productUpdate,
     orderCount,
     orderFindMany,
@@ -153,6 +160,37 @@ describe('admin role management', () => {
       where: { id: 'product-1' },
       data: { active: false },
     });
+  });
+
+  it('returns 404 when an administrator moderates a missing product', async () => {
+    const { productFindUnique, productUpdate } = setup('ADMIN');
+    productFindUnique.mockResolvedValueOnce(null as never);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/products/missing-product/visibility',
+      payload: { active: false },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error).toBe('Product not found.');
+    expect(productUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown fields in product visibility updates', async () => {
+    const { productFindUnique, productUpdate } = setup('ADMIN');
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/products/product-1/visibility',
+      payload: { active: false, role: 'ADMIN' },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(productFindUnique).not.toHaveBeenCalled();
+    expect(productUpdate).not.toHaveBeenCalled();
   });
 
   it('denies non-admins before any database access', async () => {
