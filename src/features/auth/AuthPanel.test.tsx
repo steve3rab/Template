@@ -93,6 +93,27 @@ describe('AuthPanel', () => {
     );
   });
 
+  it('shows every password requirement and blocks weak registration passwords', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(false)));
+    render(<AuthPanel language="en" />);
+    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
+
+    await user.type(screen.getByLabelText(/email address/i), 'new@example.test');
+    const password = screen.getByLabelText(/password/i);
+    const submit = screen.getByRole('button', { name: 'Create account' });
+    await user.type(password, 'lowercaseonlypassword');
+    expect(submit).toBeDisabled();
+    expect(screen.getByText('At least 12 characters')).toBeInTheDocument();
+    expect(screen.getByText('One uppercase letter')).toBeInTheDocument();
+    expect(screen.getByText('One number')).toBeInTheDocument();
+    expect(screen.getByText('One special character')).toBeInTheDocument();
+
+    await user.clear(password);
+    await user.type(password, 'Correct-horse-battery-2026!');
+    expect(submit).toBeEnabled();
+  });
+
   it('allows sign-in and restores an existing session', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
