@@ -17,9 +17,8 @@ export const emailSchema = z
   .transform((email) => email.toLowerCase());
 
 /**
- * Password policy for new credentials: 12–128 characters.
- * Passphrases are allowed; complexity rules must not force arbitrary character classes.
- * Control characters and whitespace-only passwords are rejected.
+ * New credentials require 12–128 characters, with uppercase, lowercase, numeric
+ * and special characters. Control characters and whitespace-only passwords are rejected.
  */
 export const passwordSchema = z
   .string()
