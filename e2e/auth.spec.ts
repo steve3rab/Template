@@ -12,7 +12,7 @@ test('a customer can register, sign out, sign in again and keep the session', as
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Créer un compte' }).click();
   const verificationToast = await page.locator('.toast').textContent();
-  const code = verificationToast?.match(/(\\d{10})/)?.[1];
+  const code = verificationToast?.match(/(\d{10})/)?.[1];
   expect(code).toBeTruthy();
   await page.getByLabel('Code de vérification').fill(code!);
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
