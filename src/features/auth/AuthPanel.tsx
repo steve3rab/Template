@@ -2,9 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { Language } from '../../shared/i18n';
 import { translations } from '../../shared/i18n';
 
-type User = { id: string; email: string; createdAt: string };
+type User = { id: string; publicId: string; email: string; createdAt: string };
 type AuthResponse = { user: User };
-type Mode = 'login' | 'register' | 'reset';
+type Mode = 'login' | 'register' | 'verify' | 'reset';
 
 export function AuthPanel({
   language,
@@ -19,9 +19,18 @@ export function AuthPanel({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [busy, setBusy] = useState(false);
+  const passwordRules = [
+    { label: t.passwordRuleLength, valid: password.length >= 12 },
+    { label: t.passwordRuleUppercase, valid: /[A-Z]/.test(password) },
+    { label: t.passwordRuleLowercase, valid: /[a-z]/.test(password) },
+    { label: t.passwordRuleNumber, valid: /[0-9]/.test(password) },
+    { label: t.passwordRuleSpecial, valid: /[^A-Za-z0-9\\s]/.test(password) },
+  ];
+  const passwordValid = passwordRules.every((rule) => rule.valid);
 
   function showToast(message: string, type: 'info' | 'success' | 'error' = 'info') {
     window.dispatchEvent(new CustomEvent('template-toast', { detail: { message, type } }));
@@ -76,23 +85,45 @@ export function AuthPanel({
       const endpoint =
         submittedMode === 'reset'
           ? '/api/auth/password-reset/request'
-          : `/api/auth/${submittedMode}`;
+          : submittedMode === 'verify'
+            ? '/api/auth/register/verify'
+            : `/api/auth/${submittedMode}`;
+      const requestBody =
+        submittedMode === 'reset'
+          ? { email }
+          : submittedMode === 'verify'
+            ? { email, code: verificationCode }
+            : { email, password };
       const response = await fetch(endpoint, {
         signal: AbortSignal.timeout(15000),
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submittedMode === 'reset' ? { email } : { email, password }),
+        body: JSON.stringify(requestBody),
       });
-      const payload = (await response.json()) as AuthResponse | { error?: string };
+      const payload = (await response.json()) as
+        | AuthResponse
+        | { error?: string; verificationRequired?: boolean; developmentCode?: string };
       if (!response.ok) {
-        showToast(
-          submittedMode === 'register'
+        const serverMessage = 'error' in payload && typeof payload.error === 'string'
+          ? payload.error
+          : submittedMode === 'register'
             ? t.authRegisterError
             : submittedMode === 'login'
               ? t.authLoginError
-              : t.authError,
-          'error',
+              : t.authError;
+        showToast(serverMessage, 'error');
+        return;
+      }
+      if (submittedMode === 'register' && 'verificationRequired' in payload) {
+        setMode('verify');
+        setPassword('');
+        setVerificationCode('');
+        showToast(
+          'developmentCode' in payload && payload.developmentCode
+            ? `${t.authVerificationSent} Code local : ${payload.developmentCode}`
+            : t.authVerificationSent,
+          'success',
         );
         return;
       }
@@ -108,7 +139,7 @@ export function AuthPanel({
       );
       onAuthenticated?.(payload.user);
       setPassword('');
-      if (submittedMode === 'register') showToast(t.authSuccess, 'success');
+      if (submittedMode === 'verify') showToast(t.authSuccess, 'success');
     } catch {
       showToast(t.authError, 'error');
     } finally {
@@ -143,6 +174,7 @@ export function AuthPanel({
         <div className="auth-profile">
           <p>{t.authWelcome}</p>
           <strong>{user.email}</strong>
+          <span className="account-public-id">{t.userIdentifier}: {user.publicId}</span>
           <button
             className="primary-button"
             type="button"
@@ -177,7 +209,7 @@ export function AuthPanel({
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
-          {mode !== 'reset' && (
+          {mode !== 'reset' && mode !== 'verify' && (
             <label>
               {t.authPassword}
               <input
@@ -199,14 +231,16 @@ export function AuthPanel({
                 ? t.authReset
                 : mode === 'register'
                   ? t.authRegister
-                  : t.authLogin}
+                  : mode === 'verify'
+                    ? t.authVerify
+                    : t.authLogin}
           </button>
           <button
             className="auth-mode-button"
             type="button"
             onClick={() => {
               if (busy) return;
-              setMode(mode === 'reset' ? 'login' : mode === 'register' ? 'login' : 'register');
+              setMode(mode === 'reset' ? 'login' : mode === 'verify' ? 'register' : mode === 'register' ? 'login' : 'register');
             }}
             disabled={busy}
           >
