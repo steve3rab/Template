@@ -220,27 +220,34 @@ export function registerSellerRoutes(
         seller.role === 'ADMIN'
           ? { createdAt: { gte: since } }
           : { sellerId: seller.id, createdAt: { gte: since } };
-      const orders = await prisma.order.findMany({
-        where,
-        include: { items: { include: { product: true } } },
-      });
-      const paidOrders = orders.filter((order) => order.paymentStatus === 'PAID');
-      const revenueCents = paidOrders.reduce((sum, order) => sum + order.totalCents, 0);
-      const unitsSold = orders.reduce(
-        (sum, order) => sum + order.items.reduce((subtotal, item) => subtotal + item.quantity, 0),
-        0,
-      );
-      const products = await prisma.product.findMany({
-        where: seller.role === 'ADMIN' ? {} : { sellerId: seller.id },
-      });
+      const itemOrderFilter =
+        seller.role === 'ADMIN'
+          ? { createdAt: { gte: since } }
+          : { sellerId: seller.id, createdAt: { gte: since } };
+      const productFilter = seller.role === 'ADMIN' ? {} : { sellerId: seller.id };
+      const [orderMetrics, paidOrderMetrics, itemMetrics, products, lowStockProducts] =
+        await Promise.all([
+          prisma.order.aggregate({ where, _count: { _all: true } }),
+          prisma.order.aggregate({
+            where: { ...where, paymentStatus: 'PAID' },
+            _count: { _all: true },
+            _sum: { totalCents: true },
+          }),
+          prisma.orderItem.aggregate({
+            where: { order: { is: itemOrderFilter } },
+            _sum: { quantity: true },
+          }),
+          prisma.product.count({ where: productFilter }),
+          prisma.product.count({ where: { ...productFilter, stock: { lte: 5 } } }),
+        ]);
       return {
         periodDays: days,
-        revenueCents,
-        orders: orders.length,
-        paidOrders: paidOrders.length,
-        unitsSold,
-        products: products.length,
-        lowStockProducts: products.filter((product) => product.stock <= 5).length,
+        revenueCents: paidOrderMetrics._sum.totalCents ?? 0,
+        orders: orderMetrics._count._all,
+        paidOrders: paidOrderMetrics._count._all,
+        unitsSold: itemMetrics._sum.quantity ?? 0,
+        products,
+        lowStockProducts,
         currency: 'EUR',
         note: 'Les paiements restent UNPAID tant qu’un prestataire de paiement et ses webhooks ne sont pas configurés.',
       };
