@@ -5,6 +5,8 @@ import { AuthPanel } from './AuthPanel';
 
 const registeredUser = {
   id: 'user-1',
+  publicId: 'USR-123456',
+  role: 'CUSTOMER',
   email: 'test@example.com',
   createdAt: '2026-10-29T00:00:00.000Z',
 };
@@ -35,11 +37,12 @@ afterEach(() => {
 });
 
 describe('AuthPanel', () => {
-  it('registers a user, sends credentials to the API and supports logout', async () => {
+  it('requires email verification before creating a session and supports logout', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(response(false))
+      .mockResolvedValueOnce(response(true, { verificationRequired: true, developmentCode: '1234567890' }, 202))
       .mockResolvedValueOnce(response(true, { user: registeredUser }, 201))
       .mockResolvedValueOnce(response(true, undefined, 204));
     vi.stubGlobal('fetch', fetchMock);
@@ -50,11 +53,12 @@ describe('AuthPanel', () => {
     );
 
     await user.type(screen.getByLabelText(/adresse e-mail/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/mot de passe/i), 'correct-horse-battery');
+    await user.type(screen.getByLabelText(/mot de passe/i), 'Correct-horse-battery-2026!');
+    expect(screen.getByRole('button', { name: 'Créer un compte' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Créer un compte' }));
 
-    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
-    expect(toastMessages).toContain('Votre compte a été créé. Vous êtes connecté.');
+    expect(await screen.findByLabelText(/code de vérification/i)).toBeInTheDocument();
+    expect(toastMessages.some((message) => message.includes('1234567890'))).toBe(true);
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       '/api/auth/register',
@@ -62,19 +66,30 @@ describe('AuthPanel', () => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'test@example.com', password: 'correct-horse-battery' }),
+        body: JSON.stringify({ email: 'test@example.com', password: 'Correct-horse-battery-2026!' }),
+      }),
+    );
+
+    await user.type(screen.getByLabelText(/code de vérification/i), '1234567890');
+    await user.click(screen.getByRole('button', { name: 'Vérifier mon adresse e-mail' }));
+    expect(await screen.findByText('test@example.com')).toBeInTheDocument();
+    expect(screen.getByText(/USR-123456/)).toBeInTheDocument();
+    expect(toastMessages).toContain('Votre compte a été créé. Vous êtes connecté.');
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      '/api/auth/register/verify',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'test@example.com', code: '1234567890' }),
       }),
     );
 
     await user.click(screen.getByRole('button', { name: 'Se déconnecter' }));
     expect(await screen.findByLabelText(/adresse e-mail/i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenNthCalledWith(
-      3,
+      4,
       '/api/auth/logout',
-      expect.objectContaining({
-        method: 'POST',
-        credentials: 'include',
-      }),
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
     );
   });
 
@@ -110,7 +125,7 @@ describe('AuthPanel', () => {
     await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
     await user.click(screen.getByRole('button', { name: /already registered/i }));
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'correct-horse-battery');
+    await user.type(screen.getByLabelText(/password/i), 'Correct-horse-battery-2026!');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByText('test@example.com')).toBeInTheDocument();
@@ -119,7 +134,7 @@ describe('AuthPanel', () => {
       '/api/auth/login',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ email: 'test@example.com', password: 'correct-horse-battery' }),
+        body: JSON.stringify({ email: 'test@example.com', password: 'Correct-horse-battery-2026!' }),
       }),
     );
   });
@@ -137,7 +152,7 @@ describe('AuthPanel', () => {
     render(<AuthPanel language="en" />);
     await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'correct-horse-battery');
+    await user.type(screen.getByLabelText(/password/i), 'Correct-horse-battery-2026!');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
 
     await waitFor(() =>
