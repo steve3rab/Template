@@ -14,6 +14,7 @@ const argon2TestDouble = {
 
 type FakeUser = {
   id: string;
+  publicId: string;
   email: string;
   passwordHash: string;
   role: string;
@@ -56,6 +57,7 @@ function makePrisma() {
         const now = new Date();
         const user: FakeUser = {
           id: `user-${++nextId}`,
+          publicId: `cpublic-${nextId}`,
           email: data.email,
           passwordHash: data.passwordHash,
           role: 'CUSTOMER',
@@ -217,7 +219,7 @@ describe('authentication API', () => {
     const response = await register();
     expect(response.statusCode).toBe(202);
     expect(response.json().verificationRequired).toBe(true);
-    expect(response.json().developmentCode).toMatch(/^\\d{10}$/);
+    expect(response.json().developmentCode).toMatch(/^\\d{10}$\/
     expect(store.users.size).toBe(0);
     expect(store.sessions.size).toBe(0);
     expect(store.registrations.size).toBe(1);
