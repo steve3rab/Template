@@ -18,14 +18,33 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     role: 'SELLER',
   }));
   const sessionDeleteMany = vi.fn(async () => ({ count: 2 }));
+  const userCount = vi.fn(async ({ where }: { where?: { role?: string } } = {}) => where?.role === 'SELLER' ? 2 : 12);
+  const userFindMany = vi.fn(async () => []);
+  const productCount = vi.fn(async ({ where }: { where?: { active?: boolean } } = {}) => where?.active ? 18 : 25);
+  const productFindMany = vi.fn(async () => []);
+  const orderCount = vi.fn(async () => 7);
+  const orderFindMany = vi.fn(async () => [{ totalCents: 1000 }, { totalCents: 2000 }]);
   const prisma = {
-    user: { findUnique: userFindUnique, update: userUpdate },
+    user: { findUnique: userFindUnique, update: userUpdate, count: userCount, findMany: userFindMany },
+    product: { count: productCount, findMany: productFindMany },
+    order: { count: orderCount, findMany: orderFindMany },
     session: { deleteMany: sessionDeleteMany },
     ...overrides,
   };
   app = Fastify({ logger: false });
   registerAdminRoutes(app, prisma as unknown as PrismaClient, (async () => user) as never);
-  return { prisma, userFindUnique, userUpdate, sessionDeleteMany };
+  return {
+    prisma,
+    userFindUnique,
+    userUpdate,
+    sessionDeleteMany,
+    userCount,
+    userFindMany,
+    productCount,
+    productFindMany,
+    orderCount,
+    orderFindMany,
+  };
 }
 
 afterEach(async () => {
@@ -33,6 +52,44 @@ afterEach(async () => {
 });
 
 describe('admin role management', () => {
+  it('exposes a dedicated administrator identity endpoint only to admins', async () => {
+    setup('SELLER');
+    await app.ready();
+    const denied = await app.inject({ method: 'GET', url: '/api/admin/me' });
+    expect(denied.statusCode).toBe(403);
+    await app.close();
+
+    setup('ADMIN');
+    await app.ready();
+    const allowed = await app.inject({ method: 'GET', url: '/api/admin/me' });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json().admin).toMatchObject({ id: 'admin-1', role: 'ADMIN' });
+  });
+
+  it('returns global administrator KPIs, including confirmed revenue only', async () => {
+    const { userCount, productCount, orderCount, orderFindMany } = setup('ADMIN');
+    await app.ready();
+    const response = await app.inject({ method: 'GET', url: '/api/admin/dashboard' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      users: 12,
+      sellers: 2,
+      products: 25,
+      activeProducts: 18,
+      orders: 7,
+      paidOrders: 2,
+      revenueCents: 3000,
+    });
+    expect(userCount).toHaveBeenCalledTimes(2);
+    expect(productCount).toHaveBeenCalledTimes(2);
+    expect(orderCount).toHaveBeenCalledTimes(1);
+    expect(orderFindMany).toHaveBeenCalledWith({
+      where: { paymentStatus: 'PAID' },
+      select: { totalCents: true },
+    });
+  });
+
+
   it('denies non-admins before any database access', async () => {
     const { userFindUnique, userUpdate } = setup('SELLER');
     await app.ready();
