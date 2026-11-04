@@ -6,9 +6,9 @@ const httpUrlSchema = z
   .url()
   .max(2048)
   .refine((value) => {
-    const protocol = new URL(value).protocol;
-    return protocol === 'https:';
-  }, 'URL must use HTTPS.');
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  }, 'URL must use HTTPS and must not contain embedded credentials.');
 
 function hasValidImageSignature(value: string): boolean {
   const match = value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/i);
