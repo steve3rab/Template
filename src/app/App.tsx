@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
 import { ResetPassword } from '../features/auth/ResetPassword';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
+import { AdminWorkspace } from '../features/admin/AdminWorkspace';
 import { LegalPage, type LegalPageKind } from '../features/legal/LegalPage';
 import { CustomerAccountData } from '../features/account/CustomerAccountData';
 import { formatCurrency } from '../shared/utils/formatCurrency';
@@ -148,7 +149,7 @@ const products: Product[] = [
     description: 'La finition simple qui change un look.',
   },
 ];
-type View = 'shop' | 'account' | 'seller' | 'checkout' | 'legal' | 'reset';
+type View = 'shop' | 'account' | 'seller' | 'admin' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
@@ -176,6 +177,7 @@ export function App() {
   const checkoutPendingRef = useRef(false);
   const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentRole, setCurrentRole] = useState('');
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [cartOpen, setCartOpen] = useState(false);
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
@@ -253,6 +255,7 @@ export function App() {
       const preserveCheckoutCart = checkoutInProgress;
       setCartHydrated(authenticated && preserveCheckoutCart);
       setIsAuthenticated(authenticated);
+      setCurrentRole(typeof event.detail?.role === 'string' ? event.detail.role : '');
       if (!authenticated && !preserveCheckoutCart) {
         // Never carry a previous account's private cart/favorites into a guest or another account.
         setCart({});
@@ -327,12 +330,13 @@ export function App() {
         if (response.ok) {
           setIsAuthenticated(true);
           window.dispatchEvent(
-            new CustomEvent('template-auth-changed', { detail: { authenticated: true } }),
+            new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: (await response.clone().json() as { user?: { role?: string } }).user?.role ?? '' } }),
           );
           return;
         }
         if (response.status === 401) {
           setIsAuthenticated(false);
+          setCurrentRole('');
           window.dispatchEvent(
             new CustomEvent('template-auth-changed', { detail: { authenticated: false } }),
           );
@@ -430,6 +434,24 @@ export function App() {
       setNotice("Impossible de vérifier vos droits d'accès. Réessayez dans un instant.");
     }
   }
+  async function openAdmin() {
+    try {
+      const response = await fetch('/api/admin/me', { credentials: 'include' });
+      if (!response.ok) {
+        setNotice(
+          response.status === 401
+            ? 'Connectez-vous avec un compte administrateur pour accéder à cet espace.'
+            : 'Accès refusé : cette zone est réservée aux administrateurs.',
+        );
+        if (response.status === 401) setView('account');
+        return;
+      }
+      setView('admin');
+    } catch {
+      setNotice("Impossible de vérifier vos droits d'administration. Réessayez.");
+    }
+  }
+
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
     setNotice(`${product.name} ajouté au panier`);
@@ -1196,6 +1218,12 @@ export function App() {
           <SellerWorkspace range={sellerRange} />
         </>
       )}
+      {view === 'admin' && (
+        <section className="workspace-page">
+          <button className="back-link" onClick={() => setView('shop')}>← Retour à la boutique</button>
+          <AdminWorkspace />
+        </section>
+      )}
       {view === 'legal' && <LegalPage page={legalPage} onBack={() => setView('shop')} />}
       {view === 'reset' && (
         <ResetPassword
@@ -1252,9 +1280,14 @@ export function App() {
         </div>
         <span className="copyright">© 2026 atelier. · Démonstration</span>
       </footer>
-      {view !== 'seller' && (
+      {currentRole === 'SELLER' && view !== 'seller' && (
         <button className="seller-entry" onClick={openSeller}>
           <span>▦</span> Espace vendeur
+        </button>
+      )}
+      {currentRole === 'ADMIN' && view !== 'admin' && (
+        <button className="admin-entry" onClick={openAdmin}>
+          <span>⚙</span> Administration
         </button>
       )}
       {view === 'seller' && (
