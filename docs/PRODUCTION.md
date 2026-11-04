@@ -13,6 +13,10 @@
 - L’image Docker actuelle sert le frontend via Nginx non privilégié. Elle ne lance pas l’API Fastify ni la base de données : déployez l’API comme service séparé, configurez le proxy /api vers ce service, et gardez l’API inaccessible directement depuis Internet.
 - Configurez les sauvegardes chiffrées, les alertes, la rétention des journaux, les limites réseau et les mises à jour de dépendances.
 
+## Comptes de test
+
+Le seed `npm run db:seed:test-users` et l'option 17 du menu PowerShell sont exclusivement réservés au développement local. Le script bloque les marqueurs d'environnement production, préproduction et staging et exige une origine `APP_ORIGIN` locale. N'exécutez jamais ce seed contre une base de préproduction ou de production : il crée/réinitialise des comptes privilégiés avec un mot de passe de démonstration connu et révoque leurs sessions existantes.
+
 ## Attribution du rôle administrateur / vendeur
 
 Les inscriptions publiques créent uniquement des comptes CUSTOMER. Exécutez cette commande depuis un environnement d’administration autorisé pour promouvoir un compte existant et révoquer ses sessions :
