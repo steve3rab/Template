@@ -184,9 +184,6 @@ export function AuthPanel({
           <span className="account-public-id">
             {t.userIdentifier}: {user.publicId}
           </span>
-          <span className="account-public-id">
-            {t.userIdentifier}: {user.publicId}
-          </span>
           <button
             className="primary-button"
             type="button"
