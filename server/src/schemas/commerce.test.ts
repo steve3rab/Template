@@ -46,7 +46,7 @@ describe('commerce input schemas', () => {
     expect(productInputSchema.safeParse(input).success).toBe(false);
   });
 
-  it('accepts only HTTP(S) image URLs', () => {
+  it('accepts only HTTPS image URLs', () => {
     expect(
       productInputSchema.safeParse({
         name: 'Valid name',
@@ -63,6 +63,15 @@ describe('commerce input schemas', () => {
         priceCents: 100,
         stock: 0,
         imageUrl: 'data:image/png;base64,abc',
+      }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        name: 'Valid name',
+        category: 'Clothing',
+        priceCents: 100,
+        stock: 0,
+        imageUrl: 'http://example.com/item.png',
       }).success,
     ).toBe(false);
   });
