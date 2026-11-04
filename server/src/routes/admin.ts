@@ -1,7 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import type { ResolveUser } from '../auth/requireUser.js';
-import { resourceIdParamsSchema, roleInputSchema } from '../schemas/commerce.js';
+import {
+  productVisibilitySchema,
+  resourceIdParamsSchema,
+  roleInputSchema,
+} from '../schemas/commerce.js';
 import { requireUser } from '../auth/requireUser.js';
 
 export function registerAdminRoutes(
@@ -74,19 +78,18 @@ export function registerAdminRoutes(
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
     const params = resourceIdParamsSchema.safeParse(request.params);
-    const body =
-      typeof request.body === 'object' &&
-      request.body !== null &&
-      'active' in request.body &&
-      typeof (request.body as { active?: unknown }).active === 'boolean'
-        ? (request.body as { active: boolean })
-        : null;
-    if (!params.success || !body) {
+    const body = productVisibilitySchema.safeParse(request.body);
+    if (!params.success || !body.success) {
       return reply.code(400).send({ error: 'Invalid visibility update.' });
     }
-    const product = await prisma.product.update({
+    const existing = await prisma.product.findUnique({
       where: { id: params.data.id },
-      data: { active: body.active },
+      select: { id: true },
+    });
+    if (!existing) return reply.code(404).send({ error: 'Product not found.' });
+    const product = await prisma.product.update({
+      where: { id: existing.id },
+      data: { active: body.data.active },
     });
     return { product };
   });
