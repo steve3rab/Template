@@ -330,7 +330,12 @@ export function App() {
         if (response.ok) {
           setIsAuthenticated(true);
           window.dispatchEvent(
-            new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: (await response.clone().json() as { user?: { role?: string } }).user?.role ?? '' } }),
+            new CustomEvent('template-auth-changed', {
+              detail: {
+                authenticated: true,
+                role: (await response.clone().json() as { user?: { role?: string } }).user?.role ?? '',
+              },
+            }),
           );
           return;
         }
