@@ -298,12 +298,12 @@ export async function createApp(
         return reply.code(202).send({ verificationRequired: true });
       }
 
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
         await prisma.registrationVerification.deleteMany({ where: { email: credentials.email } });
         return reply.code(503).send({ error: 'Email verification is not configured.' });
       }
 
-      // Local-only convenience for development. Never expose verification codes in production.
+      // Local-only convenience for development and automated tests. Never expose codes in deployments.
       request.log.info('A local email verification code was generated for %s.', credentials.email);
       return reply.code(202).send({ verificationRequired: true, developmentCode: code });
     },
