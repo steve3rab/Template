@@ -148,8 +148,13 @@ export async function createApp(
     request.rawBody = rawBody;
     try {
       done(null, JSON.parse(rawBody.toString('utf8')));
-    } catch (error) {
-      done(error instanceof Error ? error : new Error('Invalid JSON body'));
+    } catch {
+      done(
+        Object.assign(new Error('Invalid JSON body'), {
+          statusCode: 400,
+          code: 'FST_ERR_CTP_INVALID_JSON_BODY',
+        }),
+      );
     }
   });
 
