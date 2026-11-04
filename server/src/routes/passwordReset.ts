@@ -51,18 +51,18 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
           } else {
             const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
             const response = await fetch(webhook, {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              authorization: `Bearer ${webhookToken}`,
-            },
-            body: JSON.stringify({
-              email: user.email,
-              resetUrl: `${origin}/reset-password?token=${token}`,
-              expiresInMinutes: 30,
-            }),
-            signal: AbortSignal.timeout(5000),
-          }).catch(() => null);
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                authorization: `Bearer ${webhookToken}`,
+              },
+              body: JSON.stringify({
+                email: user.email,
+                resetUrl: `${origin}/reset-password?token=${token}`,
+                expiresInMinutes: 30,
+              }),
+              signal: AbortSignal.timeout(5000),
+            }).catch(() => null);
             if (!response?.ok) {
               await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
               request.log.error('Password reset delivery failed.');
