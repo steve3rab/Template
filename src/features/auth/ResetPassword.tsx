@@ -8,7 +8,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
     { label: 'Une lettre majuscule', valid: /[A-Z]/.test(password) },
     { label: 'Une lettre minuscule', valid: /[a-z]/.test(password) },
     { label: 'Un chiffre', valid: /[0-9]/.test(password) },
-    { label: 'Un caractère spécial', valid: /[^A-Za-z0-9\\s]/.test(password) },
+    { label: 'Un caractère spécial', valid: /[^A-Za-z0-9\s]/.test(password) },
   ];
   const passwordValid = passwordRules.every((rule) => rule.valid);
 
