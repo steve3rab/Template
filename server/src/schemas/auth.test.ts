@@ -30,22 +30,33 @@ describe('email validator', () => {
     expect(
       registrationCredentialsSchema.safeParse({
         email: 'shopper@example.com',
-        password: 'correct-horse-battery',
+        password: 'Correct-horse-battery-2026!',
       }).success,
     ).toBe(true);
     expect(
       registrationCredentialsSchema.safeParse({
         email: 'invalid-email',
-        password: 'correct-horse-battery',
+        password: 'Correct-horse-battery-2026!',
       }).success,
     ).toBe(false);
   });
 });
 
 describe('password validator', () => {
-  it('accepts a long passphrase without requiring arbitrary character classes', () => {
-    expect(passwordSchema.safeParse('correct-horse-battery').success).toBe(true);
-    expect(passwordSchema.safeParse('a secure phrase 2026!').success).toBe(true);
+  it('accepts passwords that meet every required character class', () => {
+    expect(passwordSchema.safeParse('Correct-horse-battery-2026!').success).toBe(true);
+    expect(passwordSchema.safeParse('A secure phrase 2026!').success).toBe(true);
+  });
+
+  it.each([
+    'lowercase-only-password',
+    'UPPERCASE-ONLY-PASSWORD',
+    'No-number-special!',
+    'NoSpecialCharacter2026',
+    'NoUppercase2026!',
+    'NOLOWERCASE2026!',
+  ])('rejects a password missing a required character class: %s', (password) => {
+    expect(passwordSchema.safeParse(password).success).toBe(false);
   });
 
   it.each(['', 'short', '12345678901', ' '.repeat(12), 'password\u0000unsafe', 'x'.repeat(129)])(
@@ -82,7 +93,7 @@ describe('password validator', () => {
     expect(
       passwordResetCompleteCredentialsSchema.safeParse({
         token,
-        password: 'new-secure-passphrase',
+        password: 'New-secure-passphrase2026!',
       }).success,
     ).toBe(true);
     expect(
