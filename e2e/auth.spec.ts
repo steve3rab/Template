@@ -10,10 +10,20 @@ test('a customer can register, sign out, sign in again and keep the session', as
 
   await page.getByLabel('Adresse e-mail').fill(email);
   await page.getByLabel('Mot de passe').fill(password);
+  const registrationResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/auth/register') && response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Créer un compte' }).click();
-  const verificationToast = await page.locator('.toast').textContent();
-  const code = verificationToast?.match(/(\d{10})/)?.[1];
-  expect(code).toBeTruthy();
+  const registrationResponse = await registrationResponsePromise;
+  expect(registrationResponse.status()).toBe(202);
+  const registrationPayload = (await registrationResponse.json()) as {
+    verificationRequired: boolean;
+    developmentCode?: string;
+  };
+  expect(registrationPayload.verificationRequired).toBe(true);
+  const code = registrationPayload.developmentCode;
+  expect(code).toMatch(/^\\d{10}$/);
   await page.getByLabel('Code de vérification').fill(code!);
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
   await expect(page.getByText(email)).toBeVisible();
