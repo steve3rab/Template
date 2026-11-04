@@ -18,15 +18,25 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     role: 'SELLER',
   }));
   const sessionDeleteMany = vi.fn(async () => ({ count: 2 }));
-  const userCount = vi.fn(async ({ where }: { where?: { role?: string } } = {}) => where?.role === 'SELLER' ? 2 : 12);
+  const userCount = vi.fn(
+    async ({ where }: { where?: { role?: string } } = {}) =>
+      (where?.role === 'SELLER' ? 2 : 12),
+  );
   const userFindMany = vi.fn(async () => []);
-  const productCount = vi.fn(async ({ where }: { where?: { active?: boolean } } = {}) => where?.active ? 18 : 25);
+  const productCount = vi.fn(
+    async ({ where }: { where?: { active?: boolean } } = {}) => (where?.active ? 18 : 25),
+  );
   const productFindMany = vi.fn(async () => []);
   const productUpdate = vi.fn(async () => ({ id: 'product-1', active: false }));
   const orderCount = vi.fn(async () => 7);
   const orderFindMany = vi.fn(async () => [{ totalCents: 1000 }, { totalCents: 2000 }]);
   const prisma = {
-    user: { findUnique: userFindUnique, update: userUpdate, count: userCount, findMany: userFindMany },
+    user: {
+      findUnique: userFindUnique,
+      update: userUpdate,
+      count: userCount,
+      findMany: userFindMany,
+    },
     product: { count: productCount, findMany: productFindMany, update: productUpdate },
     order: { count: orderCount, findMany: orderFindMany },
     session: { deleteMany: sessionDeleteMany },
