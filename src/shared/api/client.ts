@@ -78,6 +78,30 @@ export const apiSchemas = {
   customerOrders: z.object({ orders: z.array(orderSchema) }),
   customerAddresses: z.object({ addresses: z.array(addressSchema) }),
   addressCreated: z.object({ address: addressSchema }),
+  adminDashboard: z.object({
+    users: z.number().int(),
+    sellers: z.number().int(),
+    products: z.number().int(),
+    activeProducts: z.number().int(),
+    orders: z.number().int(),
+    paidOrders: z.number().int(),
+    revenueCents: z.number().int(),
+  }),
+  adminUsers: z.object({
+    users: z.array(z.object({
+      id: z.string(),
+      publicId: z.string(),
+      email: z.string().email(),
+      role: z.string(),
+      createdAt: z.string(),
+    })),
+  }),
+  adminProducts: z.object({
+    products: z.array(productSchema.extend({
+      seller: z.object({ id: z.string(), publicId: z.string(), email: z.string().email() }).nullable().optional(),
+    })),
+  }),
+  adminOrders: z.object({ orders: z.array(orderSchema) }),
   checkoutSession: z.object({ checkoutUrl: z.string().url() }),
 };
 
