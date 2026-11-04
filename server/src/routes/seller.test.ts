@@ -19,6 +19,15 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
   }));
   const productUpdate = vi.fn(async () => ({ id: 'product-1' }));
   const orderFindMany = vi.fn(async () => []);
+  const orderAggregate = vi.fn(async (args: { where?: { paymentStatus?: string } }) =>
+    args.where?.paymentStatus === 'PAID'
+      ? { _count: { _all: 1 }, _sum: { totalCents: 4000 } }
+      : { _count: { _all: 2 }, _sum: { totalCents: 13000 } },
+  );
+  const orderItemAggregate = vi.fn(async () => ({ _sum: { quantity: 6 } }));
+  const productCount = vi.fn(async (args: { where?: { stock?: { lte: number } } } = {}) =>
+    args.where?.stock ? 2 : 3,
+  );
   const orderFindFirst = vi.fn(async () => null);
   const orderUpdate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
     id: 'order-1',
@@ -31,8 +40,15 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
       findFirst: productFindFirst,
       create: productCreate,
       update: productUpdate,
+      count: productCount,
     },
-    order: { findMany: orderFindMany, findFirst: orderFindFirst, update: orderUpdate },
+    order: {
+      findMany: orderFindMany,
+      findFirst: orderFindFirst,
+      update: orderUpdate,
+      aggregate: orderAggregate,
+    },
+    orderItem: { aggregate: orderItemAggregate },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({ order: { update: orderUpdate }, product: { update: txProductUpdate } }),
     ),
@@ -54,6 +70,9 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
     productCreate,
     productUpdate,
     orderFindMany,
+    orderAggregate,
+    orderItemAggregate,
+    productCount,
     orderFindFirst,
     orderUpdate,
     txProductUpdate,
@@ -406,25 +425,8 @@ describe('seller data isolation and route validation', () => {
       data: { stock: { increment: 3 } },
     });
   });
-  it('validates dashboard periods and aggregates seller metrics', async () => {
-    const { orderFindMany, productFindMany } = setup();
-    orderFindMany.mockResolvedValueOnce([
-      {
-        paymentStatus: 'PAID',
-        totalCents: 4000,
-        items: [{ quantity: 2 }],
-      },
-      {
-        paymentStatus: 'UNPAID',
-        totalCents: 9000,
-        items: [{ quantity: 1 }, { quantity: 3 }],
-      },
-    ] as never);
-    productFindMany.mockResolvedValueOnce([
-      { id: 'p1', stock: 2 },
-      { id: 'p2', stock: 5 },
-      { id: 'p3', stock: 6 },
-    ] as never);
+  it('validates dashboard periods and aggregates seller metrics in the database', async () => {
+    const { orderAggregate, orderItemAggregate, productCount } = setup();
     await app.ready();
     const invalid = await app.inject({ method: 'GET', url: '/api/seller/dashboard?days=14' });
     expect(invalid.statusCode).toBe(400);
@@ -440,24 +442,52 @@ describe('seller data isolation and route validation', () => {
       lowStockProducts: 2,
       currency: 'EUR',
     });
-    expect(orderFindMany).toHaveBeenLastCalledWith({
-      where: expect.objectContaining({
-        sellerId: seller.id,
-        createdAt: { gte: expect.any(Date) },
+    expect(orderAggregate).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          sellerId: seller.id,
+          createdAt: { gte: expect.any(Date) },
+        }),
+        _count: { _all: true },
       }),
-      include: { items: { include: { product: true } } },
+    );
+    expect(orderAggregate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: expect.objectContaining({ sellerId: seller.id, paymentStatus: 'PAID' }),
+        _sum: { totalCents: true },
+      }),
+    );
+    expect(orderItemAggregate).toHaveBeenCalledWith({
+      where: {
+        order: {
+          is: { sellerId: seller.id, createdAt: { gte: expect.any(Date) } },
+        },
+      },
+      _sum: { quantity: true },
+    });
+    expect(productCount).toHaveBeenNthCalledWith(1, { where: { sellerId: seller.id } });
+    expect(productCount).toHaveBeenNthCalledWith(2, {
+      where: { sellerId: seller.id, stock: { lte: 5 } },
     });
   });
 
   it('allows admin dashboard queries across all sellers', async () => {
-    const { orderFindMany, productFindMany } = setup(async () => admin);
+    const { orderAggregate, orderItemAggregate, productCount } = setup(async () => admin);
     await app.ready();
     const response = await app.inject({ method: 'GET', url: '/api/seller/dashboard?days=90' });
     expect(response.statusCode).toBe(200);
-    expect(orderFindMany).toHaveBeenCalledWith({
-      where: { createdAt: { gte: expect.any(Date) } },
-      include: { items: { include: { product: true } } },
+    expect(orderAggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { createdAt: { gte: expect.any(Date) } },
+      }),
+    );
+    expect(orderItemAggregate).toHaveBeenCalledWith({
+      where: { order: { is: { createdAt: { gte: expect.any(Date) } } } },
+      _sum: { quantity: true },
     });
-    expect(productFindMany).toHaveBeenCalledWith({ where: {} });
+    expect(productCount).toHaveBeenNthCalledWith(1, { where: {} });
+    expect(productCount).toHaveBeenNthCalledWith(2, { where: { stock: { lte: 5 } } });
   });
 });
