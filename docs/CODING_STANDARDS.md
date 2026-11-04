@@ -34,6 +34,8 @@ These rules apply to the React/TypeScript frontend and the Fastify/Prisma API.
 - Every route must validate path parameters, query parameters, and request bodies before using them.
 - Authorization must be checked on the server for every protected operation and every resource owner boundary.
 - Keep transactions around multi-step writes that must succeed or fail together.
+- Use database aggregates for counts and sums instead of loading unbounded record sets into application memory; add indexes for frequently filtered aggregate dimensions.
+- Bound list queries and introduce explicit pagination before exposing datasets that can grow without limit.
 - Use Prisma migrations for schema changes; never edit a deployed database schema manually.
 - Return stable, intentional API payloads; do not expose password hashes, reset tokens, session hashes, or internal exception details.
 - Use consistent HTTP status codes and structured logs. Do not log passwords, cookies, reset tokens, or sensitive address/payment details.
