@@ -23,7 +23,7 @@ test('a customer can register, sign out, sign in again and keep the session', as
   };
   expect(registrationPayload.verificationRequired).toBe(true);
   const code = registrationPayload.developmentCode;
-  expect(code).toMatch(/^\\d{10}$/);
+  expect(code).toMatch(/^\d{10}$/);
   await page.getByLabel('Code de vérification').fill(code!);
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
   await expect(page.getByText(email)).toBeVisible();
