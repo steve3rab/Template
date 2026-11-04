@@ -284,7 +284,9 @@ export function App() {
               icon: fallback?.icon ?? '🛍️',
               image: (() => {
                 try {
-                  const storedImages = item.imageUrls ? (JSON.parse(item.imageUrls) as unknown) : [];
+                  const storedImages = item.imageUrls
+                    ? (JSON.parse(item.imageUrls) as unknown)
+                    : [];
                   return Array.isArray(storedImages) && typeof storedImages[0] === 'string'
                     ? storedImages[0]
                     : item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
