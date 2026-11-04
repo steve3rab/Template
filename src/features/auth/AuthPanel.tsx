@@ -46,7 +46,9 @@ export function AuthPanel({
           if (active) {
             setUser(null);
             window.dispatchEvent(
-              new CustomEvent('template-auth-changed', { detail: { authenticated: false, role: '' } }),
+              new CustomEvent('template-auth-changed', {
+                detail: { authenticated: false, role: '' },
+              }),
             );
           }
           return;
@@ -57,7 +59,9 @@ export function AuthPanel({
         if (active) {
           setUser(result.user);
           window.dispatchEvent(
-            new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: result.user.role } }),
+            new CustomEvent('template-auth-changed', {
+              detail: { authenticated: true, role: result.user.role },
+            }),
           );
         }
       })
@@ -134,7 +138,9 @@ export function AuthPanel({
       if (!('user' in payload)) throw new Error(t.authError);
       setUser(payload.user);
       window.dispatchEvent(
-        new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: payload.user.role } }),
+        new CustomEvent('template-auth-changed', {
+          detail: { authenticated: true, role: payload.user.role },
+        }),
       );
       onAuthenticated?.(payload.user);
       setPassword('');
@@ -283,7 +289,15 @@ export function AuthPanel({
             type="button"
             onClick={() => {
               if (busy) return;
-              setMode(mode === 'reset' ? 'login' : mode === 'verify' ? 'register' : mode === 'register' ? 'login' : 'register');
+              setMode(
+                mode === 'reset'
+                  ? 'login'
+                  : mode === 'verify'
+                    ? 'register'
+                    : mode === 'register'
+                      ? 'login'
+                      : 'register',
+              );
             }}
             disabled={busy}
           >
