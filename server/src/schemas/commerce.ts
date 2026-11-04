@@ -10,13 +10,39 @@ const httpUrlSchema = z
     return protocol === 'http:' || protocol === 'https:';
   }, 'URL must use HTTP or HTTPS.');
 
+function hasValidImageSignature(value: string): boolean {
+  const match = value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/i);
+  if (!match?.[1] || !match[2]) return false;
+
+  const bytes = Buffer.from(match[2], 'base64');
+  if (
+    bytes.length === 0 ||
+    bytes.toString('base64').replace(/=+$/, '') !== match[2].replace(/=+$/, '')
+  ) {
+    return false;
+  }
+
+  const format = match[1].toLowerCase();
+  if (format === 'png') {
+    return bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  }
+  if (format === 'jpeg') {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  }
+  return (
+    bytes.length >= 12 &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' &&
+    bytes.toString('ascii', 8, 12) === 'WEBP'
+  );
+}
+
 const productImageSchema = z
   .string()
   .max(4_500_000)
   .refine((value) => {
-    if (/^https?:\/\//i.test(value)) return true;
-    return /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
-  }, 'Product images must be HTTP(S) URLs or PNG/JPEG/WebP uploads.');
+    if (/^https?:\/\//i.test(value)) return httpUrlSchema.safeParse(value).success;
+    return hasValidImageSignature(value);
+  }, 'Product images must be valid HTTP(S) URLs or PNG/JPEG/WebP image uploads.');
 
 const productDimensionsSchema = z
   .object({
