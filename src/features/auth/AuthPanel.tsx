@@ -105,14 +105,13 @@ export function AuthPanel({
         | AuthResponse
         | { error?: string; verificationRequired?: boolean; developmentCode?: string };
       if (!response.ok) {
-        const serverMessage = 'error' in payload && typeof payload.error === 'string'
-          ? payload.error
-          : submittedMode === 'register'
+        const localizedMessage =
+          submittedMode === 'register'
             ? t.authRegisterError
             : submittedMode === 'login'
               ? t.authLoginError
               : t.authError;
-        showToast(serverMessage, 'error');
+        showToast(localizedMessage, 'error');
         return;
       }
       if (submittedMode === 'register' && 'verificationRequired' in payload) {
