@@ -196,6 +196,41 @@ afterEach(async () => {
 });
 
 describe('authentication API', () => {
+  it('rejects an incorrect verification code and counts failed attempts', async () => {
+    const registration = await register('wrong-code@example.com');
+    expect(registration.statusCode).toBe(202);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register/verify',
+      headers: validHeaders,
+      payload: { email: 'wrong-code@example.com', code: '0000000000' },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(store.users.size).toBe(0);
+    expect(store.registrations.get('wrong-code@example.com')?.attempts).toBe(1);
+  });
+
+  it('expires and removes pending registrations after ten minutes', async () => {
+    const registration = await register('expired-code@example.com');
+    expect(registration.statusCode).toBe(202);
+    const pending = store.registrations.get('expired-code@example.com');
+    if (pending) pending.expiresAt = new Date(Date.now() - 1);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register/verify',
+      headers: validHeaders,
+      payload: { email: 'expired-code@example.com', code: registration.json().developmentCode },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toMatch(/expired/i);
+    expect(store.users.size).toBe(0);
+    expect(store.registrations.has('expired-code@example.com')).toBe(false);
+  });
+
   it('exposes a health endpoint without leaking cacheable responses', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/health' });
     expect(response.statusCode).toBe(200);
