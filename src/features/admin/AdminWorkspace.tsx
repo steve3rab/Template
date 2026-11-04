@@ -188,7 +188,8 @@ export function AdminWorkspace() {
                   <div>
                     <strong>{user.email}</strong>
                     <span>
-                      {user.publicId} · Créé le {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                      {user.publicId} · Créé le{' '}
+                      {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                     </span>
                   </div>
                   {user.role === 'ADMIN' ? (
@@ -222,7 +223,8 @@ export function AdminWorkspace() {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? 'Sans vendeur'} · {formatCents(product.priceCents)} ·
+                      {product.seller?.email ?? 'Sans vendeur'} ·{' '}
+                      {formatCents(product.priceCents)} ·
                       Stock : {product.stock}
                     </span>
                   </div>
