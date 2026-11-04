@@ -66,6 +66,31 @@ describe('commerce input schemas', () => {
     ).toBe(false);
   });
 
+  it('accepts safe uploaded product images, sizes and dimensions', () => {
+    const parsed = productInputSchema.safeParse({
+      name: 'Canvas tote',
+      category: 'Accessories',
+      priceCents: 2500,
+      stock: 8,
+      imageUrls: ['data:image/png;base64,aGVsbG8=', 'https://example.com/tote.webp'],
+      sizes: ['Small', 'Medium', 'Medium'],
+      dimensions: { length: 32, width: 28, height: 12, unit: 'cm' },
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(JSON.parse(parsed.data.imageUrls ?? '[]')).toHaveLength(2);
+      expect(JSON.parse(parsed.data.sizes ?? '[]')).toEqual(['Small', 'Medium']);
+      expect(JSON.parse(parsed.data.dimensions ?? '{}')).toMatchObject({ length: 32, unit: 'cm' });
+    }
+  });
+
+  it('rejects unsupported image data, too many images and invalid dimensions', () => {
+    const base = { name: 'Canvas tote', category: 'Accessories', priceCents: 2500, stock: 8 };
+    expect(productInputSchema.safeParse({ ...base, imageUrls: ['data:image/svg+xml;base64,PHN2Zz4='] }).success).toBe(false);
+    expect(productInputSchema.safeParse({ ...base, imageUrls: Array(6).fill('https://example.com/photo.png') }).success).toBe(false);
+    expect(productInputSchema.safeParse({ ...base, dimensions: { length: -1, unit: 'cm' } }).success).toBe(false);
+  });
+
   it('normalizes country codes and rejects invalid ones', () => {
     const address = {
       recipient: 'Ada Lovelace',
