@@ -3,6 +3,14 @@ import { useState, type FormEvent } from 'react';
 export function ResetPassword({ onDone }: { onDone: () => void }) {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const passwordRules = [
+    { label: '12 caractères minimum', valid: password.length >= 12 },
+    { label: 'Une lettre majuscule', valid: /[A-Z]/.test(password) },
+    { label: 'Une lettre minuscule', valid: /[a-z]/.test(password) },
+    { label: 'Un chiffre', valid: /[0-9]/.test(password) },
+    { label: 'Un caractère spécial', valid: /[^A-Za-z0-9\\s]/.test(password) },
+  ];
+  const passwordValid = passwordRules.every((rule) => rule.valid);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +53,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
       <h1 className="workspace-title">
         Réinitialiser le mot de passe<span className="brand-period">.</span>
       </h1>
-      <p className="workspace-intro">Choisissez un nouveau mot de passe de 12 à 128 caractères.</p>
+      <p className="workspace-intro">Choisissez un mot de passe de 12 à 128 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.</p>
       <form className="checkout-form" onSubmit={(event) => void submit(event)}>
         <label>
           Nouveau mot de passe
@@ -57,9 +65,18 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            aria-describedby="reset-password-rules"
           />
+          <ul id="reset-password-rules" className="password-rules" aria-live="polite">
+            {passwordRules.map((rule) => (
+              <li key={rule.label} className={rule.valid ? 'valid' : ''}>
+                <span aria-hidden="true">{rule.valid ? '✓' : '○'}</span>
+                {rule.label}
+              </li>
+            ))}
+          </ul>
         </label>
-        <button className="dark-button" type="submit" disabled={busy}>
+        <button className="dark-button" type="submit" disabled={busy || !passwordValid}>
           {busy ? 'Enregistrement…' : 'Modifier le mot de passe'}
         </button>
       </form>
