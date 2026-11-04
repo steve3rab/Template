@@ -53,7 +53,10 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
       <h1 className="workspace-title">
         Réinitialiser le mot de passe<span className="brand-period">.</span>
       </h1>
-      <p className="workspace-intro">Choisissez un mot de passe de 12 à 128 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.</p>
+      <p className="workspace-intro">
+        Choisissez un mot de passe de 12 à 128 caractères avec une majuscule, une minuscule, un
+        chiffre et un caractère spécial.
+      </p>
       <form className="checkout-form" onSubmit={(event) => void submit(event)}>
         <label>
           Nouveau mot de passe
