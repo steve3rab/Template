@@ -360,6 +360,29 @@ describe('authentication API', () => {
     expect(deniedOrders.statusCode).toBe(403);
   });
 
+  it('does not enable E2E rate-limit overrides in staging environments', async () => {
+    process.env.NODE_ENV = 'staging';
+    process.env.E2E_TEST = 'true';
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        headers: validHeaders,
+        payload: { email: 'invalid', password: 'short' },
+      });
+      expect(response.statusCode).toBe(400);
+    }
+
+    const limited = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      headers: validHeaders,
+      payload: { email: 'invalid', password: 'short' },
+    });
+    expect(limited.statusCode).toBe(429);
+  });
+
   it('rate-limits repeated registration attempts', async () => {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const response = await app.inject({
