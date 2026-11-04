@@ -23,9 +23,13 @@ export const emailSchema = z
  */
 export const passwordSchema = z
   .string()
-  .min(12)
-  .max(128)
+  .min(12, 'Use at least 12 characters.')
+  .max(128, 'Use no more than 128 characters.')
   .refine((password) => password.trim().length > 0, 'Password must not be whitespace only.')
+  .refine((password) => /[a-z]/.test(password), 'Add at least one lowercase letter.')
+  .refine((password) => /[A-Z]/.test(password), 'Add at least one uppercase letter.')
+  .refine((password) => /[0-9]/.test(password), 'Add at least one number.')
+  .refine((password) => /[^A-Za-z0-9\\s]/.test(password), 'Add at least one special character.')
   .refine(
     (password) => !containsControlCharacters(password),
     'Password contains control characters.',
