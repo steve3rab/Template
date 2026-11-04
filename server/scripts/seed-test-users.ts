@@ -20,9 +20,7 @@ const forbiddenEnvironment = deploymentEnvironment.find((value) =>
 );
 
 if (forbiddenEnvironment) {
-  throw new Error(
-    `Test users cannot be seeded in the "${forbiddenEnvironment}" environment.`,
-  );
+  throw new Error(`Test users cannot be seeded in the "${forbiddenEnvironment}" environment.`);
 }
 
 const appOrigin = process.env.APP_ORIGIN;
