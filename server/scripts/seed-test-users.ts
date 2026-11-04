@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 config({ path: 'server/.env' });
+config({ path: '.env' });
 import argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
 
