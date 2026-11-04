@@ -48,6 +48,11 @@ describe('password validator', () => {
     expect(passwordSchema.safeParse('A secure phrase 2026!').success).toBe(true);
   });
 
+  it('does not treat whitespace as a special character', () => {
+    expect(passwordSchema.safeParse('A secure phrase 2026 ').success).toBe(false);
+    expect(passwordSchema.safeParse('A secure phrase 2026!').success).toBe(true);
+  });
+
   it.each([
     'lowercase-only-password',
     'UPPERCASE-ONLY-PASSWORD',
