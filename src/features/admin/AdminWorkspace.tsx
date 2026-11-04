@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
-import { apiRequest, apiSchemas, type SellerProduct } from '../../shared/api/client';
+import { apiRequest, apiSchemas } from '../../shared/api/client';
 
 type AdminUser = {
   id: string;
@@ -11,19 +11,9 @@ type AdminUser = {
   createdAt: string;
 };
 
-type AdminProduct = SellerProduct & {
-  seller?: { id: string; publicId: string; email: string } | null;
-};
+type AdminProduct = z.infer<typeof apiSchemas.adminProducts>['products'][number];
 
-type AdminOrder = {
-  id: string;
-  status: string;
-  paymentStatus: string;
-  totalCents: number;
-  createdAt: string;
-  customer?: { email: string };
-  items: { productName: string; quantity: number }[];
-};
+type AdminOrder = z.infer<typeof apiSchemas.adminOrders>['orders'][number];
 
 type Section = 'users' | 'products' | 'orders';
 
