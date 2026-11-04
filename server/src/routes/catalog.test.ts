@@ -49,7 +49,7 @@ describe('public product catalog', () => {
     });
   });
 
-  it('returns an empty result and avoids database access for invalid filters', async () => {
+  it('returns a validation error and avoids database access for invalid filters', async () => {
     const { findMany } = setup();
     await app.ready();
 
@@ -58,8 +58,8 @@ describe('public product catalog', () => {
       url: `/api/products?category=${'x'.repeat(61)}`,
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ products: [] });
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error).toBe('Invalid product filters.');
     expect(findMany).not.toHaveBeenCalled();
   });
 });
