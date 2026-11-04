@@ -166,12 +166,30 @@ async function startApp() {
   await app.ready();
 }
 
-async function register(email = 'test@example.com', password = 'Correct-horse-battery1!') {
+async function registerPending(
+  email = 'test@example.com',
+  password = 'Correct-horse-battery1!',
+) {
   return app.inject({
     method: 'POST',
     url: '/api/auth/register',
     headers: validHeaders,
     payload: { email, password },
+  });
+}
+
+async function register(email = 'test@example.com', password = 'Correct-horse-battery1!') {
+  const pending = await registerPending(email, password);
+  if (pending.statusCode !== 202) return pending;
+
+  const code = pending.json().developmentCode;
+  if (typeof code !== 'string') return pending;
+
+  return app.inject({
+    method: 'POST',
+    url: '/api/auth/register/verify',
+    headers: validHeaders,
+    payload: { email: email.trim().toLowerCase(), code },
   });
 }
 
@@ -211,7 +229,7 @@ describe('application security configuration', () => {
 describe('authentication API', () => {
   it('never returns a development verification code in staging-like environments', async () => {
     process.env.NODE_ENV = 'staging';
-    const response = await register('staging@example.com');
+    const response = await registerPending('staging@example.com');
     expect(response.statusCode).toBe(503);
     expect(response.json().developmentCode).toBeUndefined();
     expect(store.registrations.has('staging@example.com')).toBe(false);
@@ -219,7 +237,7 @@ describe('authentication API', () => {
   });
 
   it('rejects an incorrect verification code and counts failed attempts', async () => {
-    const registration = await register('wrong-code@example.com');
+    const registration = await registerPending('wrong-code@example.com');
     expect(registration.statusCode).toBe(202);
 
     const response = await app.inject({
@@ -235,7 +253,7 @@ describe('authentication API', () => {
   });
 
   it('expires and removes pending registrations after ten minutes', async () => {
-    const registration = await register('expired-code@example.com');
+    const registration = await registerPending('expired-code@example.com');
     expect(registration.statusCode).toBe(202);
     const pending = store.registrations.get('expired-code@example.com');
     if (pending) pending.expiresAt = new Date(Date.now() - 1);
@@ -330,7 +348,7 @@ describe('authentication API', () => {
   });
 
   it('creates no account until the email verification code is confirmed', async () => {
-    const response = await register();
+    const response = await registerPending();
     expect(response.statusCode).toBe(202);
     expect(response.json().verificationRequired).toBe(true);
     expect(response.json().developmentCode).toMatch(/^\d{10}$/);
