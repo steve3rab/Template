@@ -180,7 +180,7 @@ export async function createApp(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https://images.unsplash.com'],
+        imgSrc: ["'self'", 'data:', 'https:'],
         baseUri: ["'self'"],
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
