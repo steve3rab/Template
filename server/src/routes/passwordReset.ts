@@ -29,15 +29,14 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
           },
         });
         const webhook = process.env.PASSWORD_RESET_WEBHOOK_URL;
-        if (webhook) {
+        const webhookToken = process.env.PASSWORD_RESET_WEBHOOK_TOKEN;
+        if (webhook && webhookToken) {
           const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
           const response = await fetch(webhook, {
             method: 'POST',
             headers: {
               'content-type': 'application/json',
-              ...(process.env.PASSWORD_RESET_WEBHOOK_TOKEN
-                ? { authorization: `Bearer ${process.env.PASSWORD_RESET_WEBHOOK_TOKEN}` }
-                : {}),
+              authorization: `Bearer ${webhookToken}`,
             },
             body: JSON.stringify({
               email: user.email,
@@ -50,6 +49,9 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
             await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
             request.log.error('Password reset delivery failed.');
           }
+        } else if (webhook) {
+          await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
+          request.log.error('Password reset webhook credentials are incomplete.');
         } else if (process.env.NODE_ENV !== 'production') {
           request.log.info({ resetToken: token }, 'Development-only password reset token');
         } else {
