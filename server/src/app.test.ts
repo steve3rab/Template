@@ -27,10 +27,20 @@ type FakeSession = {
   expiresAt: Date;
   createdAt: Date;
 };
+type FakeRegistrationVerification = {
+  id: string;
+  email: string;
+  passwordHash: string;
+  codeHash: string;
+  expiresAt: Date;
+  attempts: number;
+  createdAt: Date;
+};
 
 function makePrisma() {
   const users = new Map<string, FakeUser>();
   const sessions = new Map<string, FakeSession>();
+  const registrations = new Map<string, FakeRegistrationVerification>();
   let nextId = 0;
 
   const prisma = {
@@ -55,6 +65,40 @@ function makePrisma() {
         users.set(user.id, user);
         return user;
       }),
+    },
+    registrationVerification: {
+      deleteMany: vi.fn(async ({ where }: { where: { email: string } }) => ({
+        count: registrations.delete(where.email) ? 1 : 0,
+      })),
+      create: vi.fn(
+        async ({ data }: { data: Omit<FakeRegistrationVerification, 'id' | 'createdAt'> }) => {
+          const pending: FakeRegistrationVerification = {
+            ...data,
+            id: `registration-${++nextId}`,
+            createdAt: new Date(),
+          };
+          registrations.set(data.email, pending);
+          return pending;
+        },
+      ),
+      findUnique: vi.fn(async ({ where }: { where: { email: string } }) =>
+        registrations.get(where.email) ?? null,
+      ),
+      update: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { email: string };
+          data: { attempts: number };
+        }) => {
+          const pending = registrations.get(where.email);
+          if (!pending) throw new Error('Pending registration not found');
+          const updated = { ...pending, ...data };
+          registrations.set(where.email, updated);
+          return updated;
+        },
+      ),
     },
     session: {
       create: vi.fn(async ({ data }: { data: Omit<FakeSession, 'id' | 'createdAt'> }) => {
@@ -106,7 +150,7 @@ function makePrisma() {
     $disconnect: vi.fn(async () => undefined),
   };
 
-  return { prisma: prisma as unknown as PrismaClient, users, sessions };
+  return { prisma: prisma as unknown as PrismaClient, users, sessions, registrations };
 }
 
 const allowedOrigin = 'http://localhost:5173';
@@ -169,18 +213,33 @@ describe('authentication API', () => {
     expect(response.headers['set-cookie']).toBeUndefined();
   });
 
-  it('registers, establishes a server-side session, returns a safe user and logs out', async () => {
+  it('creates no account until the email verification code is confirmed', async () => {
     const response = await register();
-    expect(response.statusCode).toBe(201);
-    expect(response.json().user).toMatchObject({ email: 'test@example.com' });
-    expect(response.json().user.passwordHash).toBeUndefined();
-    expect(response.json().user.id).toBeTruthy();
-    expect(String(response.headers['set-cookie'])).toContain('Path=/;');
+    expect(response.statusCode).toBe(202);
+    expect(response.json().verificationRequired).toBe(true);
+    expect(response.json().developmentCode).toMatch(/^\\d{10}$/);
+    expect(store.users.size).toBe(0);
+    expect(store.sessions.size).toBe(0);
+    expect(store.registrations.size).toBe(1);
+
+    const code = response.json().developmentCode as string;
+    const verified = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register/verify',
+      headers: validHeaders,
+      payload: { email: 'test@example.com', code },
+    });
+    expect(verified.statusCode).toBe(201);
+    expect(verified.json().user).toMatchObject({ email: 'test@example.com' });
+    expect(verified.json().user.passwordHash).toBeUndefined();
+    expect(verified.json().user.publicId).toMatch(/^c[a-z0-9]+$/);
+    expect(String(verified.headers['set-cookie'])).toContain('Path=/;');
     expect(store.users.size).toBe(1);
     expect(store.sessions.size).toBe(1);
+    expect(store.registrations.size).toBe(0);
     expect([...store.users.values()][0]?.passwordHash).not.toBe('correct-horse-battery');
 
-    const cookie = sessionCookie(response);
+    const cookie = sessionCookie(verified);
     const current = await app.inject({
       method: 'GET',
       url: '/api/auth/me',
@@ -197,14 +256,9 @@ describe('authentication API', () => {
     expect(logout.statusCode).toBe(204);
     expect(store.sessions.size).toBe(0);
 
-    const afterLogout = await app.inject({
-      method: 'GET',
-      url: '/api/auth/me',
-      headers: { cookie },
-    });
+    const afterLogout = await app.inject({ method: 'GET', url: '/api/auth/me' });
     expect(afterLogout.statusCode).toBe(401);
   });
-
   it('denies seller API access to unauthenticated users and customers', async () => {
     const anonymous = await app.inject({ method: 'GET', url: '/api/seller/me' });
     expect(anonymous.statusCode).toBe(401);
