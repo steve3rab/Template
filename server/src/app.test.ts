@@ -57,7 +57,7 @@ function makePrisma() {
         const now = new Date();
         const user: FakeUser = {
           id: `user-${++nextId}`,
-          publicId: `cpublic-${nextId}`,
+          publicId: `USR-${String(nextId).padStart(12, '0')}`,
           email: data.email,
           passwordHash: data.passwordHash,
           role: 'CUSTOMER',
@@ -269,7 +269,7 @@ describe('authentication API', () => {
     expect(verified.statusCode).toBe(201);
     expect(verified.json().user).toMatchObject({ email: 'test@example.com' });
     expect(verified.json().user.passwordHash).toBeUndefined();
-    expect(verified.json().user.publicId).toMatch(/^c[a-z0-9]+$/);
+    expect(verified.json().user.publicId).toMatch(/^USR-[A-F0-9]{12}$/);
     expect(String(verified.headers['set-cookie'])).toContain('Path=/;');
     expect(store.users.size).toBe(1);
     expect(store.sessions.size).toBe(1);
