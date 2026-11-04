@@ -28,7 +28,7 @@ export function AuthPanel({
     { label: t.passwordRuleUppercase, valid: /[A-Z]/.test(password) },
     { label: t.passwordRuleLowercase, valid: /[a-z]/.test(password) },
     { label: t.passwordRuleNumber, valid: /[0-9]/.test(password) },
-    { label: t.passwordRuleSpecial, valid: /[^A-Za-z0-9\\s]/.test(password) },
+    { label: t.passwordRuleSpecial, valid: /[^A-Za-z0-9\s]/.test(password) },
   ];
   const passwordValid = passwordRules.every((rule) => rule.valid);
 
@@ -175,6 +175,7 @@ export function AuthPanel({
           <p>{t.authWelcome}</p>
           <strong>{user.email}</strong>
           <span className="account-public-id">{t.userIdentifier}: {user.publicId}</span>
+          <span className="account-public-id">{t.userIdentifier}: {user.publicId}</span>
           <button
             className="primary-button"
             type="button"
@@ -221,10 +222,50 @@ export function AuthPanel({
                 maxLength={128}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                aria-describedby={mode === 'register' ? 'password-rules' : undefined}
               />
+              {mode === 'register' && (
+                <ul id="password-rules" className="password-rules" aria-live="polite">
+                  {passwordRules.map((rule) => (
+                    <li key={rule.label} className={rule.valid ? 'valid' : ''}>
+                      <span aria-hidden="true">{rule.valid ? '✓' : '○'}</span>
+                      {rule.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </label>
           )}
-          <button className="primary-button" type="submit" disabled={busy || checkingSession}>
+          {mode === 'verify' && (
+            <label>
+              {t.authVerificationCode}
+              <input
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                type="text"
+                name="verificationCode"
+                required
+                minLength={10}
+                maxLength={10}
+                pattern="[0-9]{10}"
+                value={verificationCode}
+                onChange={(event) =>
+                  setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 10))
+                }
+              />
+              <span className="field-hint">{t.authVerificationHint}</span>
+            </label>
+          )}
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={
+              busy ||
+              checkingSession ||
+              (mode === 'register' && !passwordValid) ||
+              (mode === 'verify' && verificationCode.length !== 10)
+            }
+          >
             {busy
               ? t.authSubmitting
               : mode === 'reset'
@@ -246,9 +287,11 @@ export function AuthPanel({
           >
             {mode === 'reset'
               ? t.authBackToLogin
-              : mode === 'register'
-                ? t.authSwitchLogin
-                : t.authSwitchRegister}
+              : mode === 'verify'
+                ? t.authChangeEmail
+                : mode === 'register'
+                  ? t.authSwitchLogin
+                  : t.authSwitchRegister}
           </button>
           {mode === 'login' && (
             <button
