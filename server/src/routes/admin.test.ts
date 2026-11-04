@@ -116,7 +116,7 @@ describe('admin role management', () => {
     const { orderAggregate } = setup('ADMIN');
     orderAggregate.mockResolvedValueOnce({
       _count: { _all: 0 },
-      _sum: { totalCents: null },
+      _sum: { totalCents: null as unknown as number },
     });
     await app.ready();
 
