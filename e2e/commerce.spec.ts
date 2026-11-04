@@ -26,8 +26,10 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   };
   expect(registrationPayload.verificationRequired).toBe(true);
   const code = registrationPayload.developmentCode;
-  expect(code).toMatch(/^\d{10}$/);
-  await page.getByLabel('Code de vérification').fill(code!);
+  if (!code || !/^\d{10}$/.test(code)) {
+    throw new Error('The test registration response did not include a valid verification code.');
+  }
+  await page.getByLabel('Code de vérification').fill(code);
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
 
   await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
