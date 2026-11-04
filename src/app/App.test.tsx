@@ -110,7 +110,7 @@ describe('Fashion storefront', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /les pièces du moment/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Veste Studio' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Espace vendeur/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Espace vendeur/ })).not.toBeInTheDocument();
   });
 
   it('uses product photography with accessible text alternatives', () => {
@@ -163,13 +163,27 @@ describe('Fashion storefront', () => {
 
   it('does not open the seller dashboard when the server denies access', async () => {
     const user = userEvent.setup();
-    window.fetch = (async () =>
-      new Response(JSON.stringify({ error: 'Seller access required.' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      })) as typeof fetch;
+    window.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/products') return apiResponse({ products: catalogue });
+      if (url === '/api/auth/me') {
+        return apiResponse({
+          user: {
+            id: 'seller-1',
+            publicId: 'USR-SELLER0001',
+            email: 'seller@example.test',
+            role: 'SELLER',
+            createdAt: new Date().toISOString(),
+          },
+        });
+      }
+      if (url === '/api/seller/me') {
+        return apiResponse({ error: 'Seller access required.' }, 403);
+      }
+      return apiResponse({ error: 'Not found.' }, 404);
+    }) as typeof fetch;
     render(<App />);
-    await user.click(screen.getByRole('button', { name: /Espace vendeur/ }));
+    await user.click(await screen.findByRole('button', { name: /Espace vendeur/ }));
     expect(screen.queryByRole('heading', { name: /vue d’ensemble/i })).not.toBeInTheDocument();
     expect(
       screen.getByText(/accès refusé : cet espace est réservé aux comptes vendeurs autorisés/i),
@@ -182,7 +196,7 @@ describe('Fashion storefront', () => {
     await user.click(screen.getByRole('button', { name: 'English' }));
     expect(document.documentElement.lang).toBe('en');
     expect(window.localStorage.getItem('template-react-language')).toBe('en');
-    await user.click(screen.getByRole('button', { name: 'French' }));
+    await user.click(screen.getByRole('button', { name: 'Français' }));
     expect(document.documentElement.lang).toBe('fr');
   });
 
