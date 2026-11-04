@@ -33,8 +33,6 @@ export function AdminWorkspace() {
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
     try {
       const [stats, userData, productData, orderData] = await Promise.all([
         apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
@@ -62,6 +60,8 @@ export function AdminWorkspace() {
   }, [load]);
 
   async function updateRole(user: AdminUser, role: 'CUSTOMER' | 'SELLER') {
+    setLoading(true);
+    setError('');
     try {
       await apiRequest(`/api/admin/users/${encodeURIComponent(user.id)}/role`, roleResult, {
         method: 'POST',
@@ -74,6 +74,8 @@ export function AdminWorkspace() {
   }
 
   async function toggleProduct(product: AdminProduct) {
+    setLoading(true);
+    setError('');
     try {
       await apiRequest(
         `/api/admin/products/${encodeURIComponent(product.id)}/visibility`,
@@ -106,7 +108,11 @@ export function AdminWorkspace() {
         <button
           className="outline-button"
           type="button"
-          onClick={() => void load()}
+          onClick={() => {
+            setLoading(true);
+            setError('');
+            void load();
+          }}
           disabled={loading}
         >
           Actualiser
