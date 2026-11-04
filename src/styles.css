@@ -3351,3 +3351,33 @@ button {
     bottom: 14px;
   }
 }
+
+
+.product-image-preview {
+  position: relative;
+  width: 76px;
+  height: 88px;
+}
+
+.product-image-preview img {
+  width: 100%;
+  height: 100%;
+}
+
+.product-image-preview button {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid #e1d7d0;
+  border-radius: 50%;
+  background: #fffefa;
+  color: #7d453d;
+  font-size: 1rem;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgb(35 39 29 / 12%);
+}
