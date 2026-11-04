@@ -43,6 +43,14 @@ Pour démarrer séparément :
 
 Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET`, `DATABASE_URL` et le webhook de vérification d'e-mail en production. Utilisez HTTPS et un gestionnaire de secrets.
 
+## Espaces vendeur et administration
+
+- L'espace vendeur expose les indicateurs de vente, le catalogue, le stock et les commandes du vendeur connecté.
+- La création d'un produit accepte jusqu'à 5 photos PNG/JPEG/WebP (1,2 Mo maximum par fichier), des tailles libres (ex. XS à XL ou 38 à 42) et des dimensions longueur/largeur/hauteur avec unité.
+- Les images téléversées sont actuellement stockées sous forme de données encodées dans SQLite. Cette solution convient au prototype et aux petits catalogues ; avant une montée en charge, il faudra remplacer ce stockage par un adaptateur d'objets (S3, Cloudinary ou équivalent) et conserver les URL des médias en base.
+- L'espace administrateur est réservé au rôle `ADMIN`. Il fournit les indicateurs globaux, la liste des comptes avec identifiants publics, la modification des rôles client/vendeur, la modération de visibilité du catalogue et la consultation des commandes.
+- Les API d'administration sont protégées côté serveur par le contrôle de rôle ; masquer un bouton dans l'interface ne constitue jamais une mesure d'autorisation.
+
 ### Comptes de test (développement local uniquement)
 
 Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes de test dans la base configurée par `DATABASE_URL`. Il utilise le mot de passe fixe `Local-Test-Password-2026!` :
