@@ -292,7 +292,16 @@ export function SellerWorkspace({ range }: { range: string }) {
             {images.length > 0 && (
               <div className="product-image-previews">
                 {images.map((image, index) => (
-                  <img key={index} src={image} alt={`Aperçu du produit ${index + 1}`} />
+                  <div className="product-image-preview" key={index}>
+                    <img src={image} alt={`Aperçu du produit ${index + 1}`} />
+                    <button
+                      type="button"
+                      aria-label={`Retirer la photo ${index + 1}`}
+                      onClick={() => setImages((current) => current.filter((_, item) => item !== index))}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
