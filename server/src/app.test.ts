@@ -195,6 +195,19 @@ afterEach(async () => {
   vi.unstubAllEnvs();
 });
 
+describe('application security configuration', () => {
+  it.each(['', 'short'])('rejects a missing or weak production session secret: %s', async (secret) => {
+    process.env.NODE_ENV = 'production';
+    if (secret) process.env.SESSION_SECRET = secret;
+    else delete process.env.SESSION_SECRET;
+
+    await expect(createApp(store.prisma, argon2TestDouble as never)).rejects.toThrow(
+      /SESSION_SECRET must be configured with at least 32 characters/,
+    );
+    process.env.NODE_ENV = 'test';
+  });
+});
+
 describe('authentication API', () => {
   it('never returns a development verification code in staging-like environments', async () => {
     process.env.NODE_ENV = 'staging';
