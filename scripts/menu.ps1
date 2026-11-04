@@ -25,7 +25,6 @@ function Show-Menu {
     Write-Host ''
     Write-Host '  DEMARRAGE' -ForegroundColor Yellow
     Write-Host '  1.  Installer / preparer le projet (sans lancer de tests)'
-    Write-Host ' 17.  Préparer le projet + créer les comptes de test locaux'
     Write-Host '  2.  Demarrer le frontend et le backend'
     Write-Host '  3.  Demarrer le frontend uniquement'
     Write-Host '  4.  Demarrer le backend uniquement'
@@ -45,6 +44,7 @@ function Show-Menu {
     Write-Host ' 14.  Construire le backend'
     Write-Host ' 15.  Generer le client Prisma'
     Write-Host ' 16.  Appliquer les migrations de base de donnees'
+    Write-Host ' 17.  Préparer le projet + créer les comptes de test locaux'
     Write-Host ''
     Write-Host '  0.  Quitter' -ForegroundColor DarkGray
     Write-Host ''
