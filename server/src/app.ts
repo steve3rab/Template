@@ -97,7 +97,10 @@ export async function createApp(
         'PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.',
       );
     }
-    if (!process.env.EMAIL_VERIFICATION_WEBHOOK_URL || !process.env.EMAIL_VERIFICATION_WEBHOOK_TOKEN) {
+    if (
+      !process.env.EMAIL_VERIFICATION_WEBHOOK_URL ||
+      !process.env.EMAIL_VERIFICATION_WEBHOOK_TOKEN
+    ) {
       throw new Error(
         'EMAIL_VERIFICATION_WEBHOOK_URL and EMAIL_VERIFICATION_WEBHOOK_TOKEN must be configured in production.',
       );
@@ -284,7 +287,9 @@ export async function createApp(
         } catch (error) {
           await prisma.registrationVerification.deleteMany({ where: { email: credentials.email } });
           request.log.error({ err: error }, 'Email verification delivery failed');
-          return reply.code(503).send({ error: 'Unable to send the verification email. Please retry.' });
+          return reply
+            .code(503)
+            .send({ error: 'Unable to send the verification email. Please retry.' });
         }
         return reply.code(202).send({ verificationRequired: true });
       }
@@ -364,7 +369,9 @@ export async function createApp(
           (error as { code?: unknown }).code === 'P2002'
         ) {
           await prisma.registrationVerification.deleteMany({ where: { email } });
-          return reply.code(409).send({ error: 'An account already exists for this email address.' });
+          return reply
+            .code(409)
+            .send({ error: 'An account already exists for this email address.' });
         }
         throw error;
       }
