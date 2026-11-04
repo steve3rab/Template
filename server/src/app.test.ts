@@ -567,8 +567,8 @@ describe('authentication API', () => {
     expect(first.statusCode).toBe(201);
 
     const duplicate = await register('test@example.com');
-    expect(duplicate.statusCode).toBe(400);
-    expect(duplicate.json().error).toBe('Unable to create account with these details.');
+    expect(duplicate.statusCode).toBe(409);
+    expect(duplicate.json().error).toBe('An account already exists for this email address.');
     expect(store.users.size).toBe(1);
   });
 
