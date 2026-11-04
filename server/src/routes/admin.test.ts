@@ -22,11 +22,12 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
   const userFindMany = vi.fn(async () => []);
   const productCount = vi.fn(async ({ where }: { where?: { active?: boolean } } = {}) => where?.active ? 18 : 25);
   const productFindMany = vi.fn(async () => []);
+  const productUpdate = vi.fn(async () => ({ id: 'product-1', active: false }));
   const orderCount = vi.fn(async () => 7);
   const orderFindMany = vi.fn(async () => [{ totalCents: 1000 }, { totalCents: 2000 }]);
   const prisma = {
     user: { findUnique: userFindUnique, update: userUpdate, count: userCount, findMany: userFindMany },
-    product: { count: productCount, findMany: productFindMany },
+    product: { count: productCount, findMany: productFindMany, update: productUpdate },
     order: { count: orderCount, findMany: orderFindMany },
     session: { deleteMany: sessionDeleteMany },
     ...overrides,
@@ -42,6 +43,7 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     userFindMany,
     productCount,
     productFindMany,
+    productUpdate,
     orderCount,
     orderFindMany,
   };
@@ -89,6 +91,43 @@ describe('admin role management', () => {
     });
   });
 
+
+  it('lists user accounts with their stable public identifiers', async () => {
+    const { userFindMany } = setup('ADMIN');
+    userFindMany.mockResolvedValueOnce([{
+      id: 'user-1',
+      publicId: 'USR-0001',
+      email: 'person@example.test',
+      role: 'CUSTOMER',
+      createdAt: new Date('2026-11-01T00:00:00.000Z'),
+    }] as never);
+    await app.ready();
+
+    const response = await app.inject({ method: 'GET', url: '/api/admin/users' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().users[0]).toMatchObject({
+      id: 'user-1',
+      publicId: 'USR-0001',
+      email: 'person@example.test',
+      role: 'CUSTOMER',
+    });
+  });
+
+  it('lets admins hide or republish a catalogue product', async () => {
+    const { productUpdate } = setup('ADMIN');
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/products/product-1/visibility',
+      payload: { active: false },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(productUpdate).toHaveBeenCalledWith({
+      where: { id: 'product-1' },
+      data: { active: false },
+    });
+  });
 
   it('denies non-admins before any database access', async () => {
     const { userFindUnique, userUpdate } = setup('SELLER');
