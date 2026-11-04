@@ -25,6 +25,7 @@ function Show-Menu {
     Write-Host ''
     Write-Host '  DEMARRAGE' -ForegroundColor Yellow
     Write-Host '  1.  Installer / preparer le projet (sans lancer de tests)'
+    Write-Host ' 17.  Préparer le projet + créer les comptes de test locaux'
     Write-Host '  2.  Demarrer le frontend et le backend'
     Write-Host '  3.  Demarrer le frontend uniquement'
     Write-Host '  4.  Demarrer le backend uniquement'
@@ -97,6 +98,60 @@ function Invoke-NpmCommand {
     [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
 }
 
+function Invoke-SetupAndSeedTestUsers {
+    $setupPath = Join-Path $PSScriptRoot 'setup.ps1'
+    $npmCommand = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
+
+    if (-not $npmCommand) {
+        Write-Host 'Erreur : npm.cmd est introuvable. Vérifiez Node.js et le PATH.' -ForegroundColor Red
+        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
+        return
+    }
+
+    Write-Host ''
+    Write-Host '> Préparation du projet, puis création des comptes de test locaux' -ForegroundColor Cyan
+    Write-Host ''
+
+    try {
+        & $setupPath
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+            throw "Le script de préparation a échoué (code $LASTEXITCODE)."
+        }
+    }
+    catch {
+        Write-Host "Échec de la préparation : $($_.Exception.Message)" -ForegroundColor Red
+        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
+        return
+    }
+
+    $previousAppOrigin = $env:APP_ORIGIN
+    try {
+        # The seed independently rejects production/preproduction/staging markers.
+        $env:APP_ORIGIN = 'http://127.0.0.1:5173'
+        Write-Host ''
+        Write-Host '> Création / réinitialisation des trois comptes de test' -ForegroundColor Cyan
+        & $npmCommand.Source run db:seed:test-users
+        if ($LASTEXITCODE -ne 0) {
+            throw "Le seed des comptes de test a échoué (code $LASTEXITCODE)."
+        }
+        Write-Host 'Comptes de test prêts. Mot de passe : Local-Test-Password-2026!' -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Échec du seed : $($_.Exception.Message)" -ForegroundColor Red
+    }
+    finally {
+        if ($null -eq $previousAppOrigin) {
+            Remove-Item Env:APP_ORIGIN -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:APP_ORIGIN = $previousAppOrigin
+        }
+    }
+
+    Write-Host ''
+    [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
+}
+
 function Invoke-ProjectScript {
     param(
         [Parameter(Mandatory = $true)][string]$ScriptName,
@@ -118,7 +173,7 @@ function Invoke-ProjectScript {
 
 while ($true) {
     Show-Menu
-    $choice = Read-Host 'Choisissez une commande (0-16)'
+    $choice = Read-Host 'Choisissez une commande (0-17)'
 
     switch ($choice) {
         '0' { Clear-Host; Write-Host 'A bientot !' -ForegroundColor Cyan; break }
@@ -138,8 +193,9 @@ while ($true) {
         '14' { Invoke-NpmCommand -NpmArguments @('run', 'build:server') -Description 'Build du backend' }
         '15' { Invoke-NpmCommand -NpmArguments @('run', 'db:generate') -Description 'Generation du client Prisma' }
         '16' { Invoke-NpmCommand -NpmArguments @('run', 'db:deploy') -Description 'Application des migrations de base de donnees' -ConfirmFirst }
+        '17' { Invoke-SetupAndSeedTestUsers }
         default {
-            Write-Host 'Choix invalide. Entrez un nombre entre 0 et 16.' -ForegroundColor Yellow
+            Write-Host 'Choix invalide. Entrez un nombre entre 0 et 17.' -ForegroundColor Yellow
             Start-Sleep -Seconds 2
         }
     }
