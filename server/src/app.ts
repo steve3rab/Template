@@ -309,7 +309,7 @@ export async function createApp(
       const email =
         typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       const code = typeof body.code === 'string' ? body.code : '';
-      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || !/^\\d{10}$/.test(code)) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\d{10}$/.test(code)) {
         return reply.code(400).send({ error: 'Enter a valid email and the 10-digit code.' });
       }
 
