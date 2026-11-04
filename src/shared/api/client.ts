@@ -88,21 +88,25 @@ export const apiSchemas = {
     revenueCents: z.number().int(),
   }),
   adminUsers: z.object({
-    users: z.array(z.object({
-      id: z.string(),
-      publicId: z.string(),
-      email: z.string().email(),
-      role: z.string(),
-      createdAt: z.string(),
-    })),
+    users: z.array(
+      z.object({
+        id: z.string(),
+        publicId: z.string(),
+        email: z.string().email(),
+        role: z.string(),
+        createdAt: z.string(),
+      }),
+    ),
   }),
   adminProducts: z.object({
-    products: z.array(productSchema.extend({
-      seller: z
-        .object({ id: z.string(), publicId: z.string(), email: z.string().email() })
-        .nullable()
-        .optional(),
-    })),
+    products: z.array(
+      productSchema.extend({
+        seller: z
+          .object({ id: z.string(), publicId: z.string(), email: z.string().email() })
+          .nullable()
+          .optional(),
+      }),
+    ),
   }),
   adminOrders: z.object({ orders: z.array(orderSchema) }),
   checkoutSession: z.object({ checkoutUrl: z.string().url() }),

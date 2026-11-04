@@ -193,8 +193,7 @@ export async function createApp(
   // The E2E suite shares one API process and IP across all browser projects and retries.
   // Keep production throttling intact, but prevent unrelated test requests from exhausting
   // the global bucket before registration/checkout flows are exercised.
-  const e2eRateLimitOverride =
-    process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true';
+  const e2eRateLimitOverride = process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true';
   await app.register(rateLimit, {
     global: true,
     max: e2eRateLimitOverride ? 1000 : 120,
@@ -326,8 +325,7 @@ export async function createApp(
         typeof request.body === 'object' && request.body !== null
           ? (request.body as { email?: unknown; code?: unknown })
           : {};
-      const email =
-        typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       const code = typeof body.code === 'string' ? body.code : '';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !/^\d{10}$/.test(code)) {
         return reply.code(400).send({ error: 'Enter a valid email and the 10-digit code.' });

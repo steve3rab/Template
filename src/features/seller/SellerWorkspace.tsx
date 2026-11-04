@@ -95,7 +95,10 @@ export function SellerWorkspace({ range }: { range: string }) {
           priceCents: Math.round(Number(price) * 100),
           stock: Number(stock),
           imageUrls: images,
-          sizes: sizes.split(',').map((value) => value.trim()).filter(Boolean),
+          sizes: sizes
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean),
           dimensions:
             length || width || height
               ? {

@@ -3019,7 +3019,6 @@ button {
   }
 }
 
-
 /* Refined language control and consistent form field spacing. */
 .language-switcher {
   display: inline-flex;
@@ -3045,7 +3044,10 @@ button {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .language-switcher .language-button[aria-pressed='true'] {
@@ -3104,7 +3106,6 @@ button {
   }
 }
 
-
 .password-rules {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3153,7 +3154,6 @@ button {
   }
 }
 
-
 .product-image-previews {
   display: flex;
   flex-wrap: wrap;
@@ -3181,7 +3181,6 @@ button {
   font-size: 0.72rem;
   line-height: 1.5;
 }
-
 
 .admin-page {
   display: grid;
@@ -3351,7 +3350,6 @@ button {
     bottom: 14px;
   }
 }
-
 
 .product-image-preview {
   position: relative;

@@ -40,9 +40,11 @@ export const translations = {
     passwordRuleLowercase: 'Une lettre minuscule',
     passwordRuleNumber: 'Un chiffre',
     passwordRuleSpecial: 'Un caractère spécial',
-    authVerificationSent: 'Un code de vérification à 10 chiffres a été envoyé à votre adresse e-mail.',
+    authVerificationSent:
+      'Un code de vérification à 10 chiffres a été envoyé à votre adresse e-mail.',
     authVerificationCode: 'Code de vérification',
-    authVerificationHint: 'Saisissez les 10 chiffres reçus par e-mail. Le code expire après 10 minutes.',
+    authVerificationHint:
+      'Saisissez les 10 chiffres reçus par e-mail. Le code expire après 10 minutes.',
     authVerify: 'Vérifier mon adresse e-mail',
     authChangeEmail: 'Modifier mon adresse e-mail',
     userIdentifier: 'Identifiant utilisateur',

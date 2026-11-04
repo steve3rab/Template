@@ -106,8 +106,7 @@ export function AuthPanel({
         body: JSON.stringify(requestBody),
       });
       const payload = (await response.json()) as
-        | AuthResponse
-        | { error?: string; verificationRequired?: boolean; developmentCode?: string };
+        AuthResponse | { error?: string; verificationRequired?: boolean; developmentCode?: string };
       if (!response.ok) {
         const localizedMessage =
           submittedMode === 'register'
@@ -182,8 +181,12 @@ export function AuthPanel({
         <div className="auth-profile">
           <p>{t.authWelcome}</p>
           <strong>{user.email}</strong>
-          <span className="account-public-id">{t.userIdentifier}: {user.publicId}</span>
-          <span className="account-public-id">{t.userIdentifier}: {user.publicId}</span>
+          <span className="account-public-id">
+            {t.userIdentifier}: {user.publicId}
+          </span>
+          <span className="account-public-id">
+            {t.userIdentifier}: {user.publicId}
+          </span>
           <button
             className="primary-button"
             type="button"

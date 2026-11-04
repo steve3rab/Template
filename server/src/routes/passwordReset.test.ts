@@ -224,7 +224,10 @@ describe('password reset routes', () => {
 
   it('removes reset tokens when the email provider rejects delivery', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 503 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('', { status: 503 })),
+    );
     const { resetDeleteMany } = setup();
     await app.ready();
 

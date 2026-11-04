@@ -18,13 +18,12 @@ function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> 
     role: 'SELLER',
   }));
   const sessionDeleteMany = vi.fn(async () => ({ count: 2 }));
-  const userCount = vi.fn(
-    async ({ where }: { where?: { role?: string } } = {}) =>
-      (where?.role === 'SELLER' ? 2 : 12),
+  const userCount = vi.fn(async ({ where }: { where?: { role?: string } } = {}) =>
+    where?.role === 'SELLER' ? 2 : 12,
   );
   const userFindMany = vi.fn(async () => []);
-  const productCount = vi.fn(
-    async ({ where }: { where?: { active?: boolean } } = {}) => (where?.active ? 18 : 25),
+  const productCount = vi.fn(async ({ where }: { where?: { active?: boolean } } = {}) =>
+    where?.active ? 18 : 25,
   );
   const productFindMany = vi.fn(async () => []);
   const productFindUnique = vi.fn(async () => ({ id: 'product-1' }));
@@ -111,7 +110,6 @@ describe('admin role management', () => {
     });
   });
 
-
   it('returns zero revenue when no paid orders exist', async () => {
     const { orderAggregate } = setup('ADMIN');
     orderAggregate.mockResolvedValueOnce({
@@ -127,13 +125,15 @@ describe('admin role management', () => {
 
   it('lists user accounts with their stable public identifiers', async () => {
     const { userFindMany } = setup('ADMIN');
-    userFindMany.mockResolvedValueOnce([{
-      id: 'user-1',
-      publicId: 'USR-0001',
-      email: 'person@example.test',
-      role: 'CUSTOMER',
-      createdAt: new Date('2026-11-01T00:00:00.000Z'),
-    }] as never);
+    userFindMany.mockResolvedValueOnce([
+      {
+        id: 'user-1',
+        publicId: 'USR-0001',
+        email: 'person@example.test',
+        role: 'CUSTOMER',
+        createdAt: new Date('2026-11-01T00:00:00.000Z'),
+      },
+    ] as never);
     await app.ready();
 
     const response = await app.inject({ method: 'GET', url: '/api/admin/users' });

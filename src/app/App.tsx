@@ -289,7 +289,7 @@ export function App() {
                     : [];
                   return Array.isArray(storedImages) && typeof storedImages[0] === 'string'
                     ? storedImages[0]
-                    : item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
+                    : (item.imageUrl ?? fallback?.image ?? imageForCategory(item.category));
                 } catch {
                   return item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
                 }
@@ -335,7 +335,9 @@ export function App() {
             new CustomEvent('template-auth-changed', {
               detail: {
                 authenticated: true,
-                role: (await response.clone().json() as { user?: { role?: string } }).user?.role ?? '',
+                role:
+                  ((await response.clone().json()) as { user?: { role?: string } }).user?.role ??
+                  '',
               },
             }),
           );
@@ -894,16 +896,24 @@ export function App() {
                   )}
                   {product.dimensions && (
                     <p className="product-variants">
-                      Dimensions : {(() => {
+                      Dimensions :{' '}
+                      {(() => {
                         try {
                           const value = JSON.parse(product.dimensions) as {
-                            length?: number; width?: number; height?: number; unit?: string;
+                            length?: number;
+                            width?: number;
+                            height?: number;
+                            unit?: string;
                           };
-                          return [
-                            value.length ? `L ${value.length}` : '',
-                            value.width ? `l ${value.width}` : '',
-                            value.height ? `H ${value.height}` : '',
-                          ].filter(Boolean).join(' × ') + (value.unit ? ` ${value.unit}` : '');
+                          return (
+                            [
+                              value.length ? `L ${value.length}` : '',
+                              value.width ? `l ${value.width}` : '',
+                              value.height ? `H ${value.height}` : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' × ') + (value.unit ? ` ${value.unit}` : '')
+                          );
                         } catch {
                           return '';
                         }
@@ -1227,7 +1237,9 @@ export function App() {
       )}
       {view === 'admin' && (
         <section className="workspace-page">
-          <button className="back-link" onClick={() => setView('shop')}>← Retour à la boutique</button>
+          <button className="back-link" onClick={() => setView('shop')}>
+            ← Retour à la boutique
+          </button>
           <AdminWorkspace />
         </section>
       )}

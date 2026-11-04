@@ -115,9 +115,7 @@ export function AdminWorkspace() {
       await load();
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Impossible de modifier la visibilité du produit.',
+        cause instanceof Error ? cause.message : 'Impossible de modifier la visibilité du produit.',
       );
     }
   }
@@ -246,9 +244,8 @@ export function AdminWorkspace() {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? 'Sans vendeur'} ·{' '}
-                      {formatCents(product.priceCents)} ·
-                      Stock : {product.stock}
+                      {product.seller?.email ?? 'Sans vendeur'} · {formatCents(product.priceCents)}{' '}
+                      · Stock : {product.stock}
                     </span>
                   </div>
                   <button

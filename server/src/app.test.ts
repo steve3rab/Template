@@ -83,17 +83,11 @@ function makePrisma() {
           return pending;
         },
       ),
-      findUnique: vi.fn(async ({ where }: { where: { email: string } }) =>
-        registrations.get(where.email) ?? null,
+      findUnique: vi.fn(
+        async ({ where }: { where: { email: string } }) => registrations.get(where.email) ?? null,
       ),
       update: vi.fn(
-        async ({
-          where,
-          data,
-        }: {
-          where: { email: string };
-          data: { attempts: number };
-        }) => {
+        async ({ where, data }: { where: { email: string }; data: { attempts: number } }) => {
           const pending = registrations.get(where.email);
           if (!pending) throw new Error('Pending registration not found');
           const updated = { ...pending, ...data };
@@ -166,10 +160,7 @@ async function startApp() {
   await app.ready();
 }
 
-async function registerPending(
-  email = 'test@example.com',
-  password = 'Correct-horse-battery1!',
-) {
+async function registerPending(email = 'test@example.com', password = 'Correct-horse-battery1!') {
   return app.inject({
     method: 'POST',
     url: '/api/auth/register',
@@ -214,16 +205,19 @@ afterEach(async () => {
 });
 
 describe('application security configuration', () => {
-  it.each(['', 'short'])('rejects a missing or weak production session secret: %s', async (secret) => {
-    process.env.NODE_ENV = 'production';
-    if (secret) process.env.SESSION_SECRET = secret;
-    else delete process.env.SESSION_SECRET;
+  it.each(['', 'short'])(
+    'rejects a missing or weak production session secret: %s',
+    async (secret) => {
+      process.env.NODE_ENV = 'production';
+      if (secret) process.env.SESSION_SECRET = secret;
+      else delete process.env.SESSION_SECRET;
 
-    await expect(createApp(store.prisma, argon2TestDouble as never)).rejects.toThrow(
-      /SESSION_SECRET must be configured with at least 32 characters/,
-    );
-    process.env.NODE_ENV = 'test';
-  });
+      await expect(createApp(store.prisma, argon2TestDouble as never)).rejects.toThrow(
+        /SESSION_SECRET must be configured with at least 32 characters/,
+      );
+      process.env.NODE_ENV = 'test';
+    },
+  );
 });
 
 describe('authentication API', () => {
