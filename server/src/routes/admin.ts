@@ -12,7 +12,14 @@ export function registerAdminRoutes(
   app.get('/api/admin/me', async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
-    return { admin: { id: admin.id, publicId: admin.publicId, email: admin.email, role: admin.role } };
+    return {
+      admin: {
+        id: admin.id,
+        publicId: admin.publicId,
+        email: admin.email,
+        role: admin.role,
+      },
+    };
   });
 
   app.get('/api/admin/dashboard', async (request, reply) => {
@@ -73,7 +80,9 @@ export function registerAdminRoutes(
       typeof (request.body as { active?: unknown }).active === 'boolean'
         ? (request.body as { active: boolean })
         : null;
-    if (!params.success || !body) return reply.code(400).send({ error: 'Invalid visibility update.' });
+    if (!params.success || !body) {
+      return reply.code(400).send({ error: 'Invalid visibility update.' });
+    }
     const product = await prisma.product.update({
       where: { id: params.data.id },
       data: { active: body.active },
