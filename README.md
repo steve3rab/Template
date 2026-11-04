@@ -38,7 +38,7 @@ Le refus d'inscription pour une adresse déjà utilisée utilise un message gén
 
 ### Comptes de test (développement local uniquement)
 
-Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes dans la base configurée par `DATABASE_URL` :
+Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes de test dans la base configurée par `DATABASE_URL`. Il utilise le mot de passe fixe `Local-Test-Password-2026!` :
 
 | Rôle                     | Identifiant                 |
 | ------------------------ | --------------------------- |
@@ -46,18 +46,13 @@ Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes dans
 | Vendeur (`SELLER`)       | `test.seller@example.com`   |
 | Administrateur (`ADMIN`) | `test.admin@example.com`    |
 
-Choisissez un mot de passe de test (12 à 128 caractères), puis lancez ces commandes dans PowerShell depuis la racine du dépôt :
+Lancez le seed en local depuis PowerShell, après avoir vérifié que `DATABASE_URL` pointe vers votre base locale :
 
 ```powershell
-$env:ALLOW_TEST_USER_SEED = "true"
-$env:TEST_USERS_PASSWORD = "Local-Test-Password-2026!"
 npm run db:seed:test-users
-Remove-Item Env:ALLOW_TEST_USER_SEED
-Remove-Item Env:TEST_USERS_PASSWORD
 ```
 
-Le mot de passe indiqué est un exemple à remplacer. Les trois comptes utilisent le mot de passe fourni dans `TEST_USERS_PASSWORD`. Le script hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse de s'exécuter si `NODE_ENV=production`, mais vérifiez aussi que `DATABASE_URL` pointe bien vers votre base locale avant de le lancer. **Ne réutilisez pas ces comptes ni ce mot de passe en production.**
-
+Le script hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse explicitement de s'exécuter si l'environnement est déclaré `production`, `preproduction`, `preprod` ou `staging` via `NODE_ENV`, `APP_ENV`, `DEPLOYMENT_ENV`, `ENVIRONMENT`, `VERCEL_ENV` ou `RAILWAY_ENVIRONMENT`. **Ces comptes et ce mot de passe sont exclusivement réservés au développement local et ne doivent jamais être utilisés en production ou en préproduction.**
 ## Base de données Prisma + SQLite
 
 Le fichier SQLite local est créé dans `server/prisma/dev.db` par défaut. Les migrations versionnées sont sous `server/prisma/migrations`.
