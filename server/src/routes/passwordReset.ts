@@ -21,7 +21,7 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
       const user = await prisma.user.findUnique({ where: { email: body.data.email } });
       if (user) {
         const token = randomBytes(32).toString('base64url');
-        await prisma.passwordResetToken.create({
+        const resetToken = await prisma.passwordResetToken.create({
           data: {
             userId: user.id,
             tokenHash: hashToken(token),
@@ -46,7 +46,10 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
             }),
             signal: AbortSignal.timeout(5000),
           }).catch(() => null);
-          if (!response?.ok) request.log.error('Password reset delivery failed.');
+          if (!response?.ok) {
+            await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
+            request.log.error('Password reset delivery failed.');
+          }
         } else if (process.env.NODE_ENV !== 'production') {
           request.log.info({ resetToken: token }, 'Development-only password reset token');
         } else {
