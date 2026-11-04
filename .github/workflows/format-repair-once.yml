@@ -1,0 +1,32 @@
+name: One-time Prettier repair
+on:
+  push:
+    paths:
+      - .github/workflows/format-repair-once.yml
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - name: Format files reported by CI
+        run: npx prettier --write server/src/app.test.ts server/src/app.ts server/src/routes/admin.test.ts server/src/routes/passwordReset.test.ts server/src/schemas/commerce.ts src/app/App.tsx src/features/admin/AdminWorkspace.tsx src/features/auth/AuthPanel.tsx src/features/seller/SellerWorkspace.tsx src/shared/api/client.ts src/shared/i18n.ts src/styles.css
+      - name: Commit formatting fixes directly to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server/src/app.test.ts server/src/app.ts server/src/routes/admin.test.ts server/src/routes/passwordReset.test.ts server/src/schemas/commerce.ts src/app/App.tsx src/features/admin/AdminWorkspace.tsx src/features/auth/AuthPanel.tsx src/features/seller/SellerWorkspace.tsx src/shared/api/client.ts src/shared/i18n.ts src/styles.css
+          if git diff --cached --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git commit -m "Apply Prettier formatting to CI-flagged files"
+          git push origin main
