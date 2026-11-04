@@ -3152,3 +3152,32 @@ button {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+.product-image-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.product-image-previews img {
+  width: 76px;
+  height: 88px;
+  border: 1px solid #e3e4d9;
+  border-radius: 6px;
+  background: #f0efe9;
+  object-fit: cover;
+}
+
+.product-image-upload input[type='file'] {
+  padding: 10px;
+  background: #fffefa;
+}
+
+.product-variants {
+  margin-top: 6px;
+  color: #666c5c;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
