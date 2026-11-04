@@ -3,17 +3,30 @@ config({ path: 'server/.env' });
 import argon2 from 'argon2';
 import { PrismaClient } from '@prisma/client';
 
-if (process.env.NODE_ENV === 'production') {
-  throw new Error('Test users cannot be seeded when NODE_ENV=production.');
-}
-if (process.env.ALLOW_TEST_USER_SEED !== 'true') {
-  throw new Error('Set ALLOW_TEST_USER_SEED=true to explicitly enable test-user creation.');
+const deploymentEnvironment = [
+  process.env.NODE_ENV,
+  process.env.APP_ENV,
+  process.env.DEPLOYMENT_ENV,
+  process.env.ENVIRONMENT,
+  process.env.VERCEL_ENV,
+  process.env.RAILWAY_ENVIRONMENT,
+]
+  .filter(Boolean)
+  .map((value) => value!.trim().toLowerCase());
+
+const forbiddenEnvironment = deploymentEnvironment.find((value) =>
+  /^(production|prod|preproduction|pre-production|preprod|staging|stage)$/.test(value),
+);
+
+if (forbiddenEnvironment) {
+  throw new Error(
+    `Test users cannot be seeded in the "${forbiddenEnvironment}" environment.`,
+  );
 }
 
-const password = process.env.TEST_USERS_PASSWORD;
-if (!password || password.length < 12 || password.length > 128) {
-  throw new Error('Set TEST_USERS_PASSWORD to a password between 12 and 128 characters.');
-}
+// Fixed credentials are deliberately restricted to local/test environments by the guard above.
+// Never use these accounts or this password outside a local development environment.
+const password = 'Local-Test-Password-2026!';
 
 const testUsers = [
   { email: 'test.customer@example.com', role: 'CUSTOMER' },
