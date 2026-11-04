@@ -25,15 +25,16 @@ export function registerAdminRoutes(
   app.get('/api/admin/dashboard', async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
-    const [users, sellers, products, activeProducts, orders, paidOrders] = await Promise.all([
+    const [users, sellers, products, activeProducts, orders, paidOrderMetrics] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: 'SELLER' } }),
       prisma.product.count(),
       prisma.product.count({ where: { active: true } }),
       prisma.order.count(),
-      prisma.order.findMany({
+      prisma.order.aggregate({
         where: { paymentStatus: 'PAID' },
-        select: { totalCents: true },
+        _count: { _all: true },
+        _sum: { totalCents: true },
       }),
     ]);
     return {
@@ -42,8 +43,8 @@ export function registerAdminRoutes(
       products,
       activeProducts,
       orders,
-      paidOrders: paidOrders.length,
-      revenueCents: paidOrders.reduce((sum, order) => sum + order.totalCents, 0),
+      paidOrders: paidOrderMetrics._count._all,
+      revenueCents: paidOrderMetrics._sum.totalCents ?? 0,
     };
   });
 
