@@ -24,6 +24,19 @@ if (forbiddenEnvironment) {
   );
 }
 
+const appOrigin = process.env.APP_ORIGIN;
+if (appOrigin) {
+  let appHost: string;
+  try {
+    appHost = new URL(appOrigin).hostname.toLowerCase();
+  } catch {
+    throw new Error('APP_ORIGIN must be a valid URL before seeding test users.');
+  }
+  if (!['localhost', '127.0.0.1', '::1'].includes(appHost)) {
+    throw new Error('Test users can only be seeded when APP_ORIGIN points to localhost.');
+  }
+}
+
 // Fixed credentials are deliberately restricted to local/test environments by the guard above.
 // Never use these accounts or this password outside a local development environment.
 const password = 'Local-Test-Password-2026!';
