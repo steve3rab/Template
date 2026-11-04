@@ -72,7 +72,7 @@ describe('commerce input schemas', () => {
       category: 'Accessories',
       priceCents: 2500,
       stock: 8,
-      imageUrls: ['data:image/png;base64,aGVsbG8=', 'https://example.com/tote.webp'],
+      imageUrls: ['data:image/png;base64,iVBORw0KGgo=', 'https://example.com/tote.webp'],
       sizes: ['Small', 'Medium', 'Medium'],
       dimensions: { length: 32, width: 28, height: 12, unit: 'cm' },
     });
@@ -82,6 +82,28 @@ describe('commerce input schemas', () => {
       expect(JSON.parse(parsed.data.sizes ?? '[]')).toEqual(['Small', 'Medium']);
       expect(JSON.parse(parsed.data.dimensions ?? '{}')).toMatchObject({ length: 32, unit: 'cm' });
     }
+  });
+
+  it('checks uploaded image signatures and validates remote image URLs', () => {
+    const base = { name: 'Canvas tote', category: 'Accessories', priceCents: 2500, stock: 8 };
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['data:image/png;base64,aGVsbG8='],
+      }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['https://'],
+      }).success,
+    ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        ...base,
+        imageUrls: ['data:image/jpeg;base64,/9j/'],
+      }).success,
+    ).toBe(true);
   });
 
   it('rejects unsupported image data, too many images and invalid dimensions', () => {
