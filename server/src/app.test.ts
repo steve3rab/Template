@@ -240,6 +240,43 @@ describe('authentication API', () => {
     expect(store.registrations.has('expired-code@example.com')).toBe(false);
   });
 
+  it('marks session cookies Secure on HTTPS staging origins and clears them consistently', async () => {
+    await app.close();
+    const httpsOrigin = 'https://shop.example.test';
+    process.env.APP_ORIGIN = httpsOrigin;
+    process.env.NODE_ENV = 'staging';
+    await startApp();
+
+    const now = new Date();
+    store.users.set('secure-user', {
+      id: 'secure-user',
+      publicId: 'USR-SECURE0001',
+      email: 'secure@example.com',
+      passwordHash: 'test-hash:Correct-horse-battery1!',
+      role: 'CUSTOMER',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      headers: { ...validHeaders, origin: httpsOrigin },
+      payload: { email: 'secure@example.com', password: 'Correct-horse-battery1!' },
+    });
+    expect(login.statusCode).toBe(200);
+    expect(String(login.headers['set-cookie'])).toContain('Secure;');
+
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: { origin: httpsOrigin, cookie: sessionCookie(login) },
+    });
+    expect(logout.statusCode).toBe(204);
+    expect(String(logout.headers['set-cookie'])).toContain('Secure;');
+    expect(String(logout.headers['set-cookie'])).toContain('Max-Age=0');
+  });
+
   it('exposes a health endpoint without leaking cacheable responses', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/health' });
     expect(response.statusCode).toBe(200);
