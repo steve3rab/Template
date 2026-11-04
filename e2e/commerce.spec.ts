@@ -12,8 +12,13 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByRole('button', { name: 'Pas encore de compte ? Inscrivez-vous' }).click();
   const email = `e2e-${Date.now()}@example.test`;
   await page.getByLabel('Adresse e-mail').fill(email);
-  await page.getByLabel(/mot de passe/i).fill('correct-horse-battery');
+  await page.getByLabel(/mot de passe/i).fill('Correct-horse-battery-2026!');
   await page.getByRole('button', { name: 'Créer un compte' }).click();
+  const verificationToast = await page.locator('.toast').textContent();
+  const code = verificationToast?.match(/(\\d{10})/)?.[1];
+  expect(code).toBeTruthy();
+  await page.getByLabel('Code de vérification').fill(code!);
+  await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
 
   await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
   await expect(page.getByLabel('Adresse e-mail du compte')).toHaveValue(email);
