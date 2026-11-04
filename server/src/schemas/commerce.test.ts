@@ -5,6 +5,7 @@ import {
   checkoutInputSchema,
   productInputSchema,
   productQuerySchema,
+  productVisibilitySchema,
   resourceIdParamsSchema,
   roleInputSchema,
   sellerOrderStatusSchema,
@@ -170,6 +171,12 @@ describe('commerce input schemas', () => {
         orderIds: Array.from({ length: 16 }, (_, i) => `o${i}`),
       }).success,
     ).toBe(false);
+  });
+
+  it('accepts strict product visibility updates', () => {
+    expect(productVisibilitySchema.parse({ active: false })).toEqual({ active: false });
+    expect(productVisibilitySchema.safeParse({ active: 'false' }).success).toBe(false);
+    expect(productVisibilitySchema.safeParse({ active: true, role: 'ADMIN' }).success).toBe(false);
   });
 
   it('validates resource identifiers, product filters, roles and order statuses', () => {
