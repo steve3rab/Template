@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { Language } from '../../shared/i18n';
 import { translations } from '../../shared/i18n';
 
-type User = { id: string; publicId: string; email: string; createdAt: string };
+type User = { id: string; publicId: string; email: string; role: string; createdAt: string };
 type AuthResponse = { user: User };
 type Mode = 'login' | 'register' | 'verify' | 'reset';
 
@@ -46,7 +46,7 @@ export function AuthPanel({
           if (active) {
             setUser(null);
             window.dispatchEvent(
-              new CustomEvent('template-auth-changed', { detail: { authenticated: false } }),
+              new CustomEvent('template-auth-changed', { detail: { authenticated: false, role: '' } }),
             );
           }
           return;
@@ -57,7 +57,7 @@ export function AuthPanel({
         if (active) {
           setUser(result.user);
           window.dispatchEvent(
-            new CustomEvent('template-auth-changed', { detail: { authenticated: true } }),
+            new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: result.user.role } }),
           );
         }
       })
