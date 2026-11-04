@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import argon2 from 'argon2';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -29,9 +29,10 @@ function tokenHash(token: string): string {
   return createHmac('sha256', secret).update(token).digest('hex');
 }
 
-function publicUser(user: Pick<User, 'id' | 'email' | 'createdAt' | 'role'>) {
+function publicUser(user: Pick<User, 'id' | 'publicId' | 'email' | 'createdAt' | 'role'>) {
   return {
     id: user.id,
+    publicId: user.publicId,
     email: user.email,
     role: user.role,
     createdAt: user.createdAt.toISOString(),
@@ -94,6 +95,11 @@ export async function createApp(
     if (!process.env.PASSWORD_RESET_WEBHOOK_URL || !process.env.PASSWORD_RESET_WEBHOOK_TOKEN) {
       throw new Error(
         'PASSWORD_RESET_WEBHOOK_URL and PASSWORD_RESET_WEBHOOK_TOKEN must be configured in production.',
+      );
+    }
+    if (!process.env.EMAIL_VERIFICATION_WEBHOOK_URL || !process.env.EMAIL_VERIFICATION_WEBHOOK_TOKEN) {
+      throw new Error(
+        'EMAIL_VERIFICATION_WEBHOOK_URL and EMAIL_VERIFICATION_WEBHOOK_TOKEN must be configured in production.',
       );
     }
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
@@ -216,28 +222,140 @@ export async function createApp(
       if (!credentials) {
         return reply.code(400).send({
           error: 'Invalid input',
-          details: 'Provide a valid email and a password between 12 and 128 characters.',
+          details:
+            'Use a valid email and a 12–128 character password with uppercase, lowercase, number and special character.',
         });
+      }
+
+      const existingUser = await prisma.user.findUnique({
+        where: { email: credentials.email },
+        select: { id: true },
+      });
+      if (existingUser) {
+        return reply.code(409).send({ error: 'An account already exists for this email address.' });
       }
 
       const passwordHash = await passwordCrypto.hash(credentials.password, {
         type: passwordCrypto.argon2id,
       });
+      const code = randomInt(0, 10_000_000_000).toString().padStart(10, '0');
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await prisma.registrationVerification.deleteMany({ where: { email: credentials.email } });
+      await prisma.registrationVerification.create({
+        data: {
+          email: credentials.email,
+          passwordHash,
+          codeHash: tokenHash(code),
+          expiresAt,
+          attempts: 0,
+        },
+      });
+
+      const webhookUrl = process.env.EMAIL_VERIFICATION_WEBHOOK_URL;
+      const webhookToken = process.env.EMAIL_VERIFICATION_WEBHOOK_TOKEN;
+      if (webhookUrl && webhookToken) {
+        try {
+          const response = await fetch(webhookUrl, {
+            method: 'POST',
+            signal: AbortSignal.timeout(10_000),
+            headers: {
+              Authorization: `Bearer ${webhookToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'email_verification',
+              to: credentials.email,
+              subject: 'Vérifiez votre adresse e-mail',
+              code,
+              expiresAt: expiresAt.toISOString(),
+              expiresInMinutes: 10,
+            }),
+          });
+          if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
+        } catch (error) {
+          await prisma.registrationVerification.deleteMany({ where: { email: credentials.email } });
+          request.log.error({ err: error }, 'Email verification delivery failed');
+          return reply.code(503).send({ error: 'Unable to send the verification email. Please retry.' });
+        }
+        return reply.code(202).send({ verificationRequired: true });
+      }
+
+      if (process.env.NODE_ENV === 'production') {
+        await prisma.registrationVerification.deleteMany({ where: { email: credentials.email } });
+        return reply.code(503).send({ error: 'Email verification is not configured.' });
+      }
+
+      // Local-only convenience for development. Never expose verification codes in production.
+      request.log.info('A local email verification code was generated for %s.', credentials.email);
+      return reply.code(202).send({ verificationRequired: true, developmentCode: code });
+    },
+  );
+
+  app.post(
+    '/api/auth/register/verify',
+    {
+      config: {
+        rateLimit: {
+          max: e2eRateLimitOverride ? 100 : 10,
+          timeWindow: '15 minutes',
+        },
+      },
+    },
+    async (request, reply) => {
+      const body =
+        typeof request.body === 'object' && request.body !== null
+          ? (request.body as { email?: unknown; code?: unknown })
+          : {};
+      const email =
+        typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const code = typeof body.code === 'string' ? body.code : '';
+      if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) || !/^\\d{10}$/.test(code)) {
+        return reply.code(400).send({ error: 'Enter a valid email and the 10-digit code.' });
+      }
+
+      const pending = await prisma.registrationVerification.findUnique({ where: { email } });
+      if (!pending) return reply.code(400).send({ error: 'The code is invalid or has expired.' });
+      if (pending.expiresAt.getTime() <= Date.now()) {
+        await prisma.registrationVerification.deleteMany({ where: { email } });
+        return reply.code(400).send({ error: 'The code has expired. Please register again.' });
+      }
+      if (pending.attempts >= 5) {
+        await prisma.registrationVerification.deleteMany({ where: { email } });
+        return reply.code(429).send({ error: 'Too many attempts. Please register again.' });
+      }
+      const actualHash = Buffer.from(tokenHash(code), 'hex');
+      const expectedHash = Buffer.from(pending.codeHash, 'hex');
+      const validCode =
+        actualHash.length === expectedHash.length && timingSafeEqual(actualHash, expectedHash);
+      if (!validCode) {
+        const attempts = pending.attempts + 1;
+        if (attempts >= 5) {
+          await prisma.registrationVerification.deleteMany({ where: { email } });
+          return reply.code(429).send({ error: 'Too many attempts. Please register again.' });
+        }
+        await prisma.registrationVerification.update({
+          where: { email },
+          data: { attempts },
+        });
+        return reply.code(400).send({ error: 'The verification code is incorrect.' });
+      }
+
       try {
         const user = await prisma.user.create({
-          data: { email: credentials.email, passwordHash },
+          data: { email, passwordHash: pending.passwordHash },
         });
+        await prisma.registrationVerification.deleteMany({ where: { email } });
         await setSession(reply, prisma, user.id);
         return reply.code(201).send({ user: publicUser(user) });
       } catch (error) {
-        // A concurrent registration may win the unique-email race.
         if (
           typeof error === 'object' &&
           error !== null &&
           'code' in error &&
           (error as { code?: unknown }).code === 'P2002'
         ) {
-          return reply.code(400).send({ error: 'Unable to create account with these details.' });
+          await prisma.registrationVerification.deleteMany({ where: { email } });
+          return reply.code(409).send({ error: 'An account already exists for this email address.' });
         }
         throw error;
       }
