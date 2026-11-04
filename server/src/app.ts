@@ -192,7 +192,7 @@ export async function createApp(
   // Keep production throttling intact, but prevent unrelated test requests from exhausting
   // the global bucket before registration/checkout flows are exercised.
   const e2eRateLimitOverride =
-    process.env.NODE_ENV !== 'production' && process.env.E2E_TEST === 'true';
+    process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true';
   await app.register(rateLimit, {
     global: true,
     max: e2eRateLimitOverride ? 1000 : 120,
