@@ -135,7 +135,7 @@ export function AuthPanel({
       if (!('user' in payload)) throw new Error(t.authError);
       setUser(payload.user);
       window.dispatchEvent(
-        new CustomEvent('template-auth-changed', { detail: { authenticated: true } }),
+        new CustomEvent('template-auth-changed', { detail: { authenticated: true, role: payload.user.role } }),
       );
       onAuthenticated?.(payload.user);
       setPassword('');
