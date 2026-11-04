@@ -31,6 +31,7 @@ npm run test:e2e
 La commande `npm run check` regroupe typecheck, lint, format, couverture frontend et backend, puis les deux builds. Les tests E2E restent séparés.
 
 Sous Windows, le menu interactif `.\\scripts\\menu.ps1` propose aussi :
+
 - **1** : préparer le projet (installation, génération Prisma et migrations), sans lancer de tests.
 - **17** : exécuter les mêmes étapes que l'option 1, puis créer/réinitialiser les comptes de test locaux avec `npm run db:seed:test-users`.
 
