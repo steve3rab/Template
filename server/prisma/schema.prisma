@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id                String               @id @default(cuid())
+  publicId          String               @unique @default(cuid())
   email             String               @unique
   passwordHash      String
   role              String               @default("CUSTOMER")
@@ -48,6 +49,9 @@ model Product {
   priceCents  Int
   stock       Int         @default(0)
   imageUrl    String?
+  imageUrls   String      @default("[]")
+  sizes       String      @default("[]")
+  dimensions  String      @default("{}")
   active      Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -157,4 +161,17 @@ model PasswordResetToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+}
+
+
+model RegistrationVerification {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  passwordHash String
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt])
 }
