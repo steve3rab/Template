@@ -23,7 +23,6 @@ test('a customer can register, sign out, sign in again and keep the session', as
 
   await page.getByLabel('Adresse e-mail').fill(email);
   await page.getByLabel('Mot de passe').fill(password);
-  await page.getByRole('button', { name: 'Déjà inscrit ? Connectez-vous' }).click();
   await page.getByRole('button', { name: 'Se connecter' }).click();
 
   await expect(page.getByText(email)).toBeVisible();
