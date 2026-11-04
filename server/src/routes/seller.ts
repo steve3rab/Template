@@ -32,6 +32,7 @@ export function registerSellerRoutes(
   app.post(
     '/api/seller/products',
     {
+      bodyLimit: 10 * 1024 * 1024,
       config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
     },
     async (request, reply) => {
@@ -56,6 +57,7 @@ export function registerSellerRoutes(
   app.patch(
     '/api/seller/products/:id',
     {
+      bodyLimit: 10 * 1024 * 1024,
       config: { rateLimit: { max: 20, timeWindow: '1 minute' } },
     },
     async (request, reply) => {
