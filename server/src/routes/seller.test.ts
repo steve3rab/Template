@@ -168,9 +168,14 @@ describe('seller data isolation and route validation', () => {
     expect(response.statusCode).toBe(201);
     const createCall = productCreate.mock.calls[0]?.[0] as { data: Record<string, unknown> };
     expect(createCall.data.imageUrl).toBe('data:image/png;base64,aGVsbG8=');
-    expect(JSON.parse(String(createCall.data.imageUrls))).toEqual(['data:image/png;base64,aGVsbG8=']);
+    expect(JSON.parse(String(createCall.data.imageUrls))).toEqual([
+      'data:image/png;base64,aGVsbG8=',
+    ]);
     expect(JSON.parse(String(createCall.data.sizes))).toEqual(['Small', 'Medium']);
-    expect(JSON.parse(String(createCall.data.dimensions))).toMatchObject({ length: 32, unit: 'cm' });
+    expect(JSON.parse(String(createCall.data.dimensions))).toMatchObject({
+      length: 32,
+      unit: 'cm',
+    });
   });
 
   it('rejects invalid product creation and does not write to the database', async () => {
