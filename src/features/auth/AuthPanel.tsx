@@ -138,7 +138,10 @@ export function AuthPanel({
       );
       onAuthenticated?.(payload.user);
       setPassword('');
-      if (submittedMode === 'verify') showToast(t.authSuccess, 'success');
+      if (submittedMode === 'verify') {
+        setMode('login');
+        showToast(t.authSuccess, 'success');
+      }
     } catch {
       showToast(t.authError, 'error');
     } finally {
