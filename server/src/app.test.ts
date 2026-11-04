@@ -166,7 +166,7 @@ async function startApp() {
   await app.ready();
 }
 
-async function register(email = 'test@example.com', password = 'correct-horse-battery') {
+async function register(email = 'test@example.com', password = 'Correct-horse-battery1!') {
   return app.inject({
     method: 'POST',
     url: '/api/auth/register',
@@ -239,7 +239,7 @@ describe('authentication API', () => {
     expect(store.users.size).toBe(1);
     expect(store.sessions.size).toBe(1);
     expect(store.registrations.size).toBe(0);
-    expect([...store.users.values()][0]?.passwordHash).not.toBe('correct-horse-battery');
+    expect([...store.users.values()][0]?.passwordHash).not.toBe('Correct-horse-battery1!');
 
     const cookie = sessionCookie(verified);
     const current = await app.inject({
@@ -429,7 +429,7 @@ describe('authentication API', () => {
       method: 'POST',
       url: '/api/auth/login',
       headers: validHeaders,
-      payload: { email: 'TEST@example.com', password: 'correct-horse-battery' },
+      payload: { email: 'TEST@example.com', password: 'Correct-horse-battery1!' },
     });
     expect(valid.statusCode).toBe(200);
     expect(valid.headers['set-cookie']).toBeTruthy();
@@ -501,7 +501,7 @@ describe('authentication API', () => {
       method: 'POST',
       url: '/api/auth/login',
       headers: validHeaders,
-      payload: { email: 'test@example.com', password: 'correct-horse-battery' },
+      payload: { email: 'test@example.com', password: 'Correct-horse-battery1!' },
     });
     expect(response.statusCode).toBe(500);
     expect(response.body).not.toContain('database-secret-detail');
