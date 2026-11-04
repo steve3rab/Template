@@ -4,11 +4,9 @@
 
 Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `main`, d'une pull request et à la demande (`workflow_dispatch`). Les jobs s'exécutent sur Ubuntu avec Node.js 22.16.0 et npm 10.9.4.
 
-| Job | Contrôles exécutés |
-| --- | --- |
-| `quality` | Installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur |
-| `e2e` | Installation, génération Prisma, migrations, installation de Chromium et tests Playwright |
-| `docker` | Construction de l'image avec Buildx, sans publication (`push: false`) |
+- **`quality`** : installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur.
+- **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright.
+- **`docker`** : construction de l'image avec Buildx, sans publication (`push: false`).
 
 La CI utilise une base SQLite éphémère et des secrets de session réservés aux tests. Ces valeurs ne doivent jamais être réutilisées en production.
 
@@ -42,10 +40,8 @@ npx playwright install chromium
 
 Les seuils sont définis dans `vite.config.ts` et sont bloquants :
 
-| Périmètre | Statements | Branches | Functions | Lines |
-| --- | ---: | ---: | ---: | ---: |
-| Ensemble du projet | 45 % | 35 % | 44 % | 47 % |
-| Backend `server/src/**` | 25 % | 20 % | 25 % | 25 % |
+- **Ensemble du projet** : statements 45 %, branches 35 %, functions 44 %, lines 47 %.
+- **Backend (`server/src/**`)** : statements 25 %, branches 20 %, functions 25 %, lines 25 %.
 
 Le contrôle frontend inclut les fichiers de test configurés par Vitest ; le backend est également exécuté séparément avec `npm run test:coverage:server`. Les seuils constituent un plancher anti-régression, pas un objectif de couverture finale. Augmentez-les progressivement lorsque de nouveaux tests sont ajoutés. Ne diminuez jamais un seuil pour faire passer une CI sans justification documentée.
 
