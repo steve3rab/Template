@@ -74,6 +74,15 @@ describe('commerce input schemas', () => {
         imageUrl: 'http://example.com/item.png',
       }).success,
     ).toBe(false);
+    expect(
+      productInputSchema.safeParse({
+        name: 'Valid name',
+        category: 'Clothing',
+        priceCents: 100,
+        stock: 0,
+        imageUrl: 'https://user:secret@example.com/item.png',
+      }).success,
+    ).toBe(false);
   });
 
   it('accepts safe uploaded product images, sizes and dimensions', () => {
