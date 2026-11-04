@@ -8,6 +8,10 @@ const productSchema = z.object({
   priceCents: z.number().int(),
   stock: z.number().int(),
   active: z.boolean(),
+  imageUrl: z.string().nullable().optional(),
+  imageUrls: z.string().optional(),
+  sizes: z.string().optional(),
+  dimensions: z.string().optional(),
 });
 
 const orderItemSchema = z.object({
