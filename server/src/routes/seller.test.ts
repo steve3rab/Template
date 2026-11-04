@@ -159,7 +159,7 @@ describe('seller data isolation and route validation', () => {
         category: 'Accessories',
         priceCents: 2500,
         stock: 8,
-        imageUrls: ['data:image/png;base64,aGVsbG8='],
+        imageUrls: ['data:image/png;base64,iVBORw0KGgo='],
         sizes: ['Small', 'Medium'],
         dimensions: { length: 32, width: 28, height: 12, unit: 'cm' },
       },
@@ -167,9 +167,9 @@ describe('seller data isolation and route validation', () => {
 
     expect(response.statusCode).toBe(201);
     const createCall = productCreate.mock.calls[0]?.[0] as { data: Record<string, unknown> };
-    expect(createCall.data.imageUrl).toBe('data:image/png;base64,aGVsbG8=');
+    expect(createCall.data.imageUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
     expect(JSON.parse(String(createCall.data.imageUrls))).toEqual([
-      'data:image/png;base64,aGVsbG8=',
+      'data:image/png;base64,iVBORw0KGgo=',
     ]);
     expect(JSON.parse(String(createCall.data.sizes))).toEqual(['Small', 'Medium']);
     expect(JSON.parse(String(createCall.data.dimensions))).toMatchObject({
