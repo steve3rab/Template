@@ -15,7 +15,7 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByLabel(/mot de passe/i).fill('Correct-horse-battery-2026!');
   await page.getByRole('button', { name: 'Créer un compte' }).click();
   const verificationToast = await page.locator('.toast').textContent();
-  const code = verificationToast?.match(/(\\d{10})/)?.[1];
+  const code = verificationToast?.match(/(\d{10})/)?.[1];
   expect(code).toBeTruthy();
   await page.getByLabel('Code de vérification').fill(code!);
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
