@@ -46,7 +46,9 @@ function publicUser(user: Pick<User, 'id' | 'publicId' | 'email' | 'createdAt' |
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure:
+      process.env.NODE_ENV === 'production' ||
+      process.env.APP_ORIGIN?.startsWith('https://') === true,
     sameSite: 'lax' as const,
     path: '/',
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
@@ -439,7 +441,7 @@ export async function createApp(
     if (token) {
       await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
     }
-    reply.clearCookie(SESSION_COOKIE, { path: '/', httpOnly: true, sameSite: 'lax' });
+    reply.clearCookie(SESSION_COOKIE, { ...cookieOptions(), maxAge: 0 });
     return reply.code(204).send();
   });
 
