@@ -61,6 +61,7 @@ model Product {
   orderItems  OrderItem[]
 
   @@index([sellerId, active])
+  @@index([sellerId, stock])
   @@index([category, active])
 }
 
@@ -135,6 +136,7 @@ model Order {
   @@index([sellerId, createdAt])
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([paymentStatus])
 }
 
 model OrderItem {
