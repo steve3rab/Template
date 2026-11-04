@@ -3103,3 +3103,52 @@ button {
     padding-inline: 14px;
   }
 }
+
+
+.password-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+  margin: 8px 0 0;
+  padding: 0;
+  color: #8b756e;
+  font-size: 0.72rem;
+  list-style: none;
+}
+
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.password-rules li span {
+  color: #a77b72;
+  font-weight: 700;
+}
+
+.password-rules li.valid,
+.password-rules li.valid span {
+  color: #4f7044;
+}
+
+.field-hint,
+.account-public-id {
+  display: block;
+  color: #77796e;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.account-public-id {
+  margin-top: 7px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 460px) {
+  .password-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
