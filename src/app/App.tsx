@@ -49,6 +49,8 @@ type Product = {
   image: string;
   tag?: string;
   description: string;
+  sizes?: string[];
+  dimensions?: string;
 };
 const products: Product[] = [
   {
@@ -277,7 +279,31 @@ export function App() {
               price: item.priceCents / 100,
               color: fallback?.color ?? 'sand',
               icon: fallback?.icon ?? '🛍️',
-              image: fallback?.image ?? imageForCategory(item.category),
+              image: (() => {
+                try {
+                  const storedImages = item.imageUrls ? (JSON.parse(item.imageUrls) as unknown) : [];
+                  return Array.isArray(storedImages) && typeof storedImages[0] === 'string'
+                    ? storedImages[0]
+                    : item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
+                } catch {
+                  return item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
+                }
+              })(),
+              ...(item.sizes
+                ? {
+                    sizes: (() => {
+                      try {
+                        const parsed: unknown = JSON.parse(item.sizes);
+                        return Array.isArray(parsed)
+                          ? parsed.filter((value): value is string => typeof value === 'string')
+                          : [];
+                      } catch {
+                        return [];
+                      }
+                    })(),
+                  }
+                : {}),
+              ...(item.dimensions ? { dimensions: item.dimensions } : {}),
               ...(fallback?.oldPrice !== undefined ? { oldPrice: fallback.oldPrice } : {}),
               ...(fallback?.tag !== undefined ? { tag: fallback.tag } : {}),
             };
@@ -834,6 +860,27 @@ export function App() {
                     </div>
                   </div>
                   <p className="product-description">{product.description}</p>
+                  {product.sizes && product.sizes.length > 0 && (
+                    <p className="product-variants">Tailles : {product.sizes.join(', ')}</p>
+                  )}
+                  {product.dimensions && (
+                    <p className="product-variants">
+                      Dimensions : {(() => {
+                        try {
+                          const value = JSON.parse(product.dimensions) as {
+                            length?: number; width?: number; height?: number; unit?: string;
+                          };
+                          return [
+                            value.length ? `L ${value.length}` : '',
+                            value.width ? `l ${value.width}` : '',
+                            value.height ? `H ${value.height}` : '',
+                          ].filter(Boolean).join(' × ') + (value.unit ? ` ${value.unit}` : '');
+                        } catch {
+                          return '';
+                        }
+                      })()}
+                    </p>
+                  )}
                 </article>
               ))}
             </div>
