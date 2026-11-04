@@ -9,6 +9,20 @@ const hashToken = (value: string) =>
     .update(value)
     .digest('hex');
 
+function isSecureWebhook(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'https:') return true;
+    return (
+      (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') &&
+      url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function registerPasswordResetRoutes(app: FastifyInstance, prisma: PrismaClient): void {
   app.post(
     '/api/auth/password-reset/request',
@@ -31,8 +45,12 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
         const webhook = process.env.PASSWORD_RESET_WEBHOOK_URL;
         const webhookToken = process.env.PASSWORD_RESET_WEBHOOK_TOKEN;
         if (webhook && webhookToken) {
-          const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
-          const response = await fetch(webhook, {
+          if (!isSecureWebhook(webhook)) {
+            await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
+            request.log.error('Password reset webhook must use HTTPS outside local development.');
+          } else {
+            const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+            const response = await fetch(webhook, {
             method: 'POST',
             headers: {
               'content-type': 'application/json',
@@ -45,9 +63,10 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
             }),
             signal: AbortSignal.timeout(5000),
           }).catch(() => null);
-          if (!response?.ok) {
-            await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
-            request.log.error('Password reset delivery failed.');
+            if (!response?.ok) {
+              await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
+              request.log.error('Password reset delivery failed.');
+            }
           }
         } else if (webhook) {
           await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
