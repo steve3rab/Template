@@ -10,6 +10,23 @@ const httpUrlSchema = z
     return protocol === 'http:' || protocol === 'https:';
   }, 'URL must use HTTP or HTTPS.');
 
+const productImageSchema = z
+  .string()
+  .max(4_500_000)
+  .refine((value) => {
+    if (/^https?:\\/\\//i.test(value)) return true;
+    return /^data:image\\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
+  }, 'Product images must be HTTP(S) URLs or PNG/JPEG/WebP uploads.');
+
+const productDimensionsSchema = z
+  .object({
+    length: z.number().positive().max(100_000).optional(),
+    width: z.number().positive().max(100_000).optional(),
+    height: z.number().positive().max(100_000).optional(),
+    unit: z.enum(['mm', 'cm', 'm', 'in']).default('cm'),
+  })
+  .strict();
+
 export const productInputSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(4000).default(''),
@@ -17,6 +34,9 @@ export const productInputSchema = z.object({
   priceCents: z.number().int().min(1).max(100_000_000),
   stock: z.number().int().min(0).max(1_000_000),
   imageUrl: httpUrlSchema.optional().nullable(),
+  imageUrls: z.array(productImageSchema).max(5).optional().transform((value) => value ? JSON.stringify(value) : undefined),
+  sizes: z.array(z.string().trim().min(1).max(40)).max(30).optional().transform((value) => value ? JSON.stringify([...new Set(value)]) : undefined),
+  dimensions: productDimensionsSchema.optional().transform((value) => value ? JSON.stringify(value) : undefined),
   active: z.boolean().default(true),
 });
 
