@@ -287,7 +287,7 @@ describe('password reset routes', () => {
         url: '/api/auth/password-reset/complete',
         payload: {
           token: 'token-value-that-is-at-least-32-chars',
-          password: 'a-very-long-new-password',
+          password: 'New-Password-2026!',
         },
       });
 
@@ -306,7 +306,7 @@ describe('password reset routes', () => {
       url: '/api/auth/password-reset/complete',
       payload: {
         token: 'token-value-that-is-at-least-32-chars',
-        password: 'a-very-long-new-password',
+        password: 'New-Password-2026!',
       },
     });
 
@@ -325,7 +325,7 @@ describe('password reset routes', () => {
       url: '/api/auth/password-reset/complete',
       payload: {
         token: 'token-value-that-is-at-least-32-chars',
-        password: 'a-very-long-new-password',
+        password: 'New-Password-2026!',
       },
     });
 
