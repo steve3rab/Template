@@ -29,14 +29,19 @@ Pour démarrer séparément :
 
 ## Authentification
 
-- Inscription et connexion par e-mail/mot de passe.
+- Inscription en deux étapes : création d'une inscription en attente, puis validation de l'adresse e-mail par un code à 10 chiffres avant la création du compte et de la session.
+- Codes de vérification hachés, valables 10 minutes, limités à 5 tentatives et invalidés après utilisation.
+- En développement local, l'API renvoie un champ `developmentCode` pour faciliter les tests. Ce champ n'est jamais renvoyé en production.
+- En production, configurez `EMAIL_VERIFICATION_WEBHOOK_URL` (HTTPS) et `EMAIL_VERIFICATION_WEBHOOK_TOKEN`. Le backend envoie un POST JSON authentifié avec `type`, `to`, `subject`, `code`, `expiresAt` et `expiresInMinutes` à votre passerelle d'e-mail.
+- Mot de passe de 12 à 128 caractères avec au moins une majuscule, une minuscule, un chiffre et un caractère spécial ; les règles sont contrôlées dans l'interface et par Zod côté serveur.
 - Mots de passe hachés avec Argon2id ; aucun mot de passe en clair n'est stocké.
+- Identifiant public stable distinct de l'adresse e-mail.
 - Sessions opaques persistées en base, jetons stockés sous forme de hash.
 - Cookie de session HttpOnly, SameSite=Lax et Secure en production.
 - Validation d'entrée avec Zod, limitation de débit sur les routes d'authentification, CORS limité à l'origine configurée et vérification de l'origine des requêtes mutantes.
-- Routes : `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+- Routes : `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/register/verify`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
 
-Le refus d'inscription pour une adresse déjà utilisée utilise un message générique, mais la différence entre création réussie et refus peut encore permettre l'énumération d'adresses. Pour un produit public, ajoutez une vérification d'e-mail avec réponse uniforme. Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET` et `DATABASE_URL` en production. Utilisez HTTPS et un gestionnaire de secrets en production. La réinitialisation du mot de passe et la gestion des rôles métier sont implémentées ; la vérification d'e-mail et le MFA restent à prévoir selon les besoins du produit.
+Le frontend n'accède jamais au secret de session : il est transmis automatiquement par cookie. Configurez `APP_ORIGIN`, `SESSION_SECRET`, `DATABASE_URL` et le webhook de vérification d'e-mail en production. Utilisez HTTPS et un gestionnaire de secrets.
 
 ### Comptes de test (développement local uniquement)
 
