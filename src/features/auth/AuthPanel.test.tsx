@@ -160,7 +160,10 @@ describe('AuthPanel', () => {
       '/api/auth/login',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ email: 'test@example.com', password: 'Correct-horse-battery-2026!' }),
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Correct-horse-battery-2026!',
+        }),
       }),
     );
   });
