@@ -158,6 +158,12 @@ export function App() {
   const languageRef = useRef(language);
   languageRef.current = language;
   const translate = (fr: string, en: string) => languageRef.current === 'en' ? en : fr;
+  const formatPrice = (amount: number) => formatPrice(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
+  const productTag = (tag: string) => {
+    if (language === 'fr') return tag;
+    const labels: Record<string, string> = { 'NOUVEAU': 'NEW', 'ESSENTIEL': 'ESSENTIAL', 'BEST-SELLER': 'BESTSELLER' };
+    return labels[tag] ?? tag;
+  };
   const productDescription = (product: Product) => {
     if (language === 'fr') return product.description;
     const demoDescriptions: Record<string, string> = {
@@ -870,7 +876,7 @@ export function App() {
               {filteredProducts.map((product, index) => (
                 <article className="product-card" key={product.id}>
                   <div className={`product-visual ${product.color}`}>
-                    {product.tag && <span className="product-tag">{product.tag}</span>}
+                    {product.tag && <span className="product-tag">{productTag(product.tag)}</span>}
                     <button
                       className={
                         favorites.includes(product.id)
@@ -911,8 +917,8 @@ export function App() {
                       <p>{categoryLabel(product.category)}</p>
                     </div>
                     <div className="product-price">
-                      {product.oldPrice && <del>{formatCurrency(product.oldPrice)}</del>}
-                      <strong>{formatCurrency(product.price)}</strong>
+                      {product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}
+                      <strong>{formatPrice(product.price)}</strong>
                     </div>
                   </div>
                   <p className="product-description">{productDescription(product)}</p>
@@ -1215,7 +1221,7 @@ export function App() {
                           <strong>{product.name}</strong>
                           <p>{translate('Quantité :', 'Quantity:')} {cart[product.id] ?? 0}</p>
                         </div>
-                        <strong>{formatCurrency(product.price * (cart[product.id] ?? 0))}</strong>
+                        <strong>{formatPrice(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                   {cartCount === 0 && (
@@ -1223,7 +1229,7 @@ export function App() {
                   )}
                   <div className="summary-total">
                     <span>{translate('Sous-total', 'Subtotal')}</span>
-                    <strong>{formatCurrency(cartTotal)}</strong>
+                    <strong>{formatPrice(cartTotal)}</strong>
                   </div>
                   <div className="summary-total">
                     <span>{translate('Livraison', 'Shipping')}</span>
@@ -1378,7 +1384,7 @@ export function App() {
                         </span>
                         <div className="drawer-product-info">
                           <strong>{product.name}</strong>
-                          <span>{formatCurrency(product.price)}</span>
+                          <span>{formatPrice(product.price)}</span>
                           <div className="quantity-control">
                             <button
                               aria-label={translate(`Retirer un ${product.name}`, `Remove one ${product.name}`)}
@@ -1395,14 +1401,14 @@ export function App() {
                             </button>
                           </div>
                         </div>
-                        <strong>{formatCurrency(product.price * (cart[product.id] ?? 0))}</strong>
+                        <strong>{formatPrice(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                 </div>
                 <div className="drawer-total">
                   <div>
                     <span>{translate('Sous-total', 'Subtotal')}</span>
-                    <strong>{formatCurrency(cartTotal)}</strong>
+                    <strong>{formatPrice(cartTotal)}</strong>
                   </div>
                   <p>
                     {translate('Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.', 'Shipping is not configured: no delivery charge is added to the item total.')}
