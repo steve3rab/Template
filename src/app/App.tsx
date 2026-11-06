@@ -388,6 +388,8 @@ export function App() {
     };
   }, [catalogRetry, language]);
 
+  useEffect(() => {
+    let active = true;
     // Resolve authentication only from explicit session outcomes. A 5xx/network
     // failure must not be interpreted as logout or overwrite a valid client state.
     void fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
