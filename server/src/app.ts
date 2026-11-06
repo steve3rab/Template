@@ -375,12 +375,7 @@ export async function createApp(
         await setSession(reply, prisma, user.id);
         return reply.code(201).send({ user: publicUser(user) });
       } catch (error) {
-        if (
-          typeof error === 'object' &&
-          error !== null &&
-          'code' in error &&
-          (error as { code?: unknown }).code === 'P2002'
-        ) {
+        if (isPrismaUniqueConstraintError(error)) {
           await prisma.registrationVerification.deleteMany({ where: { email } });
           return reply
             .code(409)
