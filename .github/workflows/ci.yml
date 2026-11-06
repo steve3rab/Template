@@ -35,7 +35,7 @@ jobs:
             exit 1
           }
           Write-Host 'PowerShell syntax validated for all scripts.'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.16.0
       - name: Pin npm to a stable version
@@ -65,7 +65,7 @@ jobs:
       SESSION_SECRET: e2e-only-secret-that-is-long-enough-for-tests
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.16.0
       - name: Pin npm to a stable version
@@ -97,7 +97,7 @@ jobs:
       DATABASE_URL_POSTGRES: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.16.0
       - name: Pin npm to a stable version
@@ -116,7 +116,7 @@ jobs:
       SESSION_SECRET: windows-ci-only-secret-that-is-long-enough
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22.16.0
       - run: npm --version
