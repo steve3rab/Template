@@ -39,8 +39,8 @@ if (!['localhost', '127.0.0.1', '::1'].includes(appHost)) {
   throw new Error('Test users can only be seeded when APP_ORIGIN points to localhost.');
 }
 
-// Fixed credentials are deliberately restricted to local/test environments by the guard above.
-// Never use these accounts or this password outside a local development environment.
+// A per-run password can be supplied by the PowerShell helper. The fallback is
+// retained for backwards compatibility and is protected by the local-origin guard.
 const password = process.env.TEST_USERS_PASSWORD ?? 'Local-Test-Password-2026!';
 if (password.length < 12 || password.length > 128) {
   throw new Error('TEST_USERS_PASSWORD must contain between 12 and 128 characters.');
