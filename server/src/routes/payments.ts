@@ -23,6 +23,18 @@ const stripeSessionLookupSchema = z.object({
   status: z.enum(['open', 'complete', 'expired']),
 });
 
+const stripeRefundSessionSchema = z.object({
+  id: z.string().min(1),
+  payment_intent: z.string().min(1).nullable(),
+});
+
+const stripeRefundSchema = z.object({
+  id: z.string().min(1),
+  amount: z.number().int().positive(),
+  currency: z.string().length(3),
+  status: z.string().min(1),
+});
+
 const stripeEventSchema = z
   .object({
     id: z.string().min(1),
@@ -283,6 +295,188 @@ export function registerPaymentRoutes(
       return reply.send({ checkoutUrl: session.data.url });
     },
   );
+
+  app.get('/api/admin/financial-transactions', async (request, reply) => {
+    const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
+    if (!admin) return;
+    const transactions = await prisma.financialTransaction.findMany({
+      include: {
+        order: {
+          select: {
+            id: true,
+            userId: true,
+            sellerId: true,
+            totalCents: true,
+            currency: true,
+            paymentStatus: true,
+            refundedCents: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return { transactions };
+  });
+
+  app.post('/api/admin/orders/:id/refund', async (request, reply) => {
+    const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
+    if (!admin) return;
+
+    const params = z.object({ id: z.string().min(1).max(128) }).safeParse(request.params);
+    const body = z
+      .object({ amountCents: z.number().int().positive().optional() })
+      .strict()
+      .safeParse(request.body ?? {});
+    if (!params.success || !body.success)
+      return reply.code(400).send({ error: 'Invalid refund request.' });
+
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) return reply.code(503).send({ error: 'Stripe is not configured.' });
+
+    const order = await prisma.order.findUnique({ where: { id: params.data.id } });
+    if (!order) return reply.code(404).send({ error: 'Order not found.' });
+    if (
+      !['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) ||
+      !order.paymentReference
+    ) {
+      return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
+    }
+
+    const remainingCents = order.totalCents - order.refundedCents;
+    const amountCents = body.data.amountCents ?? remainingCents;
+    if (
+      !Number.isSafeInteger(amountCents) ||
+      amountCents < 1 ||
+      amountCents > remainingCents
+    ) {
+      return reply.code(400).send({ error: 'Refund amount exceeds the remaining refundable amount.' });
+    }
+
+    // Reserve the refund amount with compare-and-set before contacting Stripe. Concurrent
+    // requests based on the same refundedCents snapshot cannot over-refund an order.
+    const reservedCents = order.refundedCents + amountCents;
+    const reservation = await prisma.order.updateMany({
+      where: {
+        id: order.id,
+        paymentStatus: order.paymentStatus,
+        refundedCents: order.refundedCents,
+      },
+      data: { refundedCents: { increment: amountCents } },
+    });
+    if (reservation.count !== 1)
+      return reply.code(409).send({ error: 'Order refund state changed. Refresh and retry.' });
+
+    let checkoutResponse: Response;
+    try {
+      checkoutResponse = await fetch(
+        `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(order.paymentReference)}`,
+        {
+          headers: { Authorization: `Bearer ${secretKey}` },
+          signal: AbortSignal.timeout(10000),
+        },
+      );
+    } catch {
+      await prisma.order.updateMany({
+        where: { id: order.id, refundedCents: reservedCents },
+        data: { refundedCents: { decrement: amountCents } },
+      });
+      return reply.code(502).send({ error: 'Unable to verify the Stripe payment. Retry safely.' });
+    }
+
+    const checkout = stripeRefundSessionSchema.safeParse(
+      await checkoutResponse.json().catch(() => null),
+    );
+    if (!checkoutResponse.ok || !checkout.success || !checkout.data.payment_intent) {
+      await prisma.order.updateMany({
+        where: { id: order.id, refundedCents: reservedCents },
+        data: { refundedCents: { decrement: amountCents } },
+      });
+      return reply.code(502).send({ error: 'Stripe payment reference could not be verified.' });
+    }
+
+    const idempotencyKey = createHmac('sha256', secretKey)
+      .update(`refund:${order.id}:${order.refundedCents}:${amountCents}`)
+      .digest('hex');
+    let refundResponse: Response;
+    try {
+      refundResponse = await fetch('https://api.stripe.com/v1/refunds', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: new URLSearchParams({
+          payment_intent: checkout.data.payment_intent,
+          amount: String(amountCents),
+          'metadata[orderId]': order.id,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+    } catch {
+      // The request may have reached Stripe despite a network timeout. Keep the reservation:
+      // the same idempotency key can safely be retried/reconciled without issuing a second refund.
+      request.log.error({ orderId: order.id }, 'Stripe refund outcome is unknown; reservation retained.');
+      return reply.code(202).send({
+        pending: true,
+        message: 'Refund outcome is being reconciled. Do not submit another refund.',
+      });
+    }
+
+    const refund = stripeRefundSchema.safeParse(await refundResponse.json().catch(() => null));
+    if (!refundResponse.ok || !refund.success) {
+      await prisma.order.updateMany({
+        where: { id: order.id, refundedCents: reservedCents },
+        data: { refundedCents: { decrement: amountCents } },
+      });
+      request.log.error({ statusCode: refundResponse.status }, 'Stripe refund request failed.');
+      return reply.code(502).send({ error: 'Stripe could not process this refund.' });
+    }
+
+    const nextPaymentStatus =
+      reservedCents === order.totalCents ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
+    try {
+      await prisma.$transaction(async (tx) => {
+        const finalized = await tx.order.updateMany({
+          where: { id: order.id, refundedCents: reservedCents, paymentStatus: order.paymentStatus },
+          data: { paymentStatus: nextPaymentStatus },
+        });
+        if (finalized.count !== 1) throw new Error('REFUND_FINALIZATION_CONFLICT');
+        await tx.financialTransaction.create({
+          data: {
+            orderId: order.id,
+            stripeObjectId: refund.data.id,
+            type: 'REFUND',
+            amountCents: refund.data.amount,
+            currency: refund.data.currency.toUpperCase(),
+          },
+        });
+      });
+    } catch (error) {
+      // Keep the reserved amount if Stripe has already refunded it. An operator can
+      // reconcile this Stripe refund ID without risking a duplicate payout.
+      request.log.error({ err: error, orderId: order.id, stripeRefundId: refund.data.id }, 'Refund ledger finalization failed.');
+      return reply.code(202).send({
+        pending: true,
+        refundId: refund.data.id,
+        message: 'Stripe accepted the refund; financial reconciliation is required.',
+      });
+    }
+
+    return reply.send({
+      refund: {
+        id: refund.data.id,
+        amountCents: refund.data.amount,
+        currency: refund.data.currency.toUpperCase(),
+        status: refund.data.status,
+      },
+      refundedCents: reservedCents,
+      remainingRefundableCents: order.totalCents - reservedCents,
+      paymentStatus: nextPaymentStatus,
+    });
+  });
 
   app.post('/api/webhooks/stripe', async (request, reply) => {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
