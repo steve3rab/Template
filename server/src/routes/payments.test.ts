@@ -349,7 +349,10 @@ describe('Stripe payment routes', () => {
     const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     const fetchMock = vi
-      .fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { status: 500 }))
+      .fn(
+        async (_input: RequestInfo | URL, _init?: RequestInit) =>
+          new Response(null, { status: 500 }),
+      )
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
