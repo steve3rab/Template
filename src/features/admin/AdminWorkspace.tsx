@@ -365,7 +365,8 @@ export function AdminWorkspace() {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? 'Sans vendeur'} · {formatCents(product.priceCents)}{' '}
+                      {product.seller?.email ?? 'Sans vendeur'} ·{' '}
+                      {formatCents(product.priceCents)}{' '}
                       · Stock : {product.stock}
                     </span>
                   </div>
@@ -450,11 +451,13 @@ export function AdminWorkspace() {
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
                   <strong>
-                    {reconciliation.matched} rapprochées · {reconciliation.discrepancies} écarts ·{' '}
+                    {reconciliation.matched} rapprochées ·{' '}
+                    {reconciliation.discrepancies} écarts ·{' '}
                     {reconciliation.unverified} non vérifiées
                   </strong>
                   <span>
-                    Vérification du {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
+                    Vérification du{' '}
+                    {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
                     {reconciliation.checkedOrders} commandes contrôlées
                   </span>
                   {reconciliation.results
