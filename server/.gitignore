@@ -47,3 +47,11 @@ Desktop.ini
 .idea/
 *.swp
 *.swo/
+
+# Local database files and SQLite runtime sidecars
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
