@@ -14,6 +14,7 @@ function orderStatusLabel(status: Order['status'], paymentStatus: string, langua
   const languageRef = useRef(language);
   languageRef.current = language;
   const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   switch (status) {
     case 'PENDING':
       if (paymentStatus.toUpperCase() === 'PAID') {
@@ -223,13 +224,13 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                   </span>
                 </div>
                 <div>
-                  <strong>{formatCents(order.totalCents)}</strong>
+                  <strong>{formatMoney(order.totalCents)}</strong>
                   {order.financialTransactions && order.financialTransactions.length > 0 && (
                     <div className="financial-history" aria-label={t('Historique financier', 'Financial history')}>
                       {order.financialTransactions.map((transaction) => (
                         <span key={transaction.id}>
                           {transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} ·{' '}
-                          {formatCents(transaction.amountCents)} ·{' '}
+                          {formatMoney(transaction.amountCents)} ·{' '}
                           {transaction.status === 'PENDING' ? t('En cours', 'Pending') : t('Confirmé', 'Confirmed')}
                         </span>
                       ))}
