@@ -426,7 +426,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                 </span>
               </div>
               <label>
-                Nom{' '}
+                {t('Nom', 'Name')}{' '}
                 <input
                   aria-label={t(`Nom ${product.name}`, `Name ${product.name}`)}
                   defaultValue={product.name}
@@ -456,7 +456,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                 />
               </label>
               <label>
-                Stock{' '}
+                {t('Stock', 'Stock')}{' '}
                 <input
                   aria-label={t(`Stock ${product.name}`, `Stock ${product.name}`)}
                   type="number"
@@ -493,19 +493,19 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
           orders.map((order) => (
             <div className="best-seller-row" key={order.id}>
               <div className="best-seller-name">
-                <strong>Commande {order.id.slice(-8)}</strong>
+                <strong>{t('Commande', 'Order')} {order.id.slice(-8)}</strong>
                 <span>
                   {order.customer?.email ?? t('Client', 'Customer')} ·{' '}
                   {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}
                 </span>
                 <span>
                   {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')} · {t('Paiement :', 'Payment:')}{' '}
-                  {order.paymentStatus}
+                  {({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec du paiement', 'Payment failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}
                 </span>
               </div>
               <strong>{formatCents(order.totalCents)}</strong>
               <label>
-                Statut
+                {t('Statut', 'Status')}
                 <select
                   aria-label={t(`Statut commande ${order.id}`, `Order status ${order.id}`)}
                   value={order.status}
