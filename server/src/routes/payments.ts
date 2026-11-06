@@ -522,6 +522,21 @@ export function registerPaymentRoutes(
       return reply.code(409).send({ error: 'This refund request cannot be retried.' });
     }
     const isRetry = Boolean(existingRefund);
+    if (!isRetry) {
+      const otherPendingRefund = await prisma.financialTransaction.findFirst({
+        where: {
+          orderId: order.id,
+          type: 'REFUND',
+          status: 'PENDING',
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (otherPendingRefund) {
+        return reply.code(409).send({
+          error: 'Another refund is still being processed. Reconcile or retry that request first.',
+        });
+      }
+    }
     const remainingCents = order.totalCents - order.refundedCents;
     const amountCents = existingRefund?.amountCents ?? body.data.amountCents ?? remainingCents;
     if (
