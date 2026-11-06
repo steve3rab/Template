@@ -22,7 +22,7 @@ switch ($Action) {
     }
     'Run' {
         $existing = @(& docker ps -a --filter "name=^/$Container$" --format '{{.Names}}')
-        if ($LASTEXITCODE -ne 0) { throw 'Impossible d’interroger Docker. Vérifiez que le moteur est démarré.' }
+        if ($LASTEXITCODE -ne 0) { throw "Impossible d'interroger Docker. Vérifiez que le moteur est démarré." }
         if ($existing -contains $Container) { throw "Le conteneur '$Container' existe déjà. Utilisez Stop ou choisissez un autre nom." }
         & docker run --detach --name $Container --publish "${Port}:8080" $Image
         if ($LASTEXITCODE -ne 0) { throw "Le lancement Docker a échoué (code $LASTEXITCODE)." }
@@ -38,6 +38,6 @@ switch ($Action) {
     }
     'Status' {
         & docker ps -a --filter "name=^/$Container$" --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-        if ($LASTEXITCODE -ne 0) { throw 'Impossible de lire l’état du conteneur Docker.' }
+        if ($LASTEXITCODE -ne 0) { throw "Impossible de lire l'état du conteneur Docker." }
     }
 }
