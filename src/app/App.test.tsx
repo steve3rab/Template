@@ -343,7 +343,6 @@ describe('Fashion storefront', () => {
     expect(productRequests).toBe(2);
   });
 
-
   it('rejects whitespace-only checkout addresses before persisting the cart', async () => {
     const user = userEvent.setup();
     const requests: { url: string; method: string; body?: string }[] = [];
@@ -389,8 +388,9 @@ describe('Fashion storefront', () => {
       requests.some((request) => request.url === '/api/customer/cart' && request.method === 'PUT'),
     ).toBe(false);
     expect(
-      requests.some((request) => request.url === '/api/customer/addresses' && request.method === 'POST'),
+      requests.some(
+        (request) => request.url === '/api/customer/addresses' && request.method === 'POST',
+      ),
     ).toBe(false);
   });
-
 });

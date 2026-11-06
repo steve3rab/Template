@@ -125,11 +125,8 @@ describe('SellerWorkspace translations', () => {
     await user.type(screen.getByLabelText(/product name/i), '  ');
     await user.click(screen.getByRole('button', { name: /create product/i }));
 
-    expect(toastMessages).toContain(
-      'Check the product name, price, stock and dimensions.',
-    );
+    expect(toastMessages).toContain('Check the product name, price, stock and dimensions.');
     expect(fetchMock).toHaveBeenCalledTimes(3);
     window.removeEventListener('template-toast', onToast);
   });
-
 });

@@ -224,7 +224,10 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       setMessage(t('Adresse enregistrée.', 'Address saved.'));
     } catch {
       setMessage(
-        t('Adresse non enregistrée. Vérifiez les champs puis réessayez.', 'Address not saved. Check the fields and try again.'),
+        t(
+          'Adresse non enregistrée. Vérifiez les champs puis réessayez.',
+          'Address not saved. Check the fields and try again.',
+        ),
       );
     } finally {
       setAddressPending(false);
@@ -383,11 +386,23 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             <div className="form-two-col">
               <label>
                 {t('Code postal', 'Postal code')}
-                <input name="postalCode" required minLength={2} maxLength={20} autoComplete="postal-code" />
+                <input
+                  name="postalCode"
+                  required
+                  minLength={2}
+                  maxLength={20}
+                  autoComplete="postal-code"
+                />
               </label>
               <label>
                 {t('Ville', 'City')}
-                <input name="city" required minLength={2} maxLength={100} autoComplete="address-level2" />
+                <input
+                  name="city"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  autoComplete="address-level2"
+                />
               </label>
             </div>
             <button className="dark-button" type="submit" disabled={addressPending}>

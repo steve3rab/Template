@@ -659,30 +659,30 @@ export function App() {
           signal: AbortSignal.timeout(15000),
         });
         if (response.ok) {
-        const payload = (await response.json()) as { user?: { email: string } };
-        setOrderEmail(payload.user?.email ?? '');
-        try {
-          const addressPayload = await apiRequest(
-            '/api/customer/addresses',
-            apiSchemas.customerAddresses,
-          );
-          setCheckoutAddresses(addressPayload.addresses);
-          setCheckoutAddressId(
-            addressPayload.addresses.find((address) => address.isDefault)?.id ??
-              addressPayload.addresses[0]?.id ??
-              '',
-          );
-        } catch {
-          setCheckoutAddresses([]);
-          setCheckoutAddressId('');
-          setToastKind('error');
-          setNotice(
-            translate(
-              'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
-              'Unable to load your saved addresses. You can enter a new address.',
-            ),
-          );
-        }
+          const payload = (await response.json()) as { user?: { email: string } };
+          setOrderEmail(payload.user?.email ?? '');
+          try {
+            const addressPayload = await apiRequest(
+              '/api/customer/addresses',
+              apiSchemas.customerAddresses,
+            );
+            setCheckoutAddresses(addressPayload.addresses);
+            setCheckoutAddressId(
+              addressPayload.addresses.find((address) => address.isDefault)?.id ??
+                addressPayload.addresses[0]?.id ??
+                '',
+            );
+          } catch {
+            setCheckoutAddresses([]);
+            setCheckoutAddressId('');
+            setToastKind('error');
+            setNotice(
+              translate(
+                'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+                'Unable to load your saved addresses. You can enter a new address.',
+              ),
+            );
+          }
           setCartOpen(false);
           setCheckoutPending(false);
           setView('checkout');

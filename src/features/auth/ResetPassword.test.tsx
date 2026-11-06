@@ -13,9 +13,7 @@ afterEach(() => {
 
     render(<ResetPassword onDone={vi.fn()} language="en" />);
 
-    expect(
-      screen.getByRole('alert'),
-    ).toHaveTextContent(/link is incomplete or invalid/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/link is incomplete or invalid/i);
     expect(screen.getByRole('button', { name: /update password/i })).toBeDisabled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -45,7 +43,6 @@ afterEach(() => {
     expect(toastMessages).toContain('Invalid or expired link.');
     window.removeEventListener('template-toast', onToast);
   });
-
 });
 
 describe('ResetPassword', () => {

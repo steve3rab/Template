@@ -48,7 +48,6 @@ beforeEach(() => {
       expect.objectContaining({ credentials: 'include' }),
     );
   });
-
 });
 
 afterEach(() => {

@@ -167,5 +167,4 @@ describe('AdminWorkspace', () => {
     expect(screen.getByText(/no users/i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(10);
   });
-
 });

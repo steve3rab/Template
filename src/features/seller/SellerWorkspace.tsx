@@ -407,7 +407,10 @@ export function SellerWorkspace({
               onChange={(event) => {
                 const selectedFiles = Array.from(event.target.files ?? []);
                 const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
-                if (selectedFiles.length > 5 || selectedFiles.some((file) => !allowedTypes.includes(file.type))) {
+                if (
+                  selectedFiles.length > 5 ||
+                  selectedFiles.some((file) => !allowedTypes.includes(file.type))
+                ) {
                   window.dispatchEvent(
                     new CustomEvent('template-toast', {
                       detail: {

@@ -78,14 +78,13 @@ export function ResetPassword({
       </p>
       {!token && (
         <p className="workspace-error" role="alert">
-          {t('Ce lien de réinitialisation est incomplet ou invalide. Demandez un nouveau lien.', 'This password reset link is incomplete or invalid. Request a new link.')}
+          {t(
+            'Ce lien de réinitialisation est incomplet ou invalide. Demandez un nouveau lien.',
+            'This password reset link is incomplete or invalid. Request a new link.',
+          )}
         </p>
       )}
-      <form
-        className="checkout-form"
-        onSubmit={(event) => void submit(event)}
-        aria-busy={busy}
-      >
+      <form className="checkout-form" onSubmit={(event) => void submit(event)} aria-busy={busy}>
         <label>
           {t('Nouveau mot de passe', 'New password')}
           <input
@@ -112,11 +111,7 @@ export function ResetPassword({
             {t('Modification du mot de passe…', 'Updating password…')}
           </p>
         )}
-        <button
-          className="dark-button"
-          type="submit"
-          disabled={busy || !passwordValid || !token}
-        >
+        <button className="dark-button" type="submit" disabled={busy || !passwordValid || !token}>
           {busy
             ? t('Enregistrement…', 'Saving…')
             : t('Modifier le mot de passe', 'Update password')}

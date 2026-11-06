@@ -46,37 +46,40 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = useCallback(async (showProgress = true) => {
-    if (showProgress) {
-      setLoading(true);
-      setError('');
-    }
-    try {
-      const [stats, userData, productData, orderData, financialData] = await Promise.all([
-        apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
-        apiRequest('/api/admin/users', apiSchemas.adminUsers),
-        apiRequest('/api/admin/products', apiSchemas.adminProducts),
-        apiRequest('/api/admin/orders', apiSchemas.adminOrders),
-        apiRequest('/api/admin/financial-transactions', apiSchemas.adminFinancialTransactions),
-      ]);
-      setDashboard(stats);
-      setUsers(userData.users);
-      setProducts(productData.products);
-      setOrders(orderData.orders);
-      setFinancialTransactions(financialData.transactions);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : t(
-              'Impossible de charger les données administrateur.',
-              'Unable to load administrator data.',
-            ),
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  const load = useCallback(
+    async (showProgress = true) => {
+      if (showProgress) {
+        setLoading(true);
+        setError('');
+      }
+      try {
+        const [stats, userData, productData, orderData, financialData] = await Promise.all([
+          apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
+          apiRequest('/api/admin/users', apiSchemas.adminUsers),
+          apiRequest('/api/admin/products', apiSchemas.adminProducts),
+          apiRequest('/api/admin/orders', apiSchemas.adminOrders),
+          apiRequest('/api/admin/financial-transactions', apiSchemas.adminFinancialTransactions),
+        ]);
+        setDashboard(stats);
+        setUsers(userData.users);
+        setProducts(productData.products);
+        setOrders(orderData.orders);
+        setFinancialTransactions(financialData.transactions);
+      } catch (cause) {
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : t(
+                'Impossible de charger les données administrateur.',
+                'Unable to load administrator data.',
+              ),
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [t],
+  );
 
   useEffect(() => {
     let active = true;

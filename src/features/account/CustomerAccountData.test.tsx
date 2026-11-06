@@ -175,7 +175,9 @@ describe('CustomerAccountData', () => {
     await user.click(screen.getByRole('button', { name: /save address/i }));
 
     expect(
-      await screen.findByText(/recipient, address, postal code and city must be completed correctly/i),
+      await screen.findByText(
+        /recipient, address, postal code and city must be completed correctly/i,
+      ),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
@@ -200,5 +202,4 @@ describe('CustomerAccountData', () => {
       isDefault: true,
     });
   });
-
 });
