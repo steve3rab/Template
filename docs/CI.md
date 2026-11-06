@@ -37,8 +37,8 @@ La commande `npm run check` regroupe typecheck, lint, format, couverture fronten
 Sous Windows, le menu interactif `.\\scripts\\menu.ps1` est organisé en rubriques : démarrage/arrêt, qualité et build, tests et charge, base de données, Docker et maintenance. Il appelle les mêmes scripts PowerShell que les commandes directes, avec un retour au menu après chaque action.
 
 - `setup.ps1` utilise `npm ci` pour une installation reproductible, vérifie les versions Node/npm, contrôle les processus Node du dépôt, génère les deux clients Prisma, applique les migrations puis vérifie leur statut et la parité des schémas.
-- `dev-all.ps1` contrôle les ports, démarre l'API puis le frontend dans des fenêtres distinctes et vérifie que les ports deviennent actifs.
-- `stop-dev-all.ps1` retrouve les fenêtres démarrées par les scripts du dépôt et arrête leurs arbres de processus (Node inclus).
+- `dev-all.ps1` contrôle les ports, démarre l'API puis le frontend dans le terminal courant, dans des processus séparés, et vérifie que les ports deviennent actifs.
+- `stop-dev-all.ps1` retrouve les processus démarrés par les scripts du dépôt et arrête leurs arbres de processus (Node inclus).
 - `seed-test-users.ps1` demande un mot de passe masqué et ne l'écrit pas dans les arguments de commande ni dans un fichier.
 - `test.ps1 -Mode` propose `All`, `Unit`, `Integration`, `Coverage`, `E2E`, `LoadSmoke` et `LoadStress`.
 
