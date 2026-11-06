@@ -30,7 +30,7 @@ test.describe('accessibility smoke checks', () => {
 
   test('cart can be opened and closed using the keyboard', async ({ page }) => {
     await page.goto('/');
-    const cartButton = page.getByRole('button', { name: /panier/i });
+    const cartButton = page.getByRole('button', { name: /^Panier, \d+ article\(s\)$/ });
     await cartButton.focus();
     await expect(cartButton).toBeFocused();
     await page.keyboard.press('Enter');
