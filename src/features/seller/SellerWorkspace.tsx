@@ -208,7 +208,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
           <div className="kpi-label">{t('Chiffre d’affaires payé', 'Paid revenue')}</div>
           <strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong>
           <p>
-            {dashboard?.paidOrders ?? 0} commandes payées sur{' '}
+            {dashboard?.paidOrders ?? 0} {t('commandes payées sur', 'paid orders out of')}{' '}
             {dashboard?.periodDays ?? Number(range)} jours
           </p>
         </article>
@@ -267,7 +267,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                     (file) =>
                       new Promise<string>((resolve, reject) => {
                         if (file.size > 1_200_000) {
-                          reject(new Error(`${file.name} dépasse 1,2 Mo.`));
+                          reject(new Error(t(`${file.name} dépasse 1,2 Mo.`, `${file.name} exceeds 1.2 MB.`)));
                           return;
                         }
                         const reader = new FileReader();
@@ -298,7 +298,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
               <div className="product-image-previews">
                 {images.map((image, index) => (
                   <div className="product-image-preview" key={index}>
-                    <img src={image} alt={`Aperçu du produit ${index + 1}`} />
+                    <img src={image} alt={t(`Aperçu du produit ${index + 1}`, `Product image preview ${index + 1}`)} />
                     <button
                       type="button"
                       aria-label={t(`Retirer la photo ${index + 1}`, `Remove photo ${index + 1}`)}
