@@ -50,11 +50,9 @@ function paymentStatusLabel(status: string, language: Language): string {
 }
 
 export function CustomerAccountData({ language = 'fr' }: { language?: Language }) {
-  const languageRef = useRef(language);
-  languageRef.current = language;
-  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const formatMoney = (amount: number, currency = 'EUR') =>
-    formatCents(amount, currency, languageRef.current === 'en' ? 'en-GB' : 'fr-FR');
+    formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
@@ -85,7 +83,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
         t('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.', 'Unable to load your orders and addresses. Check your connection and try again.'),
       );
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     let active = true;
