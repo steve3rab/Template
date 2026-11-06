@@ -1,13 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import { passwordResetCompleteSchema, passwordResetRequestSchema } from '../schemas/commerce.js';
-
-const hashToken = (value: string) =>
-  createHmac('sha256', process.env.SESSION_SECRET ?? 'local-development-only-change-this-secret')
-    .update(value)
-    .digest('hex');
+import { hashToken } from '../auth/tokenHash.js';
 
 function isSecureWebhook(value: string): boolean {
   try {
