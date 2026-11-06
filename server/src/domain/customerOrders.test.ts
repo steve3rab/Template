@@ -1,9 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  createCustomerOrdersFromCart,
-  CustomerOrderCreationError,
-} from './customerOrders.js';
+import { createCustomerOrdersFromCart, CustomerOrderCreationError } from './customerOrders.js';
 
 const address = {
   id: 'address-1',
