@@ -24,7 +24,7 @@ let app: FastifyInstance;
 let updateMany: ReturnType<typeof vi.fn>;
 let productUpdateMany: ReturnType<typeof vi.fn>;
 
-function setup(rateLimitMax = 1000) {
+function setup(resolveUser: () => Promise<User | null> = async () => customer, rateLimitMax = 1000) {
   updateMany = vi.fn(async () => ({ count: 1 }));
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
   const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
@@ -42,6 +42,7 @@ function setup(rateLimitMax = 1000) {
   const prisma = {
     order: {
       findMany: vi.fn(async () => [order]),
+      findUnique: vi.fn(async () => ({ ...order, refundedCents: 0 })),
       updateMany,
     },
     product: { updateMany: productUpdateMany },
@@ -67,7 +68,7 @@ function setup(rateLimitMax = 1000) {
     }
   });
   app.after(() => {
-    registerPaymentRoutes(app, prisma as unknown as PrismaClient, async () => customer);
+    registerPaymentRoutes(app, prisma as unknown as PrismaClient, resolveUser);
   });
   return Object.assign(prisma, {
     webhookEventCreate,
@@ -153,6 +154,94 @@ describe('Stripe payment routes', () => {
     expect(String(request?.body)).toContain(
       'line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=2500',
     );
+  });
+
+  it('rejects refund requests from non-admin users before accessing Stripe', async () => {
+    const prisma = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(prisma.order.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('processes a partial refund and records it in the financial ledger', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123' }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({
+            id: 're_test_123',
+            amount: 1200,
+            currency: 'eur',
+            status: 'succeeded',
+          }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
+    );
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: { amountCents: 1200 },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      refund: { id: 're_test_123', amountCents: 1200, currency: 'EUR' },
+      refundedCents: 1200,
+      remainingRefundableCents: 3800,
+      paymentStatus: 'PARTIALLY_REFUNDED',
+    });
+    expect(updateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: 'order-1', paymentStatus: 'PENDING', refundedCents: 0 },
+      data: { refundedCents: { increment: 1200 } },
+    });
+    expect(prisma.financialTransactionCreate).toHaveBeenCalledWith({
+      data: {
+        orderId: 'order-1',
+        stripeObjectId: 're_test_123',
+        type: 'REFUND',
+        amountCents: 1200,
+        currency: 'EUR',
+      },
+    });
+  });
+
+  it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    updateMany.mockResolvedValueOnce({ count: 0 });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: { amountCents: 1000 },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('accepts only signed Stripe events and marks the matching unpaid order as paid', async () => {
