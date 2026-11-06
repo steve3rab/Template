@@ -135,4 +135,70 @@ describe('CustomerAccountData', () => {
     expect(screen.getByText(/no saved addresses yet/i)).toBeInTheDocument();
     expect(orderRequests).toBe(2);
   });
+
+  it('rejects whitespace-only address fields and submits normalized values once', async () => {
+    let submittedAddress: unknown;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/auth/me') {
+        return apiResponse({ user: { email: 'client@example.com' } });
+      }
+      if (url === '/api/customer/addresses' && init?.method === 'POST') {
+        submittedAddress = JSON.parse(String(init.body));
+        return apiResponse({
+          address: {
+            id: 'address-1',
+            label: 'Home',
+            recipient: 'Alex Martin',
+            line1: '12 rue des Fleurs',
+            postalCode: '75001',
+            city: 'Paris',
+            country: 'FR',
+            isDefault: true,
+          },
+        });
+      }
+      if (url === '/api/customer/addresses') return apiResponse({ addresses: [] });
+      if (url === '/api/customer/orders') return apiResponse({ orders: [] });
+      return apiResponse({ error: 'Not found.' }, 404);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const user = userEvent.setup();
+    render(<CustomerAccountData language="en" />);
+    expect(await screen.findByText(/no saved addresses yet/i)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/^recipient$/i), '  ');
+    await user.type(screen.getByLabelText(/^address$/i), '   ');
+    await user.type(screen.getByLabelText(/^postal code$/i), '  ');
+    await user.type(screen.getByLabelText(/^city$/i), '  ');
+    await user.click(screen.getByRole('button', { name: /save address/i }));
+
+    expect(
+      await screen.findByText(/recipient, address, postal code and city must be completed correctly/i),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await user.clear(screen.getByLabelText(/^recipient$/i));
+    await user.type(screen.getByLabelText(/^recipient$/i), '  Alex Martin  ');
+    await user.clear(screen.getByLabelText(/^address$/i));
+    await user.type(screen.getByLabelText(/^address$/i), '  12 rue des Fleurs  ');
+    await user.clear(screen.getByLabelText(/^postal code$/i));
+    await user.type(screen.getByLabelText(/^postal code$/i), ' 75001 ');
+    await user.clear(screen.getByLabelText(/^city$/i));
+    await user.type(screen.getByLabelText(/^city$/i), ' Paris ');
+    await user.click(screen.getByRole('button', { name: /save address/i }));
+
+    expect(await screen.findByText('Address saved.')).toBeInTheDocument();
+    expect(submittedAddress).toEqual({
+      label: 'Home',
+      recipient: 'Alex Martin',
+      line1: '12 rue des Fleurs',
+      postalCode: '75001',
+      city: 'Paris',
+      country: 'FR',
+      isDefault: true,
+    });
+  });
+
 });
