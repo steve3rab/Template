@@ -338,7 +338,7 @@ describe('Fashion storefront', () => {
     expect(await screen.findByText(/catalogue.*chargé/i)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Veste Studio' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /try again/i }));
+    await user.click(screen.getByRole('button', { name: /réessayer/i }));
     expect(await screen.findByRole('heading', { name: 'Veste Studio' })).toBeInTheDocument();
     expect(productRequests).toBe(2);
   });
