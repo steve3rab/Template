@@ -42,7 +42,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
   const prisma = {
     order: {
       findMany: vi.fn(async () => [order]),
-      findUnique: vi.fn(async () => ({ ...order, refundedCents: 0 })),
+      findUnique: vi.fn(async () => ({ ...order, paymentStatus: 'PAID', paymentReference: 'cs_test_123', refundedCents: 0 })),
       updateMany,
     },
     product: { updateMany: productUpdateMany },
@@ -211,7 +211,7 @@ describe('Stripe payment routes', () => {
       paymentStatus: 'PARTIALLY_REFUNDED',
     });
     expect(updateMany).toHaveBeenNthCalledWith(1, {
-      where: { id: 'order-1', paymentStatus: 'PENDING', refundedCents: 0 },
+      where: { id: 'order-1', paymentStatus: 'PAID', refundedCents: 0 },
       data: { refundedCents: { increment: 1200 } },
     });
     expect(prisma.financialTransactionCreate).toHaveBeenCalledWith({
