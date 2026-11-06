@@ -14,7 +14,8 @@ type AdminUser = {
 type AdminProduct = z.infer<typeof apiSchemas.adminProducts>['products'][number];
 
 type AdminOrder = z.infer<typeof apiSchemas.adminOrders>['orders'][number];
-type AdminFinancialTransaction = z.infer<typeof apiSchemas.adminFinancialTransactions>['transactions'][number];
+type AdminFinancialTransaction =
+  z.infer<typeof apiSchemas.adminFinancialTransactions>['transactions'][number];
 
 type Section = 'users' | 'products' | 'orders' | 'finances';
 
@@ -29,9 +30,13 @@ export function AdminWorkspace() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([]);
+  const [financialTransactions, setFinancialTransactions] = useState<
+    AdminFinancialTransaction[]
+  >([]);
   const [refundRequestKeys, setRefundRequestKeys] = useState<Record<string, string>>({});
-  const [reconciliation, setReconciliation] = useState<z.infer<typeof apiSchemas.reconciliationResult> | null>(null);
+  const [reconciliation, setReconciliation] = useState<
+    z.infer<typeof apiSchemas.reconciliationResult> | null
+  >(null);
   const [section, setSection] = useState<Section>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -120,7 +125,9 @@ export function AdminWorkspace() {
       );
       await load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Impossible de reprendre le remboursement.');
+      setError(
+        cause instanceof Error ? cause.message : 'Impossible de reprendre le remboursement.',
+      );
       setLoading(false);
     }
   }
@@ -135,7 +142,11 @@ export function AdminWorkspace() {
       );
       setReconciliation(result);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Impossible de rapprocher les paiements Stripe.');
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Impossible de rapprocher les paiements Stripe.',
+      );
     } finally {
       setLoading(false);
     }
@@ -161,7 +172,10 @@ export function AdminWorkspace() {
         apiSchemas.refundResult,
         {
           method: 'POST',
-          body: JSON.stringify({ requestKey, ...(amountCents === undefined ? {} : { amountCents }) }),
+          body: JSON.stringify({
+            requestKey,
+            ...(amountCents === undefined ? {} : { amountCents }),
+          }),
         },
       );
       if ('pending' in result) {
@@ -425,7 +439,12 @@ export function AdminWorkspace() {
           {section === 'finances' && (
             <>
               <h2>Historique financier</h2>
-              <button className="outline-button" type="button" onClick={() => void reconcilePayments()} disabled={loading}>
+              <button
+                className="outline-button"
+                type="button"
+                onClick={() => void reconcilePayments()}
+                disabled={loading}
+              >
                 Rapprocher avec Stripe
               </button>
               {reconciliation && (
