@@ -58,12 +58,12 @@ try {
     while ((Test-PortAvailable -Port $BackendPort) -and (Get-Date) -lt $backendDeadline) {
         $backendProcess.Refresh()
         if ($backendProcess.HasExited) {
-            throw "La fenêtre backend s-est fermée (code $($backendProcess.ExitCode))."
+            throw "La fenêtre backend s'est fermée (code $($backendProcess.ExitCode))."
         }
         Start-Sleep -Milliseconds 500
     }
     if (Test-PortAvailable -Port $BackendPort) {
-        throw "L-API n-écoute pas sur le port $BackendPort après 20 secondes."
+        throw "API non disponible sur le port $BackendPort après 20 secondes."
     }
 
     $frontendArguments = "-NoExit -ExecutionPolicy Bypass -File `"$frontendScript`" -Port $FrontendPort"
@@ -73,12 +73,12 @@ try {
     while ((Test-PortAvailable -Port $FrontendPort) -and (Get-Date) -lt $frontendDeadline) {
         $frontendProcess.Refresh()
         if ($frontendProcess.HasExited) {
-            throw "La fenêtre frontend s-est fermée (code $($frontendProcess.ExitCode))."
+            throw "La fenêtre frontend s'est fermée (code $($frontendProcess.ExitCode))."
         }
         Start-Sleep -Milliseconds 500
     }
     if (Test-PortAvailable -Port $FrontendPort) {
-        throw "Le frontend n-écoute pas sur le port $FrontendPort après 20 secondes."
+        throw "Le frontend ne répond pas sur le port $FrontendPort après 20 secondes."
     }
 }
 catch {
