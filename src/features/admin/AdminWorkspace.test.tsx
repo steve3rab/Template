@@ -95,6 +95,8 @@ describe('AdminWorkspace', () => {
     expect(screen.getByRole('heading', { name: /historique financier/i })).toBeInTheDocument();
     expect(screen.getByText(/aucune transaction financière/i)).toBeInTheDocument();
     await screen.getByRole('button', { name: /rapprocher avec stripe/i }).click();
-    expect(await screen.findByText(/1 rapprochées · 0 écarts · 0 non vérifiées/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/1 rapprochées · 0 écarts · 0 non vérifiées/i),
+    ).toBeInTheDocument();
   });
 });
