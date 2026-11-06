@@ -338,7 +338,7 @@ describe('Fashion storefront', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(await screen.findByText(/the catalogue could not be loaded/i)).toBeInTheDocument();
+    expect(await screen.findByText(/catalogue.*chargé/i)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Veste Studio' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /try again/i }));
