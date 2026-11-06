@@ -17,7 +17,7 @@ if ($Coverage -and $E2E) {
 if ($Coverage) { $Mode = 'Coverage' }
 if ($E2E) { $Mode = 'E2E' }
 if ($InstallBrowser -and $Mode -ne 'E2E') {
-    throw '-InstallBrowser ne peut être utilisé qu’avec -Mode E2E ou -E2E.'
+    throw '-InstallBrowser ne peut être utilisé qu-avec -Mode E2E ou -E2E.'
 }
 
 switch ($Mode) {
