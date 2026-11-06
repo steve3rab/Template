@@ -208,12 +208,8 @@ async function readErrorMessage(response: Response): Promise<string> {
   return `Request failed (${response.status}).`;
 }
 
-/** Performs a same-origin API request and validates untrusted response JSON. */
-export async function apiRequest<T>(
-  path: string,
-  schema: z.ZodType<T>,
-  init: RequestInit = {},
-): Promise<T> {
+/** Applies the common transport policy to every API request. */
+async function performApiRequest(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -228,8 +224,23 @@ export async function apiRequest<T>(
   if (!response.ok) {
     throw new ApiError(await readErrorMessage(response), response.status);
   }
+  return response;
+}
 
-  const payload: unknown = await response.json();
+/** Performs a same-origin API request and validates untrusted response JSON. */
+export async function apiRequest<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  init: RequestInit = {},
+): Promise<T> {
+  const response = await performApiRequest(path, init);
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ApiError('The server returned an unexpected response.', response.status);
+  }
+
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
     throw new ApiError('The server returned an unexpected response.', response.status);
@@ -239,14 +250,5 @@ export async function apiRequest<T>(
 
 /** Performs a successful request with no response body (for example, HTTP 204). */
 export async function apiRequestVoid(path: string, init: RequestInit = {}): Promise<void> {
-  const headers = new Headers(init.headers);
-  if (init.body !== undefined && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
-  const response = await fetch(path, {
-    ...init,
-    headers,
-    credentials: init.credentials ?? 'include',
-  });
-  if (!response.ok) throw new ApiError(await readErrorMessage(response), response.status);
+  await performApiRequest(path, init);
 }
