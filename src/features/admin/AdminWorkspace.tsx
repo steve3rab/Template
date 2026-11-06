@@ -428,7 +428,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                           />
                         </label>
                         <button className="text-action" type="submit" disabled={loading}>
-                          {t('{t('Rembourser', 'Refund')}', 'Refund')}
+                          {t('Rembourser', 'Refund')}
                         </button>
                       </form>
                     )}
@@ -448,7 +448,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 onClick={() => void reconcilePayments()}
                 disabled={loading}
               >
-                {t('{t('Rapprocher avec Stripe', 'Reconcile with Stripe')}', 'Reconcile with Stripe')}
+                {t('Rapprocher avec Stripe', 'Reconcile with Stripe')}
               </button>
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
@@ -498,7 +498,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                         onClick={() => void retryPendingRefund(transaction)}
                         disabled={loading}
                       >
-                        {t('{t('Reprendre', 'Retry')}', 'Retry')}
+                        {t('Reprendre', 'Retry')}
                       </button>
                     )}
                   </div>
