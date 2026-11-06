@@ -36,6 +36,11 @@ switch ($Mode) {
         if (-not $env:BASE_URL) {
             throw 'Définissez BASE_URL vers une préproduction isolée avant un test de charge.'
         }
+        Write-Host "Cible du test de charge : $env:BASE_URL" -ForegroundColor Yellow
+        $confirmation = (Read-Host 'Vérifiez que cette cible est une préproduction isolée. Tapez CHARGE pour continuer').Trim()
+        if ($confirmation -cne 'CHARGE') {
+            throw 'Test de charge annulé.'
+        }
         Invoke-Npm -Arguments @('run', 'test:load:stress')
     }
 }
