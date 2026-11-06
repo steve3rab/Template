@@ -29,10 +29,7 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
     args.where?.stock ? 2 : 3,
   );
   const orderFindFirst = vi.fn(async () => null);
-  const orderUpdate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
-    id: 'order-1',
-    ...data,
-  }));
+  const orderUpdateMany = vi.fn(async () => ({ count: 1 }));
   const txProductUpdate = vi.fn(async () => ({ id: 'product-1' }));
   const prisma = {
     product: {
@@ -45,12 +42,12 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
     order: {
       findMany: orderFindMany,
       findFirst: orderFindFirst,
-      update: orderUpdate,
+      updateMany: orderUpdateMany,
       aggregate: orderAggregate,
     },
     orderItem: { aggregate: orderItemAggregate },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
-      callback({ order: { update: orderUpdate }, product: { update: txProductUpdate } }),
+      callback({ order: { updateMany: orderUpdateMany }, product: { update: txProductUpdate } }),
     ),
   };
   app = Fastify({ logger: false });
@@ -74,7 +71,7 @@ function setup(resolveUser = async () => seller, rateLimitMax = 1000) {
     orderItemAggregate,
     productCount,
     orderFindFirst,
-    orderUpdate,
+    orderUpdateMany,
     txProductUpdate,
   };
 }
@@ -306,7 +303,7 @@ describe('seller data isolation and route validation', () => {
   });
 
   it('does not allow a seller to change another seller order status', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     await app.ready();
     const response = await app.inject({
       method: 'PATCH',
@@ -318,11 +315,11 @@ describe('seller data isolation and route validation', () => {
       where: { id: 'order-foreign', sellerId: seller.id },
       include: { items: true },
     });
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('rejects malformed order status requests', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     await app.ready();
     const response = await app.inject({
       method: 'PATCH',
@@ -331,11 +328,11 @@ describe('seller data isolation and route validation', () => {
     });
     expect(response.statusCode).toBe(400);
     expect(orderFindFirst).not.toHaveBeenCalled();
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('blocks fulfillment before payment is confirmed', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
       status: 'PENDING',
@@ -350,11 +347,11 @@ describe('seller data isolation and route validation', () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json().error).toMatch(/confirmed payment/i);
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('blocks cancelling paid orders until a refund workflow exists', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
       status: 'PENDING',
@@ -369,11 +366,11 @@ describe('seller data isolation and route validation', () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json().error).toMatch(/refund workflow/i);
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('blocks cancelling unpaid orders while a payment session is active', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
       status: 'PENDING',
@@ -389,11 +386,11 @@ describe('seller data isolation and route validation', () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json().error).toMatch(/payment session must expire/i);
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('rejects invalid order status transitions', async () => {
-    const { orderFindFirst, orderUpdate } = setup();
+    const { orderFindFirst, orderUpdateMany } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
       status: 'PENDING',
@@ -408,7 +405,7 @@ describe('seller data isolation and route validation', () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json().error).toMatch(/transition/i);
-    expect(orderUpdate).not.toHaveBeenCalled();
+    expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
   it('cancels an unpaid order without a payment session and restores linked product stock', async () => {
@@ -432,10 +429,14 @@ describe('seller data isolation and route validation', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json().order.status).toBe('CANCELLED');
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(orderUpdate).toHaveBeenCalledWith({
-      where: { id: 'order-1' },
+    expect(orderUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'order-1',
+        status: 'PENDING',
+        paymentStatus: 'UNPAID',
+        paymentReference: null,
+      },
       data: { status: 'CANCELLED' },
-      include: { items: true },
     });
     expect(txProductUpdate).toHaveBeenCalledTimes(1);
     expect(txProductUpdate).toHaveBeenCalledWith({
@@ -443,6 +444,29 @@ describe('seller data isolation and route validation', () => {
       data: { stock: { increment: 3 } },
     });
   });
+  it('does not restore stock when a concurrent order update wins first', async () => {
+    const { orderFindFirst, orderUpdateMany, txProductUpdate } = setup();
+    orderFindFirst.mockResolvedValueOnce({
+      id: 'order-1',
+      status: 'PENDING',
+      paymentStatus: 'UNPAID',
+      paymentReference: null,
+      items: [{ productId: 'product-1', quantity: 2 }],
+    } as never);
+    orderUpdateMany.mockResolvedValueOnce({ count: 0 });
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/seller/orders/order-1/status',
+      payload: { status: 'CANCELLED' },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toMatch(/changed while this update/i);
+    expect(txProductUpdate).not.toHaveBeenCalled();
+  });
+
   it('validates dashboard periods and aggregates seller metrics in the database', async () => {
     const { orderAggregate, orderItemAggregate, productCount } = setup();
     await app.ready();
