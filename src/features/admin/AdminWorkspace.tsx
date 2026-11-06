@@ -46,9 +46,11 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (showProgress = true) => {
+    if (showProgress) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const [stats, userData, productData, orderData, financialData] = await Promise.all([
         apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
@@ -77,7 +79,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   }, [t]);
 
   useEffect(() => {
-    void load();
+    void load(false);
   }, [load]);
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
