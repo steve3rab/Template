@@ -29,6 +29,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const languageRef = useRef(language);
   languageRef.current = language;
   const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
   );
@@ -126,7 +127,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       setError(
         'pending' in result
           ? result.message
-          : `${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatCents(result.refund.amountCents)}.`,
+          : `${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatMoney(result.refund.amountCents)}.`,
       );
       await load();
     } catch (cause) {
@@ -184,7 +185,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       if ('pending' in result) {
         setError(result.message);
       } else {
-        setError(`${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatCents(result.refund.amountCents)}.`);
+        setError(`${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatMoney(result.refund.amountCents)}.`);
         setRefundRequestKeys((current) => {
           const next = { ...current };
           delete next[order.id];
@@ -279,7 +280,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         </article>
         <article className="kpi-card">
           <span>{t('Chiffre d’affaires encaissé', 'Collected revenue')}</span>
-          <strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong>
+          <strong>{dashboard ? formatMoney(dashboard.revenueCents) : '—'}</strong>
           <small>{t('Commandes payées uniquement', 'Paid orders only')}</small>
         </article>
       </div>
@@ -368,7 +369,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} · {formatCents(product.priceCents)}{' '}
+                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} · {formatMoney(product.priceCents)}{' '}
                       · {t('Stock :', 'Stock:')} {product.stock}
                     </span>
                   </div>
@@ -405,7 +406,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                     </span>
                   </div>
                   <div className="admin-order-actions">
-                    <strong>{formatCents(order.totalCents)}</strong>
+                    <strong>{formatMoney(order.totalCents)}</strong>
                     {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
                       <form
                         key={`${order.id}:${refundRequestKeys[order.id] ?? 'new'}`}
@@ -490,7 +491,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                     <span>{new Date(transaction.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR')}</span>
                   </div>
                   <div className="admin-order-actions">
-                    <strong>{formatCents(transaction.amountCents, transaction.currency)}</strong>
+                    <strong>{formatMoney(transaction.amountCents, transaction.currency)}</strong>
                     {transaction.type === 'REFUND' && transaction.status === 'PENDING' && (
                       <button
                         className="text-action"
