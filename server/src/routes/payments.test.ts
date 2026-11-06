@@ -437,6 +437,58 @@ describe('Stripe payment routes', () => {
     expect(prisma.financialTransactionCreate).not.toHaveBeenCalled();
   });
 
+  it('reconciles an asynchronous successful refund webhook into the ledger', async () => {
+    vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
+    const prisma = setup();
+    vi.mocked(prisma.financialTransactionFindFirst).mockResolvedValueOnce({
+      id: 'financial-transaction-1',
+      stripeObjectId: 'pending-idempotency-key',
+      amountCents: 1200,
+      createdAt: new Date(),
+    } as never);
+    await app.ready();
+
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        id: 'evt_refund_updated_123',
+        type: 'refund.updated',
+        data: {
+          object: {
+            id: 're_async_123',
+            amount: 1200,
+            currency: 'eur',
+            status: 'succeeded',
+            metadata: { orderId: 'order-1' },
+          },
+        },
+      }),
+    );
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/webhooks/stripe',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
+      },
+      payload: rawBody,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(prisma.financialTransactionUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'financial-transaction-1', status: 'PENDING' },
+      data: {
+        stripeObjectId: 're_async_123',
+        status: 'SUCCEEDED',
+        amountCents: 1200,
+        currency: 'EUR',
+      },
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'order-1', refundedCents: { gte: 1200 } },
+      data: { paymentStatus: 'PARTIALLY_REFUNDED' },
+    });
+  });
+
   it('cancels an expired unpaid checkout and restores reserved stock once', async () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     setup();
