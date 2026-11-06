@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, useRef, type FormEvent } from 'react';
 import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { apiRequest, apiSchemas } from '../../shared/api/client';
@@ -26,7 +26,9 @@ const roleResult = z.object({
 });
 
 export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
   );
@@ -67,7 +69,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     let active = true;
