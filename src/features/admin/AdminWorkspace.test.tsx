@@ -81,7 +81,9 @@ describe('AdminWorkspace', () => {
 
     render(<AdminWorkspace />);
 
-    expect(await screen.findByRole('heading', { name: /centre de gestion/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /centre de gestion/i }),
+    ).toBeInTheDocument();
     expect(await screen.findByText('8')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /utilisateurs/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /produits/i })).toBeInTheDocument();
