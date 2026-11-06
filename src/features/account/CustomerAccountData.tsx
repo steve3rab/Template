@@ -308,21 +308,21 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             </p>
           ) : (
             addresses.map((address) => (
-            <article className="best-seller-row" key={address.id}>
-              <div className="best-seller-name">
-                <strong>
-                  {address.label}
-                  {address.isDefault ? ` · ${t('Par défaut', 'Default')}` : ''}
-                </strong>
-                <span>
-                  {address.recipient}, {address.line1}, {address.postalCode} {address.city},{' '}
-                  {address.country}
-                </span>
-              </div>
-              <button className="text-action" onClick={() => void removeAddress(address.id)}>
-                {t('Supprimer', 'Delete')}
-              </button>
-            </article>
+              <article className="best-seller-row" key={address.id}>
+                <div className="best-seller-name">
+                  <strong>
+                    {address.label}
+                    {address.isDefault ? ` · ${t('Par défaut', 'Default')}` : ''}
+                  </strong>
+                  <span>
+                    {address.recipient}, {address.line1}, {address.postalCode} {address.city},{' '}
+                    {address.country}
+                  </span>
+                </div>
+                <button className="text-action" onClick={() => void removeAddress(address.id)}>
+                  {t('Supprimer', 'Delete')}
+                </button>
+              </article>
             ))
           )}
           <form
