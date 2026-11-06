@@ -216,7 +216,20 @@ export function CustomerAccountData() {
                     {order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}
                   </span>
                 </div>
-                <strong>{formatCents(order.totalCents)}</strong>
+                <div>
+                  <strong>{formatCents(order.totalCents)}</strong>
+                  {order.financialTransactions && order.financialTransactions.length > 0 && (
+                    <div className="financial-history" aria-label="Historique financier">
+                      {order.financialTransactions.map((transaction) => (
+                        <span key={transaction.id}>
+                          {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} ·{' '}
+                          {formatCents(transaction.amountCents)} ·{' '}
+                          {transaction.status === 'PENDING' ? 'En cours' : 'Confirmé'}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </article>
             ))
           )}
