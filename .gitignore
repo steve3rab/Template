@@ -4,10 +4,7 @@
 node_modules/
 **/node_modules/
 
-# ============================================================
-# Environment files and secrets
-# Keep example templates versioned.
-# ============================================================
+# Environment files and secrets (keep examples versioned)
 .env
 .env.*
 !.env.example
@@ -16,8 +13,6 @@ node_modules/
 **/.env.*
 !**/.env.example
 !**/.env.*.example
-
-# Private keys, certificates and local credentials
 *.pem
 *.key
 *.p12
@@ -26,25 +21,50 @@ node_modules/
 secrets/
 **/secrets/
 
-# ============================================================
-# Frontend (React / Vite)
-# ============================================================
+# Frontend — React / TypeScript / Vite
 /dist/
+/build/
 /.vite/
-.vite/
-storybook-static/
+**/.vite/
 *.tsbuildinfo
+storybook-static/
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.parcel-cache/
+.turbo/
+.vercel/
+.netlify/
 
-# ============================================================
-# Backend (Node.js / Fastify)
-# ============================================================
+# Browser and E2E test artifacts
+playwright/.cache/
+.playwright/
+test-results/
+playwright-report/
+blob-report/
+
+# Backend — Node.js / Fastify / TypeScript
 /server/dist/
+/server/build/
 /server/coverage/
 /server/.cache/
+/server/.tmp/
+/server/tmp/
+/server/logs/
+/server/uploads/
+/server/storage/
 
-# ============================================================
-# Databases (local development only)
-# ============================================================
+# Prisma generated/local artifacts
+/server/prisma/generated/
+/server/prisma/*.db
+/server/prisma/*.db-journal
+/server/prisma/*.db-shm
+/server/prisma/*.db-wal
+/server/prisma/*.sqlite
+/server/prisma/*.sqlite3
+
+# Local databases (migrations and seed source remain tracked)
 *.db
 *.db-journal
 *.db-shm
@@ -52,22 +72,19 @@ storybook-static/
 *.sqlite
 *.sqlite3
 
-# ============================================================
-# Tests and reports
-# ============================================================
+# Coverage and test reports
 coverage/
-playwright-report/
-test-results/
-blob-report/
+**/coverage/
 .nyc_output/
+.vitest/
+.junit/
 
-# ============================================================
 # Logs and temporary runtime files
-# ============================================================
 *.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+lerna-debug.log*
 *.pid
 *.pid.lock
 *.seed
@@ -76,9 +93,7 @@ pnpm-debug.log*
 .tmp/
 .temp/
 
-# ============================================================
-# Operating systems and editors
-# ============================================================
+# OS and editors
 .DS_Store
 Thumbs.db
 Desktop.ini
@@ -88,10 +103,8 @@ Desktop.ini
 *.swo
 *~
 
-# ============================================================
-# Local tooling
-# ============================================================
+# Local tooling caches
 .eslintcache
 .prettier-cache
-.turbo/
-.parcel-cache/
+.cache/
+**/.cache/
