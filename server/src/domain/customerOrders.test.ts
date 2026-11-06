@@ -15,8 +15,12 @@ const address = {
   country: 'FR',
 };
 
-function setup(options: { cart?: { productId: string; quantity: number }[]; stock?: number } = {}) {
-  const cartItemFindMany = vi.fn(async () => options.cart ?? [{ productId: 'product-1', quantity: 2 }]);
+function setup(
+  options: { cart?: { productId: string; quantity: number }[]; stock?: number } = {},
+) {
+  const cartItemFindMany = vi.fn(
+    async () => options.cart ?? [{ productId: 'product-1', quantity: 2 }],
+  );
   const cartItemDeleteMany = vi.fn(async () => ({ count: 1 }));
   const productFindFirst = vi.fn(async () => ({
     id: 'product-1',
