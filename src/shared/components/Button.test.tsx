@@ -5,7 +5,11 @@ import { Button } from './Button';
 
 describe('shared Button', () => {
   it('renders a semantic button and forwards native attributes', () => {
-    render(<Button type="submit" name="save" value="yes">Enregistrer</Button>);
+    render(
+      <Button type="submit" name="save" value="yes">
+        Enregistrer
+      </Button>,
+    );
     expect(screen.getByRole('button', { name: 'Enregistrer' })).toHaveAttribute('type', 'submit');
     expect(screen.getByRole('button')).toHaveAttribute('name', 'save');
   });
@@ -13,7 +17,11 @@ describe('shared Button', () => {
   it('prevents duplicate interaction while loading', async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();
-    render(<Button loading loadingLabel="Enregistrement… " onClick={onClick}>Enregistrer</Button>);
+    render(
+      <Button loading loadingLabel="Enregistrement… " onClick={onClick}>
+        Enregistrer
+      </Button>,
+    );
 
     const button = screen.getByRole('button', { name: /enregistrement/i });
     expect(button).toBeDisabled();
@@ -23,7 +31,11 @@ describe('shared Button', () => {
   });
 
   it('supports variants, sizes, custom classes, and disabled state', () => {
-    render(<Button variant="danger" size="small" className="custom" disabled>Supprimer</Button>);
+    render(
+      <Button variant="danger" size="small" className="custom" disabled>
+        Supprimer
+      </Button>,
+    );
     const button = screen.getByRole('button', { name: 'Supprimer' });
     expect(button).toHaveClass('ui-button--danger', 'ui-button--small', 'custom');
     expect(button).toBeDisabled();
