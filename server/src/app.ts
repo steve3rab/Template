@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import argon2 from 'argon2';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -19,19 +19,14 @@ import {
 } from './schemas/auth.js';
 import { registerCommerceRoutes } from './commerce.js';
 import { registerPaymentRoutes } from './routes/payments.js';
+import { hashToken } from './auth/tokenHash.js';
 import { isPrismaUniqueConstraintError } from './utils/prismaErrors.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const localSessionSecret = 'local-development-only-change-this-secret';
 
 function createPublicUserId(): string {
   return `USR-${randomBytes(6).toString('hex').toUpperCase()}`;
-}
-
-function tokenHash(token: string): string {
-  const secret = process.env.SESSION_SECRET ?? localSessionSecret;
-  return createHmac('sha256', secret).update(token).digest('hex');
 }
 
 function publicUser(user: Pick<User, 'id' | 'publicId' | 'email' | 'createdAt' | 'role'>) {
@@ -65,7 +60,7 @@ async function setSession(reply: FastifyReply, prisma: PrismaClient, userId: str
   const token = randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await prisma.session.create({
-    data: { userId, tokenHash: tokenHash(token), expiresAt },
+    data: { userId, tokenHash: hashToken(token), expiresAt },
   });
   reply.setCookie(SESSION_COOKIE, token, cookieOptions());
 }
@@ -75,7 +70,7 @@ async function currentUser(request: FastifyRequest, prisma: PrismaClient) {
   if (!token) return null;
 
   const session = await prisma.session.findUnique({
-    where: { tokenHash: tokenHash(token) },
+    where: { tokenHash: hashToken(token) },
     include: { user: true },
   });
   if (!session) return null;
@@ -268,7 +263,7 @@ export async function createApp(
         data: {
           email: credentials.email,
           passwordHash,
-          codeHash: tokenHash(code),
+          codeHash: hashToken(code),
           expiresAt,
           attempts: 0,
         },
@@ -347,7 +342,7 @@ export async function createApp(
         await prisma.registrationVerification.deleteMany({ where: { email } });
         return reply.code(429).send({ error: 'Too many attempts. Please register again.' });
       }
-      const actualHash = Buffer.from(tokenHash(code), 'hex');
+      const actualHash = Buffer.from(hashToken(code), 'hex');
       const expectedHash = Buffer.from(pending.codeHash, 'hex');
       const validCode =
         actualHash.length === expectedHash.length && timingSafeEqual(actualHash, expectedHash);
@@ -438,7 +433,7 @@ export async function createApp(
   app.post('/api/auth/logout', async (request, reply) => {
     const token = request.cookies[SESSION_COOKIE];
     if (token) {
-      await prisma.session.deleteMany({ where: { tokenHash: tokenHash(token) } });
+      await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
     }
     reply.clearCookie(SESSION_COOKIE, { ...cookieOptions(), maxAge: 0 });
     return reply.code(204).send();
