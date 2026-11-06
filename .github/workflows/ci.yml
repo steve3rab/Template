@@ -27,6 +27,10 @@ jobs:
       - run: npm ci --legacy-peer-deps --no-audit --no-fund
       - run: npm run db:generate
       - run: npm run db:deploy
+      - name: Verify migration history is fully applied
+        run: npx prisma migrate status --schema server/prisma/schema.prisma
+      - name: Verify SQLite and PostgreSQL Prisma models stay aligned
+        run: npm run db:check-schema-parity
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
