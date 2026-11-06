@@ -281,20 +281,24 @@ describe('Stripe payment routes', () => {
               currency: 'eur',
             }),
             {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
         )
         .mockResolvedValueOnce(
-          new Response(JSON.stringify({
-            id: 're_test_123',
-            amount: 1200,
-            currency: 'eur',
-            status: 'succeeded',
-          }), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({
+              id: 're_test_123',
+              amount: 1200,
+              currency: 'eur',
+              status: 'succeeded',
+            }),
+            {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
         ),
     );
     await app.ready();
@@ -302,7 +306,10 @@ describe('Stripe payment routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1200, requestKey: '00000000-0000-4000-8000-000000000001' },
+      payload: {
+        amountCents: 1200,
+        requestKey: '00000000-0000-4000-8000-000000000001',
+      },
     });
 
     expect(response.statusCode).toBe(200);
@@ -341,10 +348,8 @@ describe('Stripe payment routes', () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
-    const fetchMock = vi.fn(
-      async (_input: RequestInfo | URL, _init?: RequestInit) =>
-        new Response(null, { status: 500 }),
-    )
+    const fetchMock = vi
+      .fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { status: 500 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -354,27 +359,39 @@ describe('Stripe payment routes', () => {
             currency: 'eur',
           }),
           {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       )
       .mockRejectedValueOnce(new Error('network timeout'))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123', amount_total: 5000, currency: 'eur' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 'cs_test_123',
+            payment_intent: 'pi_test_123',
+            amount_total: 5000,
+            currency: 'eur',
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({
-          id: 're_retry_123',
-          amount: 1200,
-          currency: 'eur',
-          status: 'succeeded',
-        }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 're_retry_123',
+            amount: 1200,
+            currency: 'eur',
+            status: 'succeeded',
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
       );
     vi.stubGlobal('fetch', fetchMock);
     await app.ready();
@@ -382,7 +399,10 @@ describe('Stripe payment routes', () => {
     const first = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1200, requestKey: '00000000-0000-4000-8000-000000000003' },
+      payload: {
+        amountCents: 1200,
+        requestKey: '00000000-0000-4000-8000-000000000003',
+      },
     });
     expect(first.statusCode).toBe(202);
     const pendingCall = vi.mocked(prisma.financialTransactionCreate).mock.calls[0]?.[0] as {
@@ -406,7 +426,10 @@ describe('Stripe payment routes', () => {
     const second = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1200 },
+      payload: {
+        amountCents: 1200,
+        requestKey: '00000000-0000-4000-8000-000000000003',
+      },
     });
     expect(second.statusCode).toBe(200);
     const retryHeaders = fetchMock.mock.calls[3]?.[1]?.headers as Record<string, string>;
