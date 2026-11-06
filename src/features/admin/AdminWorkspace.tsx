@@ -31,6 +31,7 @@ export function AdminWorkspace() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([]);
   const [refundRequestKeys, setRefundRequestKeys] = useState<Record<string, string>>({});
+  const [reconciliation, setReconciliation] = useState<z.infer<typeof apiSchemas.reconciliationResult> | null>(null);
   const [section, setSection] = useState<Section>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -92,6 +93,22 @@ export function AdminWorkspace() {
       active = false;
     };
   }, []);
+
+  async function reconcilePayments() {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await apiRequest(
+        '/api/admin/payments/reconciliation',
+        apiSchemas.reconciliationResult,
+      );
+      setReconciliation(result);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossible de rapprocher les paiements Stripe.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function refundOrder(order: AdminOrder, event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -372,6 +389,29 @@ export function AdminWorkspace() {
           {section === 'finances' && (
             <>
               <h2>Historique financier</h2>
+              <button className="outline-button" type="button" onClick={() => void reconcilePayments()} disabled={loading}>
+                Rapprocher avec Stripe
+              </button>
+              {reconciliation && (
+                <div className="financial-reconciliation" role="status">
+                  <strong>
+                    {reconciliation.matched} rapprochées · {reconciliation.discrepancies} écarts ·{' '}
+                    {reconciliation.unverified} non vérifiées
+                  </strong>
+                  <span>
+                    Vérification du {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
+                    {reconciliation.checkedOrders} commandes contrôlées
+                  </span>
+                  {reconciliation.results
+                    .filter((result) => result.state !== 'MATCHED')
+                    .map((result) => (
+                      <article key={result.orderId}>
+                        <strong>Commande {result.orderId.slice(-8)}</strong>
+                        {result.issues.map((issue) => <span key={issue}>{issue}</span>)}
+                      </article>
+                    ))}
+                </div>
+              )}
               {financialTransactions.map((transaction) => (
                 <article className="admin-row" key={transaction.id}>
                   <div>
