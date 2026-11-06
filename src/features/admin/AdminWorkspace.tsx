@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { apiRequest, apiSchemas } from '../../shared/api/client';
@@ -26,9 +26,7 @@ const roleResult = z.object({
 });
 
 export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
-  const languageRef = useRef(language);
-  languageRef.current = language;
-  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
@@ -103,7 +101,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [language]);
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
     if (!transaction.requestKey) {
