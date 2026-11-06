@@ -50,7 +50,9 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await expect(page.getByText(/En attente de paiement/i)).toBeVisible();
   await expect(page.getByText(/Paiement : À régler/i)).toBeVisible();
   await page.getByRole('button', { name: /payer mes commandes en attente/i }).click();
-  await expect(page.getByRole('status')).toContainText(/paiement en ligne n’est pas encore configuré/i);
+  await expect(page.getByRole('status')).toContainText(
+    /paiement en ligne n’est pas encore configuré/i,
+  );
 });
 
 test('legal pages are accessible from the storefront footer', async ({ page }) => {
