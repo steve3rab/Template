@@ -47,6 +47,8 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
       const [stats, userData, productData, orderData, financialData] = await Promise.all([
         apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
@@ -75,40 +77,8 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   }, [t]);
 
   useEffect(() => {
-    let active = true;
-    void Promise.all([
-      apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
-      apiRequest('/api/admin/users', apiSchemas.adminUsers),
-      apiRequest('/api/admin/products', apiSchemas.adminProducts),
-      apiRequest('/api/admin/orders', apiSchemas.adminOrders),
-      apiRequest('/api/admin/financial-transactions', apiSchemas.adminFinancialTransactions),
-    ])
-      .then(([stats, userData, productData, orderData, financialData]) => {
-        if (!active) return;
-        setDashboard(stats);
-        setUsers(userData.users);
-        setProducts(productData.products);
-        setOrders(orderData.orders);
-        setFinancialTransactions(financialData.transactions);
-      })
-      .catch((cause: unknown) => {
-        if (!active) return;
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : t(
-                'Impossible de charger les données administrateur.',
-                'Unable to load administrator data.',
-              ),
-        );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [t]);
+    void load();
+  }, [load]);
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
     if (!transaction.requestKey) {
@@ -296,14 +266,10 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         <button
           className="outline-button"
           type="button"
-          onClick={() => {
-            setLoading(true);
-            setError('');
-            void load();
-          }}
+          onClick={() => void load()}
           disabled={loading}
         >
-          Actualiser
+          {loading ? t('Actualisation…', 'Refreshing…') : t('Actualiser', 'Refresh')}
         </button>
       </header>
 
@@ -370,10 +336,30 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         </button>
       </nav>
 
-      {loading ? (
-        <p>{t('Chargement des données…', 'Loading data…')}</p>
-      ) : (
-        <section className="seller-panel admin-data-panel">
+      {loading && (
+        <p className="workspace-loading" role="status" aria-live="polite" aria-busy="true">
+          {dashboard
+            ? t('Actualisation des données…', 'Refreshing data…')
+            : t('Chargement des données…', 'Loading data…')}
+        </p>
+      )}
+      {error && (
+        <div className="workspace-error" role="alert">
+          <p>{error}</p>
+          {!dashboard && (
+            <button
+              type="button"
+              className="outline-button"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              {t('Réessayer', 'Try again')}
+            </button>
+          )}
+        </div>
+      )}
+      {dashboard && (
+        <section className="seller-panel admin-data-panel" aria-busy={loading}>
           {section === 'users' && (
             <>
               <h2>{t('Gestion des comptes', 'Account management')}</h2>
