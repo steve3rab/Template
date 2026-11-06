@@ -95,6 +95,7 @@ export function AdminWorkspace() {
   async function refundOrder(order: AdminOrder, event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const requestKey = String(form.get('requestKey') ?? '');
     const rawAmount = String(form.get('amountCents') ?? '').trim();
     const amountCents = rawAmount ? Number(rawAmount) : undefined;
     if (amountCents !== undefined && (!Number.isSafeInteger(amountCents) || amountCents < 1)) {
@@ -109,7 +110,7 @@ export function AdminWorkspace() {
         apiSchemas.refundResult,
         {
           method: 'POST',
-          body: JSON.stringify(amountCents === undefined ? {} : { amountCents }),
+          body: JSON.stringify({ requestKey, ...(amountCents === undefined ? {} : { amountCents }) }),
         },
       );
       if ('pending' in result) setError(result.message);
@@ -326,6 +327,7 @@ export function AdminWorkspace() {
                     <strong>{formatCents(order.totalCents)}</strong>
                     {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
                       <form onSubmit={(event) => void refundOrder(order, event)}>
+                        <input type="hidden" name="requestKey" value={crypto.randomUUID()} />
                         <label>
                           Montant en centimes (facultatif)
                           <input
