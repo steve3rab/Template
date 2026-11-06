@@ -1,0 +1,23 @@
+# Backend build output
+/dist/
+/coverage/
+/.cache/
+
+# Backend environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Prisma local databases and sidecar files
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/*.db-shm
+/prisma/*.db-wal
+/prisma/*.sqlite
+/prisma/*.sqlite3
+
+# Local runtime files
+*.log
+*.pid
+*.pid.lock
