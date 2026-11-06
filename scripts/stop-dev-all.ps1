@@ -27,7 +27,7 @@ $processes = @(
 )
 
 if ($processes.Count -eq 0) {
-    Write-Host 'Aucune fenêtre frontend/backend lancée par dev-all.ps1 n’a été trouvée.' -ForegroundColor Yellow
+    Write-Host 'Aucune fenêtre frontend/backend lancée par dev-all.ps1 n-a été trouvée.' -ForegroundColor Yellow
     return
 }
 
@@ -38,7 +38,7 @@ foreach ($process in $processes) {
         if ($taskkill) {
             & $taskkill.Source /PID $process.ProcessId /T /F | Out-Null
             if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Impossible d’arrêter $description (code $LASTEXITCODE)."
+                Write-Warning "Impossible d-arrêter $description (code $LASTEXITCODE)."
             }
             else {
                 Write-Host "Arrêté : $description" -ForegroundColor Green
