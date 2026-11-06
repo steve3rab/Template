@@ -327,7 +327,7 @@ export function AdminWorkspace() {
                     <strong>{formatCents(order.totalCents)}</strong>
                     {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
                       <form onSubmit={(event) => void refundOrder(order, event)}>
-                        <input type="hidden" name="requestKey" value={crypto.randomUUID()} />
+                        <input type="hidden" name="requestKey" defaultValue={crypto.randomUUID()} />
                         <label>
                           Montant en centimes (facultatif)
                           <input
