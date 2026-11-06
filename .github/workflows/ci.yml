@@ -72,6 +72,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      DATABASE_URL: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
       DATABASE_URL_POSTGRES: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
     steps:
       - uses: actions/checkout@v4
