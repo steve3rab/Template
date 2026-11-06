@@ -49,8 +49,12 @@ export function SellerWorkspace({
   const [height, setHeight] = useState('');
   const [dimensionUnit, setDimensionUnit] = useState('cm');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const [stats, productPayload, orderPayload] = await Promise.all([
         apiRequest(`/api/seller/dashboard?days=${range}`, apiSchemas.sellerDashboard),
@@ -60,7 +64,9 @@ export function SellerWorkspace({
       setDashboard(stats);
       setProducts(productPayload.products);
       setOrders(orderPayload.orders);
+      setLoadError(false);
     } catch (error) {
+      setLoadError(true);
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
         window.dispatchEvent(
           new CustomEvent('template-toast', {
@@ -86,6 +92,8 @@ export function SellerWorkspace({
           },
         }),
       );
+    } finally {
+      setLoading(false);
     }
   }, [range, t]);
 
@@ -221,6 +229,41 @@ export function SellerWorkspace({
     }
   }
 
+  if (loading && !dashboard) {
+    return (
+      <section className="seller-page" aria-busy="true">
+        <h1>{t('Tableau de bord', 'Dashboard')}</h1>
+        <p className="workspace-loading" role="status" aria-live="polite">
+          {t('Chargement des données vendeur…', 'Loading seller data…')}
+        </p>
+      </section>
+    );
+  }
+
+  if (loadError && !dashboard) {
+    return (
+      <section className="seller-page">
+        <h1>{t('Tableau de bord', 'Dashboard')}</h1>
+        <div className="workspace-error" role="alert">
+          <p>
+            {t(
+              'Impossible de charger les données vendeur. Vérifiez votre connexion puis réessayez.',
+              'Unable to load seller data. Check your connection and try again.',
+            )}
+          </p>
+          <button
+            type="button"
+            className="outline-button"
+            onClick={() => void load()}
+            disabled={loading}
+          >
+            {loading ? t('Chargement…', 'Loading…') : t('Réessayer', 'Try again')}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="seller-page">
       <div className="seller-topline">
@@ -238,6 +281,24 @@ export function SellerWorkspace({
           </p>
         </div>
       </div>
+      {loadError && (
+        <div className="workspace-error" role="alert">
+          <span>
+            {t(
+              'Actualisation impossible. Les dernières données chargées sont conservées.',
+              'Refresh failed. The last successfully loaded data is still shown.',
+            )}
+          </span>
+          <button
+            type="button"
+            className="outline-button"
+            onClick={() => void load()}
+            disabled={loading}
+          >
+            {loading ? t('Chargement…', 'Loading…') : t('Réessayer', 'Try again')}
+          </button>
+        </div>
+      )}
       <div className="kpi-grid">
         <article className="kpi-card">
           <div className="kpi-label">{t('Chiffre d’affaires payé', 'Paid revenue')}</div>
