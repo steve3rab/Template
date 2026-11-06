@@ -3543,3 +3543,97 @@ button {
   .ui-button { transition: none; }
   .ui-button__spinner { animation-duration: 1400ms; }
 }
+
+
+/* Accessible shared form and feedback primitives */
+.ui-text-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-text-field__label {
+  color: #454a3d;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.ui-text-field__input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d8dacd;
+  border-radius: 6px;
+  background: #fffefa;
+  color: #24271f;
+  font: inherit;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.ui-text-field__input:focus-visible {
+  border-color: #66734f;
+  outline: 3px solid rgb(91 112 70 / 22%);
+  outline-offset: 1px;
+}
+
+.ui-text-field__input.is-invalid {
+  border-color: #a64c40;
+}
+
+.ui-text-field__hint,
+.ui-text-field__error {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.ui-text-field__hint {
+  color: #77796e;
+}
+
+.ui-text-field__error {
+  color: #873f35;
+}
+
+.ui-status-message {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.ui-status-message__title {
+  font-weight: 700;
+}
+
+.ui-status-message--info {
+  border-color: #d6d9cc;
+  background: #f4f5ef;
+  color: #3e4935;
+}
+
+.ui-status-message--success {
+  border-color: #c9d8c1;
+  background: #f1f6ed;
+  color: #385638;
+}
+
+.ui-status-message--warning {
+  border-color: #e6d4a9;
+  background: #fff9e9;
+  color: #6c5421;
+}
+
+.ui-status-message--error {
+  border-color: #e6c7c1;
+  background: #fff4f1;
+  color: #873f35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-text-field__input { transition: none; }
+}
