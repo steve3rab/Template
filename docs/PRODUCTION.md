@@ -50,4 +50,4 @@ npm run db:deploy
 
 Le passage de la CI est nécessaire mais ne constitue ni un audit de sécurité, ni un test de charge, ni une validation du parcours Stripe en production. Effectuez ces vérifications en préproduction avec les services et secrets de test.
 
-Exécutez aussi les tests de charge du répertoire tests/load dans un environnement de préproduction et une revue de sécurité manuelle. Aucun test de charge ni audit externe n’est réputé exécuté simplement parce que les scripts sont présents.
+Exécutez aussi `npm run test:load:smoke`, puis `npm run test:load:stress` du répertoire `tests/load` dans un environnement de préproduction isolé et une revue de sécurité manuelle. Les scripts k6 vérifient uniquement la disponibilité et le catalogue public ; ils ne simulent pas encore les parcours authentifiés, les commandes ou les paiements. Aucun test de charge ni audit externe n’est réputé exécuté simplement parce que les scripts sont présents.
