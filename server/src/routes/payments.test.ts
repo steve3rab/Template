@@ -27,7 +27,18 @@ let productUpdateMany: ReturnType<typeof vi.fn>;
 function setup(rateLimitMax = 1000) {
   updateMany = vi.fn(async () => ({ count: 1 }));
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
-  const transaction = { order: { updateMany }, product: { updateMany: productUpdateMany } };
+  const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
+  const webhookEventUpdate = vi.fn(async () => ({ id: 'webhook-event-1' }));
+  const financialTransactionCreate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
+  const transaction = {
+    order: {
+      updateMany,
+      findMany: vi.fn(async () => [order]),
+    },
+    product: { updateMany: productUpdateMany },
+    stripeWebhookEvent: { create: webhookEventCreate, update: webhookEventUpdate },
+    financialTransaction: { create: financialTransactionCreate },
+  };
   const prisma = {
     order: {
       findMany: vi.fn(async () => [order]),
