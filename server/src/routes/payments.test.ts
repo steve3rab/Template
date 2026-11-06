@@ -69,7 +69,7 @@ function setup(rateLimitMax = 1000) {
   app.after(() => {
     registerPaymentRoutes(app, prisma as unknown as PrismaClient, async () => customer);
   });
-  return prisma;
+  return Object.assign(prisma, { webhookEventCreate, webhookEventUpdate, financialTransactionCreate });
 }
 
 function signatureFor(rawBody: Buffer, secret: string, timestamp = Math.floor(Date.now() / 1000)) {
@@ -190,6 +190,48 @@ describe('Stripe payment routes', () => {
       data: { paymentStatus: 'PAID' },
     });
     expect(prisma.order.findMany).not.toHaveBeenCalled();
+    expect(prisma.webhookEventCreate).toHaveBeenCalledWith({
+      data: { stripeEventId: 'evt_test_123', type: 'checkout.session.completed', objectId: 'cs_test_123' },
+    });
+    expect(prisma.financialTransactionCreate).toHaveBeenCalledWith({
+      data: {
+        orderId: 'order-1',
+        stripeObjectId: 'evt_test_123:order-1',
+        type: 'PAYMENT',
+        amountCents: 5000,
+        currency: 'EUR',
+      },
+    });
+    expect(prisma.webhookEventUpdate).toHaveBeenCalledWith({
+      where: { stripeEventId: 'evt_test_123' },
+      data: { processedAt: expect.any(Date) },
+    });
+  });
+
+  it('acknowledges a previously recorded Stripe event without replaying side effects', async () => {
+    vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
+    const prisma = setup();
+    vi.mocked(prisma.webhookEventCreate).mockRejectedValueOnce({ code: 'P2002' });
+    await app.ready();
+    const rawBody = Buffer.from(JSON.stringify({
+      id: 'evt_duplicate_123',
+      type: 'checkout.session.completed',
+      data: { object: { id: 'cs_test_123', payment_status: 'paid', metadata: { orderIds: 'order-1' } } },
+    }));
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/webhooks/stripe',
+      headers: {
+        'content-type': 'application/json',
+        'stripe-signature': signatureFor(rawBody, 'whsec_test_example'),
+      },
+      payload: rawBody,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ received: true, duplicate: true });
+    expect(updateMany).not.toHaveBeenCalled();
+    expect(prisma.financialTransactionCreate).not.toHaveBeenCalled();
   });
 
   it('cancels an expired unpaid checkout and restores reserved stock once', async () => {
