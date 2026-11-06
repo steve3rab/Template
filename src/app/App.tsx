@@ -386,7 +386,13 @@ export function App() {
   );
 
   useEffect(() => {
-    void loadCatalog(false);
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void loadCatalog(false);
+    });
+    return () => {
+      active = false;
+    };
   }, [loadCatalog]);
 
   useEffect(() => {
