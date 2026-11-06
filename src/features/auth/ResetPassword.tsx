@@ -9,6 +9,7 @@ export function ResetPassword({
   language?: Language;
 }) {
   const t = (fr: string, en: string) => translateText(language, fr, en);
+  const token = new URLSearchParams(window.location.search).get('token') ?? '';
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const passwordRules = [
@@ -25,9 +26,9 @@ export function ResetPassword({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || !token || !passwordValid) return;
     setBusy(true);
     try {
-      const token = new URLSearchParams(window.location.search).get('token') ?? '';
       const response = await fetch('/api/auth/password-reset/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +76,16 @@ export function ResetPassword({
           'Choose a password between 12 and 128 characters, including an uppercase letter, a lowercase letter, a number and a special character.',
         )}
       </p>
-      <form className="checkout-form" onSubmit={(event) => void submit(event)}>
+      {!token && (
+        <p className="workspace-error" role="alert">
+          {t('Ce lien de réinitialisation est incomplet ou invalide. Demandez un nouveau lien.', 'This password reset link is incomplete or invalid. Request a new link.')}
+        </p>
+      )}
+      <form
+        className="checkout-form"
+        onSubmit={(event) => void submit(event)}
+        aria-busy={busy}
+      >
         <label>
           {t('Nouveau mot de passe', 'New password')}
           <input
@@ -97,7 +107,16 @@ export function ResetPassword({
             ))}
           </ul>
         </label>
-        <button className="dark-button" type="submit" disabled={busy || !passwordValid}>
+        {busy && (
+          <p className="workspace-loading" role="status" aria-live="polite">
+            {t('Modification du mot de passe…', 'Updating password…')}
+          </p>
+        )}
+        <button
+          className="dark-button"
+          type="submit"
+          disabled={busy || !passwordValid || !token}
+        >
           {busy
             ? t('Enregistrement…', 'Saving…')
             : t('Modifier le mot de passe', 'Update password')}
