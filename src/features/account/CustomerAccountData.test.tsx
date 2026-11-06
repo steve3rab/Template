@@ -135,7 +135,7 @@ describe('CustomerAccountData', () => {
       await user.click(screen.getByRole('button', { name: /try again/i }));
       expect(await screen.findByText(/you have no orders yet/i)).toBeInTheDocument();
       expect(screen.getByText(/no saved addresses yet/i)).toBeInTheDocument();
-        expect(orderRequests).toBe(2);
+      expect(orderRequests).toBe(2);
     },
   );
 });
