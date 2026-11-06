@@ -120,6 +120,7 @@ model Order {
   currency          String      @default("EUR")
   paymentStatus     String      @default("UNPAID")
   paymentReference  String?
+  refundedCents     Int         @default(0)
   shippingRecipient String
   shippingLine1     String
   shippingLine2     String?
