@@ -54,4 +54,4 @@ if ($InstallPlaywrightBrowsers) {
     Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
 }
 
-Write-Host 'Préparation terminée. Aucun serveur ni test n’a été lancé.' -ForegroundColor Green
+Write-Host 'Préparation terminée. Aucun serveur ni test n-a été lancé.' -ForegroundColor Green
