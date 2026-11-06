@@ -494,13 +494,6 @@ export function registerPaymentRoutes(
 
     const order = await prisma.order.findUnique({ where: { id: params.data.id } });
     if (!order) return reply.code(404).send({ error: 'Order not found.' });
-    if (
-      !['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) ||
-      !order.paymentReference
-    ) {
-      return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
-    }
-
     const existingRefund = await prisma.financialTransaction.findFirst({
       where: { orderId: order.id, type: 'REFUND', requestKey: body.data.requestKey },
       orderBy: { createdAt: 'asc' },
@@ -517,6 +510,12 @@ export function registerPaymentRoutes(
         remainingRefundableCents: order.totalCents - order.refundedCents,
         paymentStatus: order.paymentStatus,
       });
+    }
+    if (
+      !['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) ||
+      !order.paymentReference
+    ) {
+      return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
     }
     if (existingRefund && existingRefund.status !== 'PENDING') {
       return reply.code(409).send({ error: 'This refund request cannot be retried.' });
