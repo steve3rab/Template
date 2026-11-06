@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { apiRequest, apiSchemas } from '../../shared/api/client';
@@ -14,8 +14,9 @@ type AdminUser = {
 type AdminProduct = z.infer<typeof apiSchemas.adminProducts>['products'][number];
 
 type AdminOrder = z.infer<typeof apiSchemas.adminOrders>['orders'][number];
+type AdminFinancialTransaction = z.infer<typeof apiSchemas.adminFinancialTransactions>['transactions'][number];
 
-type Section = 'users' | 'products' | 'orders';
+type Section = 'users' | 'products' | 'orders' | 'finances';
 
 const roleResult = z.object({
   user: z.object({ id: z.string(), email: z.string(), role: z.string() }),
@@ -28,6 +29,7 @@ export function AdminWorkspace() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([]);
   const [section, setSection] = useState<Section>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,11 +41,13 @@ export function AdminWorkspace() {
         apiRequest('/api/admin/users', apiSchemas.adminUsers),
         apiRequest('/api/admin/products', apiSchemas.adminProducts),
         apiRequest('/api/admin/orders', apiSchemas.adminOrders),
+        apiRequest('/api/admin/financial-transactions', apiSchemas.adminFinancialTransactions),
       ]);
       setDashboard(stats);
       setUsers(userData.users);
       setProducts(productData.products);
       setOrders(orderData.orders);
+      setFinancialTransactions(financialData.transactions);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -62,13 +66,15 @@ export function AdminWorkspace() {
       apiRequest('/api/admin/users', apiSchemas.adminUsers),
       apiRequest('/api/admin/products', apiSchemas.adminProducts),
       apiRequest('/api/admin/orders', apiSchemas.adminOrders),
+      apiRequest('/api/admin/financial-transactions', apiSchemas.adminFinancialTransactions),
     ])
-      .then(([stats, userData, productData, orderData]) => {
+      .then(([stats, userData, productData, orderData, financialData]) => {
         if (!active) return;
         setDashboard(stats);
         setUsers(userData.users);
         setProducts(productData.products);
         setOrders(orderData.orders);
+        setFinancialTransactions(financialData.transactions);
       })
       .catch((cause: unknown) => {
         if (!active) return;
@@ -85,6 +91,35 @@ export function AdminWorkspace() {
       active = false;
     };
   }, []);
+
+  async function refundOrder(order: AdminOrder, event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const rawAmount = String(form.get('amountCents') ?? '').trim();
+    const amountCents = rawAmount ? Number(rawAmount) : undefined;
+    if (amountCents !== undefined && (!Number.isSafeInteger(amountCents) || amountCents < 1)) {
+      setError('Le montant du remboursement doit être un nombre entier de centimes positif.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const result = await apiRequest(
+        `/api/admin/orders/${encodeURIComponent(order.id)}/refund`,
+        apiSchemas.refundResult,
+        {
+          method: 'POST',
+          body: JSON.stringify(amountCents === undefined ? {} : { amountCents }),
+        },
+      );
+      if ('pending' in result) setError(result.message);
+      else setError(`Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`);
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossible de traiter le remboursement.');
+      setLoading(false);
+    }
+  }
 
   async function updateRole(user: AdminUser, role: 'CUSTOMER' | 'SELLER') {
     setLoading(true);
@@ -189,6 +224,13 @@ export function AdminWorkspace() {
         >
           Commandes ({orders.length})
         </button>
+        <button
+          type="button"
+          className={section === 'finances' ? 'active' : ''}
+          onClick={() => setSection('finances')}
+        >
+          Finances ({financialTransactions.length})
+        </button>
       </nav>
 
       {error && (
@@ -280,10 +322,57 @@ export function AdminWorkspace() {
                       {order.status} · Paiement : {order.paymentStatus}
                     </span>
                   </div>
-                  <strong>{formatCents(order.totalCents)}</strong>
+                  <div className="admin-order-actions">
+                    <strong>{formatCents(order.totalCents)}</strong>
+                    {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
+                      <form onSubmit={(event) => void refundOrder(order, event)}>
+                        <label>
+                          Montant en centimes (facultatif)
+                          <input
+                            name="amountCents"
+                            type="number"
+                            min="1"
+                            max={Math.max(0, order.totalCents - (order.refundedCents ?? 0))}
+                            step="1"
+                            placeholder="Solde complet"
+                          />
+                        </label>
+                        <button className="text-action" type="submit" disabled={loading}>
+                          Rembourser
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </article>
               ))}
               {orders.length === 0 && <p>Aucune commande.</p>}
+            </>
+          )}
+
+          {section === 'finances' && (
+            <>
+              <h2>Historique financier</h2>
+              {financialTransactions.map((transaction) => (
+                <article className="admin-row" key={transaction.id}>
+                  <div>
+                    <strong>
+                      {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} ·{' '}
+                      Commande {transaction.order.id.slice(-8)}
+                    </strong>
+                    <span>
+                      {transaction.status === 'PENDING'
+                        ? 'En attente de confirmation'
+                        : transaction.status === 'FAILED'
+                          ? 'Échec'
+                          : 'Confirmé'}{' '}
+                      · {transaction.stripeObjectId}
+                    </span>
+                    <span>{new Date(transaction.createdAt).toLocaleString('fr-FR')}</span>
+                  </div>
+                  <strong>{formatCents(transaction.amountCents, transaction.currency)}</strong>
+                </article>
+              ))}
+              {financialTransactions.length === 0 && <p>Aucune transaction financière.</p>}
             </>
           )}
         </section>
