@@ -35,6 +35,14 @@ const stripeRefundSchema = z.object({
   status: z.string().min(1),
 });
 
+const stripeRefundEventSchema = z.object({
+  id: z.string().min(1),
+  amount: z.number().int().positive(),
+  currency: z.string().length(3),
+  status: z.string().min(1),
+  metadata: z.object({ orderId: z.string().min(1) }).passthrough().optional(),
+});
+
 const stripeEventSchema = z
   .object({
     id: z.string().min(1),
@@ -577,7 +585,61 @@ export function registerPaymentRoutes(
           },
         });
 
-        if (
+        const refundEvent =
+          event.data.type === 'refund.updated'
+            ? stripeRefundEventSchema.safeParse(event.data.data.object)
+            : null;
+        if (refundEvent?.success && refundEvent.data.metadata?.orderId) {
+          const orderId = refundEvent.data.metadata.orderId;
+          const pending = await tx.financialTransaction.findFirst({
+            where: { orderId, type: 'REFUND', status: 'PENDING' },
+            orderBy: { createdAt: 'asc' },
+          });
+          const refundOrder = pending
+            ? await tx.order.findUnique({ where: { id: orderId } })
+            : null;
+          if (pending && refundOrder) {
+            if (refundEvent.data.status === 'succeeded') {
+              const finalized = await tx.financialTransaction.updateMany({
+                where: { id: pending.id, status: 'PENDING' },
+                data: {
+                  stripeObjectId: refundEvent.data.id,
+                  status: 'SUCCEEDED',
+                  amountCents: refundEvent.data.amount,
+                  currency: refundEvent.data.currency.toUpperCase(),
+                },
+              });
+              if (finalized.count === 1) {
+                await tx.order.updateMany({
+                  where: { id: orderId, refundedCents: { gte: refundEvent.data.amount } },
+                  data: {
+                    paymentStatus:
+                      refundOrder.refundedCents >= refundOrder.totalCents
+                        ? 'REFUNDED'
+                        : 'PARTIALLY_REFUNDED',
+                  },
+                });
+              }
+            } else if (
+              refundEvent.data.status === 'failed' ||
+              refundEvent.data.status === 'canceled'
+            ) {
+              const failed = await tx.financialTransaction.updateMany({
+                where: { id: pending.id, status: 'PENDING' },
+                data: { status: 'FAILED' },
+              });
+              if (failed.count === 1) {
+                await tx.order.updateMany({
+                  where: {
+                    id: orderId,
+                    refundedCents: { gte: pending.amountCents },
+                  },
+                  data: { refundedCents: { decrement: pending.amountCents } },
+                });
+              }
+            }
+          }
+        } else if (
           session?.success &&
           orderIds.length > 0 &&
           session.data.payment_status === 'paid' &&
