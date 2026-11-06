@@ -365,7 +365,29 @@ describe('seller data isolation and route validation', () => {
       payload: { status: 'CANCELLED' },
     });
     expect(response.statusCode).toBe(409);
-    expect(response.json().error).toMatch(/refund workflow/i);
+    expect(response.json().error).toMatch(/fully refunded before cancellation/i);
+    expect(orderUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('blocks cancelling partially refunded orders until the remaining balance is refunded', async () => {
+    const { orderFindFirst, orderUpdateMany } = setup();
+    orderFindFirst.mockResolvedValueOnce({
+      id: 'order-1',
+      status: 'PENDING',
+      paymentStatus: 'PARTIALLY_REFUNDED',
+      paymentReference: 'cs_active',
+      items: [],
+    } as never);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/seller/orders/order-1/status',
+      payload: { status: 'CANCELLED' },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toMatch(/fully refunded before cancellation/i);
     expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
