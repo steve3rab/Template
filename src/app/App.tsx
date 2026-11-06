@@ -156,6 +156,20 @@ export function App() {
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
   const translate = (fr: string, en: string) => language === 'en' ? en : fr;
+  const productDescription = (product: Product) => {
+    if (language === 'fr') return product.description;
+    const demoDescriptions: Record<string, string> = {
+      '1': 'A structured cut, easy to wear from morning to evening.',
+      '2': 'Everyday comfort with a minimalist silhouette.',
+      '3': 'A compact, practical bag to keep your essentials close at hand.',
+      '4': 'Soft knitwear with a relaxed fit.',
+      '5': 'A graphic touch for sunny days.',
+      '6': 'Clean lines that work with every outfit.',
+      '7': 'A lightweight shirt designed for layering.',
+      '8': 'A simple finishing touch that transforms a look.',
+    };
+    return demoDescriptions[product.id] ?? product.description;
+  };
   const categoryLabel = (category: string) => {
     if (language === 'fr') return category;
     const labels: Record<string, string> = {
@@ -364,12 +378,12 @@ export function App() {
           return;
         }
         setToastKind('error');
-        setNotice('Impossible de vérifier votre session. Réessayez sans vous déconnecter.');
+        setNotice(translate('Impossible de vérifier votre session. Réessayez sans vous déconnecter.', 'Unable to verify your session. Please try again without signing out.'));
       })
       .catch(() => {
         if (!active) return;
         setToastKind('error');
-        setNotice('Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.');
+        setNotice(translate('Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.', 'Unable to verify your session. Check your connection and try again.'));
       });
     return () => {
       active = false;
@@ -676,14 +690,14 @@ export function App() {
             event.preventDefault();
             setView('shop');
           }}
-          aria-label="Atelier, accueil"
+          aria-label={translate('Atelier, accueil', 'Atelier, home')}
         >
           <span className="store-brand-icon">a.</span>
           <span>
             atelier<span className="brand-period">.</span>
           </span>
         </a>
-        <nav className="main-nav" aria-label="Navigation principale">
+        <nav className="main-nav" aria-label={translate('Navigation principale', 'Main navigation')}>
           <button
             type="button"
             className={view === 'shop' && category === 'Tout' ? 'nav-link active' : 'nav-link'}
@@ -741,7 +755,7 @@ export function App() {
           <button
             className="cart-button"
             onClick={() => setCartOpen((open) => !open)}
-            aria-label={`Panier, ${cartCount} article(s)`}
+            aria-label={translate(`Panier, ${cartCount} article(s)`, `Cart, ${cartCount} item(s)`)}
           >
             {translate('Panier', 'Cart')} <span className="cart-count">{cartCount}</span>
           </button>
@@ -753,7 +767,7 @@ export function App() {
           role={toastKind === 'error' ? 'alert' : 'status'}
         >
           {notice}
-          <button aria-label="Fermer le message" onClick={() => setNotice('')}>
+          <button aria-label={translate('Fermer le message', 'Dismiss message')} onClick={() => setNotice('')}>
             ×
           </button>
         </div>
@@ -789,7 +803,7 @@ export function App() {
                 </span>
               </div>
             </div>
-            <div className="hero-art" aria-label="Sélection mode de la nouvelle collection">
+            <div className="hero-art" aria-label={translate('Sélection mode de la nouvelle collection', 'Fashion selection from the new collection')}>
               <img
                 className="hero-photo"
                 src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=90"
@@ -901,7 +915,7 @@ export function App() {
                       <strong>{formatCurrency(product.price)}</strong>
                     </div>
                   </div>
-                  <p className="product-description">{product.description}</p>
+                  <p className="product-description">{productDescription(product)}</p>
                   {product.sizes && product.sizes.length > 0 && (
                     <p className="product-variants">Tailles : {product.sizes.join(', ')}</p>
                   )}
@@ -961,17 +975,17 @@ export function App() {
             <div>
               <span>↗</span>
               <strong>{translate('Paiement en ligne', 'Online payment')}</strong>
-              <p>Le paiement est traité via Stripe lorsque le service est configuré.</p>
+              <p>{translate('Le paiement est traité via Stripe lorsque le service est configuré.', 'Payments are processed through Stripe once the service is configured.')}</p>
             </div>
             <div>
               <span>↺</span>
               <strong>{translate('Informations de retour', 'Returns information')}</strong>
-              <p>Consultez les conditions applicables avant toute commande.</p>
+              <p>{translate('Consultez les conditions applicables avant toute commande.', 'Review the applicable terms before placing an order.')}</p>
             </div>
             <div>
               <span>♡</span>
               <strong>{translate('Informations utiles', 'Useful information')}</strong>
-              <p>Conditions de vente et confidentialité accessibles en pied de page.</p>
+              <p>{translate('Conditions de vente et confidentialité accessibles en pied de page.', 'Sales terms and privacy information are available in the footer.')}</p>
             </div>
           </section>
         </>
@@ -999,17 +1013,17 @@ export function App() {
             <div>
               <span>01</span>
               <strong>{translate('Vos commandes', 'Your orders')}</strong>
-              <p>Consultez le suivi et l’historique de vos achats.</p>
+              <p>{translate('Consultez le suivi et l’historique de vos achats.', 'Track your orders and view your purchase history.')}</p>
             </div>
             <div>
               <span>02</span>
               <strong>{translate('Vos adresses', 'Your addresses')}</strong>
-              <p>Ajoutez ou supprimez vos adresses de livraison.</p>
+              <p>{translate('Ajoutez ou supprimez vos adresses de livraison.', 'Add or remove your delivery addresses.')}</p>
             </div>
             <div>
               <span>03</span>
               <strong>{translate('Votre compte', 'Your account')}</strong>
-              <p>Gérez votre connexion et vos informations personnelles.</p>
+              <p>{translate('Gérez votre connexion et vos informations personnelles.', 'Manage your sign-in and personal information.')}</p>
             </div>
           </div>
           <AuthPanel
@@ -1042,7 +1056,7 @@ export function App() {
               }
             }}
           />
-          <CustomerAccountData />
+          <CustomerAccountData language={language} />
           <p className="fine-print">
             Retrouvez vos commandes et vos adresses depuis votre espace client.
           </p>
@@ -1063,7 +1077,7 @@ export function App() {
           {checkoutDone ? (
             <div className="success-panel">
               <span className="success-icon">✓</span>
-              <span className="eyebrow">COMMANDE ENREGISTRÉE</span>
+              <span className="eyebrow">{translate('COMMANDE ENREGISTRÉE', 'ORDER SAVED')}</span>
               <h1>
                 Merci pour votre commande<span className="brand-period">.</span>
               </h1>
@@ -1099,7 +1113,7 @@ export function App() {
                     <label>
                       Choisir une adresse enregistrée
                       <select
-                        aria-label="Choisir une adresse enregistrée"
+                        aria-label={translate('Choisir une adresse enregistrée', 'Choose a saved address')}
                         value={checkoutAddressId || '__new__'}
                         onChange={(event) =>
                           setCheckoutAddressId(
@@ -1132,7 +1146,7 @@ export function App() {
                             required
                             name="recipient"
                             autoComplete="name"
-                            placeholder="Prénom et nom du destinataire"
+                            placeholder={translate('Prénom et nom du destinataire', 'Recipient full name')}
                           />
                         </label>
                         <label>
@@ -1140,7 +1154,7 @@ export function App() {
                           <input
                             name="line2"
                             autoComplete="address-line2"
-                            placeholder="Appartement, bâtiment…"
+                            placeholder={translate('Appartement, bâtiment…', 'Apartment, building…')}
                           />
                         </label>
                       </div>
@@ -1150,7 +1164,7 @@ export function App() {
                           required
                           name="line1"
                           autoComplete="street-address"
-                          placeholder="Numéro et rue"
+                          placeholder={translate('Numéro et rue', 'Street address')}
                         />
                       </label>
                       <div className="form-two-col">
@@ -1160,7 +1174,7 @@ export function App() {
                             required
                             name="postalCode"
                             autoComplete="postal-code"
-                            placeholder="75000"
+                            placeholder={translate('75000', 'Postal code')}
                           />
                         </label>
                         <label>
@@ -1169,7 +1183,7 @@ export function App() {
                             required
                             name="city"
                             autoComplete="address-level2"
-                            placeholder="Paris"
+                            placeholder={translate('Paris', 'City')}
                           />
                         </label>
                       </div>
@@ -1204,7 +1218,7 @@ export function App() {
                         </span>
                         <div>
                           <strong>{product.name}</strong>
-                          <p>Quantité : {cart[product.id] ?? 0}</p>
+                          <p>{translate('Quantité :', 'Quantity:')} {cart[product.id] ?? 0}</p>
                         </div>
                         <strong>{formatCurrency(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
@@ -1243,7 +1257,7 @@ export function App() {
               </select>
             </label>
           </div>
-          <SellerWorkspace range={sellerRange} />
+          <SellerWorkspace range={sellerRange} language={language} />
         </>
       )}
       {view === 'admin' && (
@@ -1251,10 +1265,10 @@ export function App() {
           <button className="back-link" onClick={() => setView('shop')}>
             ← Retour à la boutique
           </button>
-          <AdminWorkspace />
+          <AdminWorkspace language={language} />
         </section>
       )}
-      {view === 'legal' && <LegalPage page={legalPage} onBack={() => setView('shop')} />}
+      {view === 'legal' && <LegalPage page={legalPage} language={language} onBack={() => setView('shop')} />}
       {view === 'reset' && (
         <ResetPassword
           onDone={() => {
@@ -1280,7 +1294,7 @@ export function App() {
         <p>{translate('Des essentiels pour votre quotidien.', 'Everyday essentials.')}</p>
         <div className="footer-links">
           <button onClick={() => setView('account')}>{translate('Mon compte', 'My account')}</button>
-          <button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>
+          <button onClick={() => setNotice(translate('Le centre d’aide sera bientôt disponible.', 'The help centre will be available soon.'))}>
             Aide & contact
           </button>
           <button
