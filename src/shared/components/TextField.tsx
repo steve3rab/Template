@@ -43,8 +43,16 @@ export function TextField({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
       />
-      {hint ? <p className="ui-text-field__hint" id={hintId}>{hint}</p> : null}
-      {error ? <p className="ui-text-field__error" id={errorId}>{error}</p> : null}
+      {hint ? (
+        <p className="ui-text-field__hint" id={hintId}>
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="ui-text-field__error" id={errorId}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
