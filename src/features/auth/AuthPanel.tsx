@@ -123,7 +123,7 @@ export function AuthPanel({
         setVerificationCode('');
         showToast(
           'developmentCode' in payload && payload.developmentCode
-            ? `${t.authVerificationSent} Code local : ${payload.developmentCode}`
+            ? `${t.authVerificationSent} ${language === 'en' ? 'Local code:' : 'Code local :'} ${payload.developmentCode}`
             : t.authVerificationSent,
           'success',
         );
