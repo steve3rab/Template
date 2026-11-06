@@ -3458,7 +3458,11 @@ button {
   font-weight: 650;
   line-height: 1.2;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
 }
 
 .ui-button:focus-visible {
@@ -3536,14 +3540,20 @@ button {
 }
 
 @keyframes ui-button-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-button { transition: none; }
-  .ui-button__spinner { animation-duration: 1400ms; }
-}
+  .ui-button {
+    transition: none;
+  }
 
+  .ui-button__spinner {
+    animation-duration: 1400ms;
+  }
+}
 
 /* Accessible shared form and feedback primitives */
 .ui-text-field {
@@ -3568,7 +3578,9 @@ button {
   background: #fffefa;
   color: #24271f;
   font: inherit;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .ui-text-field__input:focus-visible {
@@ -3635,5 +3647,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-text-field__input { transition: none; }
+  .ui-text-field__input {
+    transition: none;
+  }
 }
