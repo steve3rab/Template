@@ -230,16 +230,19 @@ describe('Stripe payment routes', () => {
       'fetch',
       vi.fn()
         .mockResolvedValueOnce(
-          new Response(JSON.stringify({
-            id: 'cs_test_123',
-            payment_status: 'paid',
-            amount_total: 5000,
-            currency: 'eur',
-            payment_intent: 'pi_test_123',
-          }), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
+          new Response(
+            JSON.stringify({
+              id: 'cs_test_123',
+              payment_status: 'paid',
+              amount_total: 5000,
+              currency: 'eur',
+              payment_intent: 'pi_test_123',
+            }),
+            {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
         )
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ data: [] }), {
