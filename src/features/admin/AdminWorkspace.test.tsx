@@ -67,14 +67,16 @@ describe('AdminWorkspace', () => {
         }),
       )
       .mockResolvedValueOnce(jsonResponse({ transactions: [] }))
-      .mockResolvedValueOnce(jsonResponse({
-        checkedAt: '2026-11-06T12:00:00.000Z',
-        checkedOrders: 1,
-        matched: 1,
-        discrepancies: 0,
-        unverified: 0,
-        results: [{ orderId: 'order-12345678', state: 'MATCHED', issues: [] }],
-      }));
+      .mockResolvedValueOnce(
+        jsonResponse({
+          checkedAt: '2026-11-06T12:00:00.000Z',
+          checkedOrders: 1,
+          matched: 1,
+          discrepancies: 0,
+          unverified: 0,
+          results: [{ orderId: 'order-12345678', state: 'MATCHED', issues: [] }],
+        }),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AdminWorkspace />);
