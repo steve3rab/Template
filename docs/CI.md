@@ -31,14 +31,17 @@ npm run test:e2e
 
 La commande `npm run check` regroupe typecheck, lint, format, couverture frontend et backend, puis les deux builds. Les tests E2E restent séparés.
 
-Sous Windows, le menu interactif `.\\scripts\\menu.ps1` propose aussi :
+Sous Windows, le menu interactif `.\\scripts\\menu.ps1` est organisé en rubriques : démarrage/arrêt, qualité et build, tests et charge, base de données, Docker et maintenance. Il appelle les mêmes scripts PowerShell que les commandes directes, avec un retour au menu après chaque action.
 
-- **1** : préparer le projet (installation, génération Prisma et migrations), sans lancer de tests.
-- **17** : exécuter les mêmes étapes que l'option 1, puis créer/réinitialiser les comptes de test locaux avec `npm run db:seed:test-users`.
+- `setup.ps1` utilise `npm ci` pour une installation reproductible, vérifie les versions Node/npm, contrôle les processus Node du dépôt, génère les deux clients Prisma, applique les migrations puis vérifie leur statut et la parité des schémas.
+- `dev-all.ps1` contrôle les ports, démarre l'API puis le frontend dans des fenêtres distinctes et vérifie que les ports deviennent actifs.
+- `stop-dev-all.ps1` retrouve les fenêtres démarrées par les scripts du dépôt et arrête leurs arbres de processus (Node inclus).
+- `seed-test-users.ps1` demande un mot de passe masqué et ne l'écrit pas dans les arguments de commande ni dans un fichier.
+- `test.ps1 -Mode` propose `All`, `Unit`, `Integration`, `Coverage`, `E2E`, `LoadSmoke` et `LoadStress`.
 
-L'option 17 est réservée au développement local. Le seed refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Avant de lancer les options 1 ou 17 sous Windows, arrêtez les serveurs frontend/backend et les tests encore actifs. `setup.ps1` recherche les processus `node.exe` dont la ligne de commande référence le dépôt et interrompt la préparation en affichant leurs PID ; cela évite que le moteur natif Prisma chargé provoque `EPERM: operation not permitted, rename` pendant la génération du client. Si l'erreur survient malgré tout, fermez les autres processus Node.js du dépôt puis relancez la commande.
+Avant une préparation Prisma sous Windows, arrêtez les serveurs et tests encore actifs. `setup.ps1` recherche les processus `node.exe` dont la ligne de commande référence le dépôt et interrompt la préparation en affichant leurs PID ; cela évite que le moteur natif Prisma chargé provoque `EPERM: operation not permitted, rename`. Utilisez `.\\scripts\\stop-dev-all.ps1` pour les serveurs démarrés par le menu ; fermez manuellement les autres processus Node du dépôt.
 
-Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en repli ; l'origine configurée est conservée afin que le seed puisse refuser une cible distante. Le seed utilise le mot de passe de démonstration documenté dans le README ; ne le réutilisez jamais hors de votre machine de développement.
+Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en repli. Il refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Le mot de passe masqué fourni au script PowerShell est transmis via `TEST_USERS_PASSWORD` uniquement pour le processus du seed ; ne créez jamais ces comptes sur un environnement distant.
 
 ## Accessibilité et tests de charge
 
