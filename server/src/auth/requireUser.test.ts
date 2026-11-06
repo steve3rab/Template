@@ -48,7 +48,13 @@ describe('requireUser', () => {
     const resolveUser = vi.fn().mockResolvedValue(user);
 
     await expect(
-      requireUser(request, reply as unknown as FastifyReply, prisma, resolveUser, ['SELLER', 'ADMIN']),
+      requireUser(
+        request,
+        reply as unknown as FastifyReply,
+        prisma,
+        resolveUser,
+        ['SELLER', 'ADMIN'],
+      ),
     ).resolves.toBeNull();
 
     expect(reply.code).toHaveBeenCalledWith(403);
