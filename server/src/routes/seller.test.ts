@@ -369,7 +369,9 @@ describe('seller data isolation and route validation', () => {
     expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
-  it('blocks cancelling partially refunded orders until the remaining balance is refunded', async () => {
+  it(
+    'blocks cancelling partially refunded orders until the remaining balance is refunded',
+    async () => {
     const { orderFindFirst, orderUpdateMany } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
@@ -430,7 +432,9 @@ describe('seller data isolation and route validation', () => {
     expect(orderUpdateMany).not.toHaveBeenCalled();
   });
 
-  it('cancels an unpaid order without a payment session and restores linked product stock', async () => {
+  it(
+    'cancels an unpaid order without a payment session and restores linked product stock',
+    async () => {
     const { orderFindFirst, orderUpdateMany, txProductUpdate, prisma } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
