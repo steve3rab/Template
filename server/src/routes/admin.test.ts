@@ -10,7 +10,7 @@ const seller = { id: 'seller-1', role: 'SELLER' } as User;
 let app: FastifyInstance;
 
 function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> = {}) {
-  const user = role === 'ADMIN' ? admin : seller;
+  const user = role === 'ADMIN' ? admin : role === 'SELLER' ? seller : ({ id: 'customer-1', role: 'CUSTOMER' } as User);
   const userFindUnique = vi.fn(async () => ({ id: 'target-user' }));
   const userUpdate = vi.fn(async () => ({
     id: 'target-user',
@@ -280,4 +280,27 @@ describe('admin role management', () => {
       where: { userId: 'target-user' },
     });
   });
+  it.each(['SELLER', 'CUSTOMER'] as const)(
+    'denies %s from every administrator route before database access',
+    async (role) => {
+      const { userFindUnique, userUpdate, userCount, productCount, orderCount } = setup(role);
+      await app.ready();
+
+      const responses = await Promise.all([
+        app.inject({ method: 'GET', url: '/api/admin/me' }),
+        app.inject({ method: 'GET', url: '/api/admin/dashboard' }),
+        app.inject({ method: 'GET', url: '/api/admin/users' }),
+        app.inject({ method: 'PATCH', url: '/api/admin/products/product-1/visibility', payload: { active: false } }),
+        app.inject({ method: 'POST', url: '/api/admin/users/target-user/role', payload: { role: 'SELLER' } }),
+      ]);
+
+      expect(responses.map((response) => response.statusCode)).toEqual([403, 403, 403, 403, 403]);
+      expect(userFindUnique).not.toHaveBeenCalled();
+      expect(userUpdate).not.toHaveBeenCalled();
+      expect(userCount).not.toHaveBeenCalled();
+      expect(productCount).not.toHaveBeenCalled();
+      expect(orderCount).not.toHaveBeenCalled();
+    },
+  );
+
 });
