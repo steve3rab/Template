@@ -167,16 +167,16 @@ export function App() {
   const productDescription = (product: Product) => {
     if (language === 'fr') return product.description;
     const demoDescriptions: Record<string, string> = {
-      '1': 'A structured cut, easy to wear from morning to evening.',
-      '2': 'Everyday comfort with a minimalist silhouette.',
-      '3': 'A compact, practical bag to keep your essentials close at hand.',
-      '4': 'Soft knitwear with a relaxed fit.',
-      '5': 'A graphic touch for sunny days.',
-      '6': 'Clean lines that work with every outfit.',
-      '7': 'A lightweight shirt designed for layering.',
-      '8': 'A simple finishing touch that transforms a look.',
+      'Veste Studio': 'A structured cut, easy to wear from morning to evening.',
+      'Sneakers Everyday': 'Everyday comfort with a minimalist silhouette.',
+      'Sac Épure': 'A compact, practical bag to keep your essentials close at hand.',
+      'Pull Essentiel': 'Soft knitwear with a relaxed fit.',
+      'Lunettes Soleil': 'A graphic touch for sunny days.',
+      'Baskets City': 'Clean lines that work with every outfit.',
+      'Chemise Relax': 'A lightweight shirt designed for layering.',
+      'Casquette Club': 'A simple finishing touch that transforms a look.',
     };
-    return demoDescriptions[product.id] ?? product.description;
+    return demoDescriptions[product.name] ?? product.description;
   };
   const categoryLabel = (category: string) => {
     if (language === 'fr') return category;
