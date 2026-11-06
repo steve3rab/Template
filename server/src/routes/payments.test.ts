@@ -387,6 +387,37 @@ describe('Stripe payment routes', () => {
     expect(second.json().refund.id).toBe('re_retry_123');
   });
 
+  it('blocks a different refund request while an earlier refund is pending', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(1000, async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    vi.mocked(prisma.financialTransactionFindFirst)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'pending-refund-1',
+        stripeObjectId: 'pending-stripe-key',
+        requestKey: '00000000-0000-4000-8000-000000000009',
+        status: 'PENDING',
+        amountCents: 1200,
+      } as never);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: {
+        amountCents: 800,
+        requestKey: '00000000-0000-4000-8000-000000000010',
+      },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toMatch(/another refund is still being processed/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
