@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { PRODUCT_CATEGORIES } from '../../shared/categories';
 import { translateText, type Language } from '../../shared/i18n';
@@ -15,9 +15,7 @@ import {
 } from '../../shared/api/client';
 
 export function SellerWorkspace({ range, language = 'fr' }: { range: string; language?: Language }) {
-  const languageRef = useRef(language);
-  languageRef.current = language;
-  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const categoryLabel = (value: string) => {
     if (language === 'fr') return value;
