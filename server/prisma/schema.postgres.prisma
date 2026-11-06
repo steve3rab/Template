@@ -172,6 +172,7 @@ model FinancialTransaction {
   id             String   @id @default(cuid())
   orderId        String
   stripeObjectId String   @unique
+  requestKey     String?  @unique
   type           String
   status         String   @default("SUCCEEDED")
   amountCents    Int
