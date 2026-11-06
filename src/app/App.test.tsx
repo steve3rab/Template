@@ -317,5 +317,4 @@ describe('Fashion storefront', () => {
       screen.queryByRole('button', { name: /réinitialiser les filtres/i }),
     ).not.toBeInTheDocument();
   });
-
 });
