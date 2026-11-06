@@ -196,8 +196,12 @@ describe('Fashion storefront', () => {
     await user.click(screen.getByRole('button', { name: 'English' }));
     expect(document.documentElement.lang).toBe('en');
     expect(window.localStorage.getItem('template-react-language')).toBe('en');
+    expect(screen.getByText(/Effortless/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search products' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Français' }));
     expect(document.documentElement.lang).toBe('fr');
+    expect(screen.getByText(/Le style, en/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rechercher un produit' })).toBeInTheDocument();
   });
 
   it('reuses a saved delivery address and explains the shipping amount', async () => {
