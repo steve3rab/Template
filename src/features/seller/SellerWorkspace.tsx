@@ -43,6 +43,7 @@ export function SellerWorkspace({
   const [price, setPrice] = useState('29.90');
   const [stock, setStock] = useState('10');
   const [images, setImages] = useState<string[]>([]);
+  const [imagesLoading, setImagesLoading] = useState(false);
   const [sizes, setSizes] = useState('');
   const [length, setLength] = useState('');
   const [width, setWidth] = useState('');
@@ -404,9 +405,26 @@ export function SellerWorkspace({
               accept="image/png,image/jpeg,image/webp"
               multiple
               onChange={(event) => {
-                const files = Array.from(event.target.files ?? []).slice(0, 5);
+                const selectedFiles = Array.from(event.target.files ?? []);
+                const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+                if (selectedFiles.length > 5 || selectedFiles.some((file) => !allowedTypes.includes(file.type))) {
+                  window.dispatchEvent(
+                    new CustomEvent('template-toast', {
+                      detail: {
+                        message: t(
+                          'Sélectionnez au maximum 5 images PNG, JPEG ou WebP.',
+                          'Select up to 5 PNG, JPEG or WebP images.',
+                        ),
+                        type: 'error',
+                      },
+                    }),
+                  );
+                  event.target.value = '';
+                  return;
+                }
+                setImagesLoading(true);
                 void Promise.all(
-                  files.map(
+                  selectedFiles.map(
                     (file) =>
                       new Promise<string>((resolve, reject) => {
                         if (file.size > 1_200_000) {
@@ -447,7 +465,8 @@ export function SellerWorkspace({
                         },
                       }),
                     ),
-                  );
+                  )
+                  .finally(() => setImagesLoading(false));
               }}
             />
             <span className="field-hint">
@@ -456,6 +475,11 @@ export function SellerWorkspace({
                 'PNG, JPEG or WebP · 1.2 MB maximum per image.',
               )}
             </span>
+            {imagesLoading && (
+              <span className="workspace-loading" role="status" aria-live="polite">
+                {t('Préparation des photos…', 'Preparing images…')}
+              </span>
+            )}
             {images.length > 0 && (
               <div className="product-image-previews">
                 {images.map((image, index) => (
@@ -576,8 +600,12 @@ export function SellerWorkspace({
               />
             </label>
           </div>
-          <button className="dark-button" type="submit" disabled={busy}>
-            {busy ? t('Enregistrement…', 'Saving…') : t('Créer le produit', 'Create product')}
+          <button className="dark-button" type="submit" disabled={busy || imagesLoading}>
+            {busy
+              ? t('Enregistrement…', 'Saving…')
+              : imagesLoading
+                ? t('Préparation des photos…', 'Preparing images…')
+                : t('Créer le produit', 'Create product')}
           </button>
         </form>
       </section>
