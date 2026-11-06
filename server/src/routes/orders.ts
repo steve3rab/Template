@@ -101,7 +101,10 @@ export function registerCustomerOrderRoutes(
     return {
       orders: await prisma.order.findMany({
         where: { userId: user.id },
-        include: { items: true },
+        include: {
+          items: true,
+          financialTransactions: { orderBy: { createdAt: 'asc' } },
+        },
         orderBy: { createdAt: 'desc' },
       }),
     };
