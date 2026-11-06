@@ -13,7 +13,7 @@ function extractModels(schema, path) {
   }
 
   if (models.size === 0) {
-    throw new Error(\`No Prisma models found in \${path}\`);
+    throw new Error('No Prisma models found in ' + path);
   }
   return models;
 }
@@ -27,7 +27,7 @@ let hasDrift = false;
 
 for (const name of modelNames) {
   if (sqliteModels.get(name) !== postgresModels.get(name)) {
-    console.error(\`Prisma model drift detected: \${name}\`);
+    console.error('Prisma model drift detected: ' + name);
     hasDrift = true;
   }
 }
@@ -35,5 +35,5 @@ for (const name of modelNames) {
 if (hasDrift) {
   process.exitCode = 1;
 } else {
-  console.log(\`Prisma schema parity verified: \${sqliteModels.size} models match.\`);
+  console.log('Prisma schema parity verified: ' + sqliteModels.size + ' models match.');
 }
