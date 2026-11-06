@@ -20,7 +20,8 @@ function New-MenuItem {
         [string]$Label,
         [ValidateSet('Npm', 'Script')][string]$Kind,
         [string]$Target,
-        [string[]]$Arguments = @()
+        [string[]]$Arguments = @(),
+        [switch]$ConfirmFirst
     )
     [pscustomobject]@{
         Key = $Key
@@ -28,6 +29,7 @@ function New-MenuItem {
         Kind = $Kind
         Target = $Target
         Arguments = $Arguments
+        ConfirmFirst = [bool]$ConfirmFirst
     }
 }
 
@@ -51,6 +53,14 @@ function Invoke-MenuAction {
 
     Write-Host ''
     Write-Host ("> " + $Item.Label) -ForegroundColor Cyan
+    if ($Item.ConfirmFirst) {
+        $answer = (Read-Host 'Cette opération peut être longue ou modifier des données. Continuer ? (O/N)').Trim()
+        if ($answer -notin @('O', 'o', 'Oui', 'oui', 'Y', 'y', 'Yes', 'yes')) {
+            Write-Host 'Opération annulée.' -ForegroundColor Yellow
+            [void](Read-Host 'Entrée pour revenir au menu')
+            return
+        }
+    }
     try {
         if ($Item.Kind -eq 'Npm') {
             $npmArguments = @($Item.Arguments)
@@ -102,7 +112,7 @@ function Invoke-MenuCategory {
 }
 
 $startupItems = @(
-    (New-MenuItem '1' 'Installer / préparer le projet (npm ci, Prisma, migrations)' Script 'setup.ps1'),
+    (New-MenuItem '1' 'Installer / préparer le projet (npm ci, Prisma, migrations)' Script 'setup.ps1' -ConfirmFirst),
     (New-MenuItem '2' 'Démarrer frontend + backend dans deux fenêtres' Script 'dev-all.ps1'),
     (New-MenuItem '3' 'Arrêter frontend + backend lancés par le menu' Script 'stop-dev-all.ps1'),
     (New-MenuItem '4' 'Démarrer le frontend uniquement' Script 'dev.ps1'),
@@ -110,7 +120,7 @@ $startupItems = @(
     (New-MenuItem '6' 'Construire puis prévisualiser le frontend' Script 'preview.ps1')
 )
 $qualityItems = @(
-    (New-MenuItem '1' 'Contrôle complet (types, lint, format, couverture, builds)' Script 'check.ps1'),
+    (New-MenuItem '1' 'Contrôle complet (types, lint, format, couverture, builds)' Script 'check.ps1' -ConfirmFirst),
     (New-MenuItem '2' 'Vérifier TypeScript' Npm '' @('run', 'typecheck')),
     (New-MenuItem '3' 'Vérifier ESLint' Npm '' @('run', 'lint')),
     (New-MenuItem '4' 'Corriger automatiquement ESLint' Npm '' @('run', 'lint:fix')),
@@ -123,16 +133,16 @@ $testItems = @(
     (New-MenuItem '1' 'Tests unitaires frontend' Script 'test.ps1' @('-Mode', 'Unit')),
     (New-MenuItem '2' 'Tests d’intégration backend' Script 'test.ps1' @('-Mode', 'Integration')),
     (New-MenuItem '3' 'Tous les tests Vitest' Script 'test.ps1' @('-Mode', 'All')),
-    (New-MenuItem '4' 'Couverture frontend + backend avec seuils' Script 'test.ps1' @('-Mode', 'Coverage')),
-    (New-MenuItem '5' 'Tests E2E Playwright' Script 'test.ps1' @('-Mode', 'E2E')),
+    (New-MenuItem '4' 'Couverture frontend + backend avec seuils' Script 'test.ps1' @('-Mode', 'Coverage') -ConfirmFirst),
+    (New-MenuItem '5' 'Tests E2E Playwright' Script 'test.ps1' @('-Mode', 'E2E') -ConfirmFirst),
     (New-MenuItem '6' 'Installer Chromium pour Playwright' Npm '' @('exec', '--', 'playwright', 'install', 'chromium')),
     (New-MenuItem '7' 'Test de charge k6 (smoke, serveur local par défaut)' Script 'test.ps1' @('-Mode', 'LoadSmoke')),
-    (New-MenuItem '8' 'Test de charge k6 (stress, BASE_URL requis)' Script 'test.ps1' @('-Mode', 'LoadStress'))
+    (New-MenuItem '8' 'Test de charge k6 (stress, BASE_URL requis)' Script 'test.ps1' @('-Mode', 'LoadStress') -ConfirmFirst)
 )
 $databaseItems = @(
     (New-MenuItem '1' 'Générer les clients Prisma SQLite + PostgreSQL' Npm '' @('run', 'db:generate')),
     (New-MenuItem '2' 'Vérifier l’état des migrations SQLite' Npm '' @('run', 'db:status')),
-    (New-MenuItem '3' 'Appliquer les migrations existantes' Npm '' @('run', 'db:deploy')),
+    (New-MenuItem '3' 'Appliquer les migrations existantes' Npm '' @('run', 'db:deploy') -ConfirmFirst),
     (New-MenuItem '4' 'Créer une migration en développement' Npm '' @('run', 'db:migrate')),
     (New-MenuItem '5' 'Vérifier la parité des schémas SQLite/PostgreSQL' Npm '' @('run', 'db:check-schema-parity')),
     (New-MenuItem '6' 'Créer / réinitialiser les comptes de test (mot de passe demandé)' Script 'seed-test-users.ps1')
