@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, useRef, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { PRODUCT_CATEGORIES } from '../../shared/categories';
 import { translateText, type Language } from '../../shared/i18n';
@@ -15,7 +15,9 @@ import {
 } from '../../shared/api/client';
 
 export function SellerWorkspace({ range, language = 'fr' }: { range: string; language?: Language }) {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -67,7 +69,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         }),
       );
     }
-  }, [range]);
+  }, [range, language]);
 
   useEffect(() => {
     void Promise.resolve()
