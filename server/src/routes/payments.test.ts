@@ -326,14 +326,14 @@ describe('Stripe payment routes', () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { status: 500 }))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123' }), {
+        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123', amount_total: 5000, currency: 'eur' }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
         }),
       )
       .mockRejectedValueOnce(new Error('network timeout'))
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123' }), {
+        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123', amount_total: 5000, currency: 'eur' }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
         }),
