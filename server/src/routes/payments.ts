@@ -640,6 +640,20 @@ export function registerPaymentRoutes(
     }
 
     const refund = stripeRefundSchema.safeParse(await refundResponse.json().catch(() => null));
+    if (
+      refundResponse.status >= 500 ||
+      refundResponse.status === 429 ||
+      (refundResponse.ok && !refund.success)
+    ) {
+      request.log.error(
+        { statusCode: refundResponse.status },
+        'Stripe refund result is uncertain; durable refund intent retained.',
+      );
+      return reply.code(202).send({
+        pending: true,
+        message: 'Stripe refund result is uncertain. Retry will reuse the same request key.',
+      });
+    }
     if (!refundResponse.ok || !refund.success) {
       if (!isRetry) {
         await prisma.$transaction(async (tx) => {
