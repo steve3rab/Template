@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import type { Language } from '../../shared/i18n';
+import { TextField } from '../../shared/components/TextField';
 import { translations } from '../../shared/i18n';
 
 type User = { id: string; publicId: string; email: string; role: string; createdAt: string };
@@ -206,18 +207,17 @@ export function AuthPanel({
           >
             {checkingSession && !user ? t.authLoading : '\u00a0'}
           </p>
-          <label>
-            {t.authEmail}
-            <input
-              autoComplete="email"
-              type="email"
-              name="email"
-              required
-              maxLength={254}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </label>
+          <TextField
+            className="auth-form-input"
+            label={t.authEmail}
+            autoComplete="email"
+            type="email"
+            name="email"
+            required
+            maxLength={254}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
           {mode !== 'reset' && mode !== 'verify' && (
             <label>
               {t.authPassword}
@@ -245,24 +245,23 @@ export function AuthPanel({
             </label>
           )}
           {mode === 'verify' && (
-            <label>
-              {t.authVerificationCode}
-              <input
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                type="text"
-                name="verificationCode"
-                required
-                minLength={10}
-                maxLength={10}
-                pattern="[0-9]{10}"
-                value={verificationCode}
-                onChange={(event) =>
-                  setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 10))
-                }
-              />
-              <span className="field-hint">{t.authVerificationHint}</span>
-            </label>
+            <TextField
+              className="auth-form-input"
+              label={t.authVerificationCode}
+              hint={t.authVerificationHint}
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              type="text"
+              name="verificationCode"
+              required
+              minLength={10}
+              maxLength={10}
+              pattern="[0-9]{10}"
+              value={verificationCode}
+              onChange={(event) =>
+                setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 10))
+              }
+            />
           )}
           <button
             className="primary-button"
