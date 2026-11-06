@@ -368,12 +368,6 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         </button>
       </nav>
 
-      {error && (
-        <p className="admin-error" role="alert">
-          {error}
-        </p>
-      )}
-
       {loading ? (
         <p>{t('Chargement des données…', 'Loading data…')}</p>
       ) : (
