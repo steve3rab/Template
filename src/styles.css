@@ -3650,3 +3650,53 @@ button {
     transition: none;
   }
 }
+
+
+/* Recoverable loading and error states for customer and seller workspaces */
+.workspace-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 16px;
+  border: 1px solid #e5e5da;
+  border-radius: 6px;
+  background: #fbfaf5;
+  color: #555d49;
+  font-size: 0.9rem;
+}
+
+.workspace-loading::before {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: '';
+  animation: ui-button-spin 800ms linear infinite;
+}
+
+.workspace-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e6c7c1;
+  border-radius: 6px;
+  background: #fff4f1;
+  color: #873f35;
+  line-height: 1.5;
+}
+
+.workspace-error p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-loading::before {
+    animation-duration: 1600ms;
+  }
+}
