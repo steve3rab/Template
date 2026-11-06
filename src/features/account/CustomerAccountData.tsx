@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
+import { translateText, type Language } from '../../shared/i18n';
 
 import {
   apiRequest,
@@ -9,44 +10,47 @@ import {
   type SellerOrder as Order,
 } from '../../shared/api/client';
 
-function orderStatusLabel(status: Order['status'], paymentStatus: string): string {
+function orderStatusLabel(status: Order['status'], paymentStatus: string, language: Language): string {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   switch (status) {
     case 'PENDING':
       if (paymentStatus.toUpperCase() === 'PAID') {
-        return 'Paiement confirmé · préparation à venir';
+        return t('Paiement confirmé · préparation à venir', 'Payment confirmed · processing soon');
       }
       return paymentStatus.toUpperCase() === 'UNPAID'
-        ? 'En attente de paiement'
-        : 'Commande en cours de confirmation';
+        ? t('En attente de paiement', 'Awaiting payment')
+        : t('Commande en cours de confirmation', 'Order confirmation in progress');
     case 'PROCESSING':
-      return 'En préparation';
+      return t('En préparation', 'Processing');
     case 'SHIPPED':
-      return 'Expédiée';
+      return t('Expédiée', 'Shipped');
     case 'DELIVERED':
-      return 'Livrée';
+      return t('Livrée', 'Delivered');
     case 'CANCELLED':
-      return 'Annulée';
+      return t('Annulée', 'Cancelled');
   }
 }
 
-function paymentStatusLabel(status: string): string {
+function paymentStatusLabel(status: string, language: Language): string {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   switch (status.toUpperCase()) {
     case 'PAID':
-      return 'Payé';
+      return t('Payé', 'Paid');
     case 'UNPAID':
-      return 'À régler';
+      return t('À régler', 'Unpaid');
     case 'REFUNDED':
-      return 'Remboursé';
+      return t('Remboursé', 'Refunded');
     case 'PARTIALLY_REFUNDED':
-      return 'Partiellement remboursé';
+      return t('Partiellement remboursé', 'Partially refunded');
     case 'FAILED':
-      return 'Échec du paiement';
+      return t('Échec du paiement', 'Payment failed');
     default:
-      return 'Statut indisponible';
+      return t('Statut indisponible', 'Status unavailable');
   }
 }
 
-export function CustomerAccountData() {
+export function CustomerAccountData({ language = 'fr' }: { language?: Language }) {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
@@ -74,7 +78,7 @@ export function CustomerAccountData() {
       if (version !== loadVersion.current) return;
       setLoadFailed(true);
       setMessage(
-        'Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.',
+        t('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.', 'Unable to load your orders and addresses. Check your connection and try again.'),
       );
     }
   }, []);
@@ -136,7 +140,7 @@ export function CustomerAccountData() {
       });
       window.location.assign(checkout.checkoutUrl);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Impossible de préparer le paiement.');
+      setMessage(error instanceof Error ? error.message : t('Impossible de préparer le paiement.', 'Unable to prepare payment.'));
       setCheckoutPending(false);
     }
   }
@@ -159,11 +163,11 @@ export function CustomerAccountData() {
         }),
       });
     } catch {
-      setMessage('Adresse non enregistrée. Vérifiez les champs.');
+      setMessage(t('Adresse non enregistrée. Vérifiez les champs.', 'Address not saved. Check the fields.'));
       return;
     }
     formElement.reset();
-    setMessage('Adresse enregistrée.');
+    setMessage(t('Adresse enregistrée.', 'Address saved.'));
     await load();
   }
 
@@ -174,20 +178,20 @@ export function CustomerAccountData() {
       });
       await load();
     } catch {
-      setMessage('Impossible de supprimer cette adresse.');
+      setMessage(t('Impossible de supprimer cette adresse.', 'Unable to delete this address.'));
     }
   }
 
   return (
     <section className="seller-panel" style={{ marginTop: 24 }}>
-      <h2>Mes commandes et adresses</h2>
+      <h2>{t('Mes commandes et adresses', 'My orders and addresses')}</h2>
       {!available && !loadFailed ? (
-        <p>Connectez-vous pour consulter votre historique et vos adresses enregistrées.</p>
+        <p>{t('Connectez-vous pour consulter votre historique et vos adresses enregistrées.', 'Sign in to view your order history and saved addresses.')}</p>
       ) : loadFailed ? (
         <p role="alert">{message}</p>
       ) : (
         <>
-          <h3>Historique des commandes</h3>
+          <h3>{t('Historique des commandes', 'Order history')}</h3>
           {orders.some(
             (order) => order.paymentStatus === 'UNPAID' && order.status === 'PENDING',
           ) && (
@@ -197,20 +201,20 @@ export function CustomerAccountData() {
               disabled={checkoutPending}
               onClick={() => void payUnpaidOrders()}
             >
-              {checkoutPending ? 'Préparation du paiement…' : 'Payer mes commandes en attente'}
+              {checkoutPending ? t('Préparation du paiement…', 'Preparing payment…') : t('Payer mes commandes en attente', 'Pay my outstanding orders')}
             </button>
           )}
           {orders.length === 0 ? (
-            <p>Vous n’avez pas encore de commande.</p>
+            <p>{t('Vous n’avez pas encore de commande.', 'You have no orders yet.')}</p>
           ) : (
             orders.map((order) => (
               <article className="best-seller-row" key={order.id}>
                 <div className="best-seller-name">
-                  <strong>Commande {order.id.slice(-8)}</strong>
+                  <strong>{t('Commande', 'Order')} {order.id.slice(-8)}</strong>
                   <span>
-                    {new Date(order.createdAt).toLocaleDateString('fr-FR')} ·{' '}
-                    {orderStatusLabel(order.status, order.paymentStatus)} · Paiement :{' '}
-                    {paymentStatusLabel(order.paymentStatus)}
+                    {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')} ·{' '}
+                    {orderStatusLabel(order.status, order.paymentStatus, language)} · {t('Paiement :', 'Payment:')}{' '}
+                    {paymentStatusLabel(order.paymentStatus, language)}
                   </span>
                   <span>
                     {order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ')}
@@ -219,12 +223,12 @@ export function CustomerAccountData() {
                 <div>
                   <strong>{formatCents(order.totalCents)}</strong>
                   {order.financialTransactions && order.financialTransactions.length > 0 && (
-                    <div className="financial-history" aria-label="Historique financier">
+                    <div className="financial-history" aria-label={t('Historique financier', 'Financial history')}>
                       {order.financialTransactions.map((transaction) => (
                         <span key={transaction.id}>
-                          {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} ·{' '}
+                          {transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} ·{' '}
                           {formatCents(transaction.amountCents)} ·{' '}
-                          {transaction.status === 'PENDING' ? 'En cours' : 'Confirmé'}
+                          {transaction.status === 'PENDING' ? t('En cours', 'Pending') : t('Confirmé', 'Confirmed')}
                         </span>
                       ))}
                     </div>
@@ -233,13 +237,13 @@ export function CustomerAccountData() {
               </article>
             ))
           )}
-          <h3 style={{ marginTop: 24 }}>Adresses enregistrées</h3>
+          <h3 style={{ marginTop: 24 }}>{t('Adresses enregistrées', 'Saved addresses')}</h3>
           {addresses.map((address) => (
             <article className="best-seller-row" key={address.id}>
               <div className="best-seller-name">
                 <strong>
                   {address.label}
-                  {address.isDefault ? ' · Par défaut' : ''}
+                  {address.isDefault ? ` · ${t('Par défaut', 'Default')}` : ''}
                 </strong>
                 <span>
                   {address.recipient}, {address.line1}, {address.postalCode} {address.city},{' '}
@@ -247,7 +251,7 @@ export function CustomerAccountData() {
                 </span>
               </div>
               <button className="text-action" onClick={() => void removeAddress(address.id)}>
-                Supprimer
+                {t('Supprimer', 'Delete')}
               </button>
             </article>
           ))}
@@ -256,31 +260,31 @@ export function CustomerAccountData() {
             onSubmit={(event) => void addAddress(event)}
             style={{ marginTop: 16 }}
           >
-            <h3>Ajouter une adresse</h3>
+            <h3>{t('Ajouter une adresse', 'Add an address')}</h3>
             <label>
-              Libellé
+              {t('Libellé', 'Label')}
               <input name="label" defaultValue="Domicile" required maxLength={60} />
             </label>
             <label>
-              Destinataire
+              {t('Destinataire', 'Recipient')}
               <input name="recipient" required minLength={2} maxLength={120} />
             </label>
             <label>
-              Adresse
+              {t('Adresse', 'Address')}
               <input name="line1" required minLength={3} maxLength={180} />
             </label>
             <div className="form-two-col">
               <label>
-                Code postal
+                {t('Code postal', 'Postal code')}
                 <input name="postalCode" required maxLength={20} />
               </label>
               <label>
-                Ville
+                {t('Ville', 'City')}
                 <input name="city" required maxLength={100} />
               </label>
             </div>
             <button className="dark-button" type="submit">
-              Enregistrer l’adresse
+              {t('Enregistrer l’adresse', 'Save address')}
             </button>
           </form>
         </>
