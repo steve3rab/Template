@@ -296,4 +296,26 @@ describe('Fashion storefront', () => {
       screen.getByText(/connectez-vous ou créez un compte pour finaliser votre commande/i),
     ).toBeInTheDocument();
   });
+
+  it('explains when the live catalogue is empty instead of suggesting filter changes', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/products') return apiResponse({ products: [] });
+        if (url === '/api/auth/me') return apiResponse({ error: 'Not authenticated.' }, 401);
+        return apiResponse({ error: 'Not found.' }, 404);
+      }),
+    );
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('heading', { name: /aucun produit disponible pour le moment/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /réinitialiser les filtres/i }),
+    ).not.toBeInTheDocument();
+  });
+
 });
