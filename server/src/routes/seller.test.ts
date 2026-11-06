@@ -474,6 +474,7 @@ describe('seller data isolation and route validation', () => {
       });
     },
   );
+
   it('does not restore stock when a concurrent order update wins first', async () => {
     const { orderFindFirst, orderUpdateMany, txProductUpdate } = setup();
     orderFindFirst.mockResolvedValueOnce({
