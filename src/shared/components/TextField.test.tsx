@@ -26,7 +26,7 @@ describe('shared TextField', () => {
         error="Mot de passe trop court"
       />,
     );
-    const input = screen.getByLabelText('Mot de passe *');
+    const input = screen.getByLabelText('Mot de passe');
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAttribute('aria-describedby', 'password-hint password-error');
     expect(screen.getByText('12 caractères minimum')).toHaveAttribute('id', 'password-hint');
