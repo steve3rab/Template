@@ -61,7 +61,9 @@ function setup(options: SetupOptions = {}) {
 }
 
 describe('createCustomerOrdersFromCart', () => {
-  it('creates an order using database prices and reserves stock in one transaction', async () => {
+  it(
+    'creates an order using database prices and reserves stock in one transaction',
+    async () => {
     const store = setup();
 
     const orders = await createCustomerOrdersFromCart(store.prisma, 'customer-1', address);
