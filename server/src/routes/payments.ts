@@ -26,6 +26,8 @@ const stripeSessionLookupSchema = z.object({
 const stripeRefundSessionSchema = z.object({
   id: z.string().min(1),
   payment_intent: z.string().min(1).nullable(),
+  amount_total: z.number().int().nullable(),
+  currency: z.string().nullable(),
 });
 
 const stripeReconciliationSessionSchema = z.object({
@@ -601,7 +603,13 @@ export function registerPaymentRoutes(
     const checkout = stripeRefundSessionSchema.safeParse(
       await checkoutResponse.json().catch(() => null),
     );
-    if (!checkoutResponse.ok || !checkout.success || !checkout.data.payment_intent) {
+    if (
+      !checkoutResponse.ok ||
+      !checkout.success ||
+      !checkout.data.payment_intent ||
+      checkout.data.amount_total !== order.totalCents ||
+      checkout.data.currency?.toUpperCase() !== order.currency.toUpperCase()
+    ) {
       if (!isRetry) {
         await prisma.$transaction(async (tx) => {
           await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
@@ -666,6 +674,18 @@ export function registerPaymentRoutes(
       }
       request.log.error({ statusCode: refundResponse.status }, 'Stripe refund request failed.');
       return reply.code(502).send({ error: 'Stripe could not process this refund.' });
+    }
+
+    if (
+      refund.data.amount !== amountCents ||
+      refund.data.currency.toUpperCase() !== order.currency.toUpperCase()
+    ) {
+      request.log.error({ orderId: order.id, stripeRefundId: refund.data.id }, 'Stripe refund amount or currency mismatch.');
+      return reply.code(202).send({
+        pending: true,
+        refundId: refund.data.id,
+        message: 'Stripe refund details do not match the requested amount. Manual reconciliation is required.',
+      });
     }
 
     if (refund.data.status !== 'succeeded') {
