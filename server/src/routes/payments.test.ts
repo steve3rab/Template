@@ -24,12 +24,17 @@ let app: FastifyInstance;
 let updateMany: ReturnType<typeof vi.fn>;
 let productUpdateMany: ReturnType<typeof vi.fn>;
 
-function setup(rateLimitMax = 1000, resolveUser: () => Promise<User | null> = async () => customer) {
+function setup(
+  rateLimitMax = 1000,
+  resolveUser: () => Promise<User | null> = async () => customer,
+) {
   updateMany = vi.fn(async () => ({ count: 1 }));
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
   const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
   const webhookEventUpdate = vi.fn(async () => ({ id: 'webhook-event-1' }));
-  const financialTransactionCreate = vi.fn(async (_args: unknown) => ({ id: 'financial-transaction-1' }));
+  const financialTransactionCreate = vi.fn(async (_args: unknown) => ({
+    id: 'financial-transaction-1',
+  }));
   const financialTransactionFindFirst = vi.fn(async () => null);
   const financialTransactionDeleteMany = vi.fn(async () => ({ count: 1 }));
   const financialTransactionUpdate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
@@ -58,7 +63,12 @@ function setup(rateLimitMax = 1000, resolveUser: () => Promise<User | null> = as
   const prisma = {
     order: {
       findMany: vi.fn(async () => [order]),
-      findUnique: vi.fn(async () => ({ ...order, paymentStatus: 'PAID', paymentReference: 'cs_test_123', refundedCents: 0 })),
+      findUnique: vi.fn(async () => ({
+        ...order,
+        paymentStatus: 'PAID',
+        paymentReference: 'cs_test_123',
+        refundedCents: 0,
+      })),
       updateMany,
     },
     product: { updateMany: productUpdateMany },
@@ -263,7 +273,14 @@ describe('Stripe payment routes', () => {
       'fetch',
       vi.fn()
         .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123', amount_total: 5000, currency: 'eur' }), {
+          new Response(
+            JSON.stringify({
+              id: 'cs_test_123',
+              payment_intent: 'pi_test_123',
+              amount_total: 5000,
+              currency: 'eur',
+            }),
+            {
             status: 200,
             headers: { 'content-type': 'application/json' },
           }),
@@ -324,9 +341,19 @@ describe('Stripe payment routes', () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(null, { status: 500 }))
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(null, { status: 500 }),
+    )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123', amount_total: 5000, currency: 'eur' }), {
+        new Response(
+          JSON.stringify({
+            id: 'cs_test_123',
+            payment_intent: 'pi_test_123',
+            amount_total: 5000,
+            currency: 'eur',
+          }),
+          {
           status: 200,
           headers: { 'content-type': 'application/json' },
         }),
@@ -456,7 +483,9 @@ describe('Stripe payment routes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
+  it(
+    'does not call Stripe when another concurrent refund already changed the refund balance',
+    async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
@@ -665,7 +694,9 @@ describe('Stripe payment routes', () => {
     });
   });
 
-  it('does not restore stock twice when Stripe concurrently replays an expiration webhook', async () => {
+  it(
+    'does not restore stock twice when Stripe concurrently replays an expiration webhook',
+    async () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     const prisma = setup();
     updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
