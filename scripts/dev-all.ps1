@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
-    [int]$FrontendPort = 5173,
-    [int]$BackendPort = 3001,
+    [ValidateRange(1, 65535)][int]$FrontendPort = 5173,
+    [ValidateRange(1, 65535)][int]$BackendPort = 3001,
     [switch]$SeedTestUsers
 )
 
@@ -9,64 +9,94 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 Assert-DependenciesInstalled
 
+if ($FrontendPort -eq $BackendPort) {
+    throw 'Les ports frontend et backend doivent être différents.'
+}
+foreach ($port in @($FrontendPort, $BackendPort)) {
+    if (-not (Test-PortAvailable -Port $port)) {
+        throw "Le port $port est déjà utilisé. Arrêtez le service concerné ou choisissez un autre port."
+    }
+}
+
 if ($SeedTestUsers) {
-    if ($env:NODE_ENV -eq 'production') {
-        throw 'La création des comptes de test est interdite lorsque NODE_ENV=production.'
+    & (Join-Path $PSScriptRoot 'seed-test-users.ps1')
+}
+
+$shellPath = if ($PSVersionTable.PSEdition -eq 'Core') {
+    Join-Path $PSHOME 'pwsh.exe'
+}
+else {
+    Join-Path $PSHOME 'powershell.exe'
+}
+if (-not (Test-Path -LiteralPath $shellPath)) {
+    throw "Exécutable PowerShell introuvable : $shellPath"
+}
+
+$frontendScript = Join-Path $PSScriptRoot 'dev.ps1'
+$backendScript = Join-Path $PSScriptRoot 'backend.ps1'
+$previousOrigin = $env:APP_ORIGIN
+$backendProcess = $null
+$frontendProcess = $null
+try {
+    $env:APP_ORIGIN = "http://127.0.0.1:$FrontendPort"
+    $backendArguments = "-NoExit -ExecutionPolicy Bypass -File `"$backendScript`" -Port $BackendPort"
+    $backendProcess = Start-Process -FilePath $shellPath -ArgumentList $backendArguments -WorkingDirectory $script:ProjectRoot -PassThru
+
+    $backendDeadline = (Get-Date).AddSeconds(20)
+    while ((Test-PortAvailable -Port $BackendPort) -and (Get-Date) -lt $backendDeadline) {
+        $backendProcess.Refresh()
+        if ($backendProcess.HasExited) {
+            throw "La fenêtre backend s’est fermée (code $($backendProcess.ExitCode))."
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    if (Test-PortAvailable -Port $BackendPort) {
+        throw "L’API n’écoute pas sur le port $BackendPort après 20 secondes."
     }
 
-    $securePassword = Read-Host 'Mot de passe commun des comptes de test (12 à 128 caractères)' -AsSecureString
-    $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
-    try {
-        $testPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
-        if ($testPassword.Length -lt 12 -or $testPassword.Length -gt 128) {
-            throw 'Le mot de passe doit contenir entre 12 et 128 caractères.'
+    $frontendArguments = "-NoExit -ExecutionPolicy Bypass -File `"$frontendScript`" -Port $FrontendPort"
+    $frontendProcess = Start-Process -FilePath $shellPath -ArgumentList $frontendArguments -WorkingDirectory $script:ProjectRoot -PassThru
+
+    $frontendDeadline = (Get-Date).AddSeconds(20)
+    while ((Test-PortAvailable -Port $FrontendPort) -and (Get-Date) -lt $frontendDeadline) {
+        $frontendProcess.Refresh()
+        if ($frontendProcess.HasExited) {
+            throw "La fenêtre frontend s’est fermée (code $($frontendProcess.ExitCode))."
         }
-
-        $previousAllowSeed = $env:ALLOW_TEST_USER_SEED
-        $previousTestPassword = $env:TEST_USERS_PASSWORD
-        try {
-            $env:ALLOW_TEST_USER_SEED = 'true'
-            $env:TEST_USERS_PASSWORD = $testPassword
-            Write-Host 'Préparation de la base et des comptes de test...' -ForegroundColor Cyan
-            Invoke-Npm -Arguments @('run', 'db:generate')
-            Invoke-Npm -Arguments @('run', 'db:deploy')
-            Invoke-Npm -Arguments @('run', 'db:seed:test-users')
-        }
-        finally {
-            if ($null -eq $previousAllowSeed) {
-                Remove-Item Env:ALLOW_TEST_USER_SEED -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500
+    }
+    if (Test-PortAvailable -Port $FrontendPort) {
+        throw "Le frontend n’écoute pas sur le port $FrontendPort après 20 secondes."
+    }
+}
+catch {
+    foreach ($process in @($frontendProcess, $backendProcess)) {
+        if ($null -ne $process) {
+            $process.Refresh()
+            if (-not $process.HasExited) {
+                $taskkill = Get-Command 'taskkill.exe' -ErrorAction SilentlyContinue
+                if ($taskkill) {
+                    & $taskkill.Source /PID $process.Id /T /F | Out-Null
+                }
+                else {
+                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                }
             }
-            else {
-                $env:ALLOW_TEST_USER_SEED = $previousAllowSeed
-            }
-
-            if ($null -eq $previousTestPassword) {
-                Remove-Item Env:TEST_USERS_PASSWORD -ErrorAction SilentlyContinue
-            }
-            else {
-                $env:TEST_USERS_PASSWORD = $previousTestPassword
-            }
-
-            $testPassword = $null
         }
     }
-    finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
-        $securePassword.Dispose()
+    throw
+}
+finally {
+    if ($null -eq $previousOrigin) {
+        Remove-Item Env:APP_ORIGIN -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:APP_ORIGIN = $previousOrigin
     }
 }
 
-Write-Host 'Démarrage du frontend et du backend dans deux fenêtres PowerShell.' -ForegroundColor Cyan
-$frontend = Join-Path $PSScriptRoot 'dev.ps1'
-$backend = Join-Path $PSScriptRoot 'backend.ps1'
-$frontendCommand = "& '$frontend' -Port $FrontendPort"
-$backendCommand = "`$env:APP_ORIGIN = 'http://127.0.0.1:$FrontendPort'; & '$backend' -Port $BackendPort"
-Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoExit', '-ExecutionPolicy', 'Bypass', '-Command', $backendCommand)
-Start-Sleep -Milliseconds 700
-Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoExit', '-ExecutionPolicy', 'Bypass', '-Command', $frontendCommand)
-Write-Host "Frontend : http://localhost:$FrontendPort" -ForegroundColor Green
-Write-Host "Backend  : http://localhost:$BackendPort/api/health" -ForegroundColor Green
-
-if (-not $SeedTestUsers) {
-    Write-Host 'Comptes de test non modifiés. Pour les créer ou les réinitialiser, relancez avec -SeedTestUsers.' -ForegroundColor Yellow
-}
+Write-Host ''
+Write-Host 'Les deux serveurs sont démarrés dans des fenêtres séparées.' -ForegroundColor Green
+Write-Host "Frontend : http://localhost:$FrontendPort  (PID $($frontendProcess.Id))" -ForegroundColor Cyan
+Write-Host "Backend  : http://127.0.0.1:$BackendPort/api/health  (PID $($backendProcess.Id))" -ForegroundColor Cyan
+Write-Host 'Arrêt groupé : .\scripts\stop-dev-all.ps1' -ForegroundColor Yellow
