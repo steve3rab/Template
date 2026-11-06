@@ -409,7 +409,7 @@ describe('seller data isolation and route validation', () => {
   });
 
   it('cancels an unpaid order without a payment session and restores linked product stock', async () => {
-    const { orderFindFirst, orderUpdate, txProductUpdate, prisma } = setup();
+    const { orderFindFirst, orderUpdateMany, txProductUpdate, prisma } = setup();
     orderFindFirst.mockResolvedValueOnce({
       id: 'order-1',
       status: 'PENDING',
