@@ -3,25 +3,26 @@ param(
     [switch]$InstallPlaywrightBrowsers
 )
 
+$ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 
-# Prisma replaces generated native engine files during "prisma generate".
-# Windows refuses that rename while a project Node.js process has the engine loaded.
+Test-ExternalCommand -Name 'node'
+Test-ExternalCommand -Name 'npm.cmd'
+Assert-Toolchain
+
+# Prisma replaces generated native engine files during generate. Windows refuses
+# that rename while a project Node process still has the engine loaded.
 try {
     $projectNodeProcesses = @(
         Get-CimInstance -ClassName Win32_Process -Filter "Name = 'node.exe'" |
             Where-Object {
                 $_.CommandLine -and
-                $_.CommandLine.IndexOf(
-                    $script:ProjectRoot,
-                    [System.StringComparison]::OrdinalIgnoreCase
-                ) -ge 0
+                $_.CommandLine.IndexOf($script:ProjectRoot, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
             }
     )
 }
 catch {
-    Write-Warning "Impossible de vérifier les processus Node.js : $($_.Exception.Message)"
-    $projectNodeProcesses = @()
+    throw "Impossible de vérifier les processus Node.js du projet. Fermez les serveurs et tests, puis relancez. Détail : $($_.Exception.Message)"
 }
 
 if ($projectNodeProcesses.Count -gt 0) {
@@ -30,31 +31,27 @@ if ($projectNodeProcesses.Count -gt 0) {
     foreach ($process in $projectNodeProcesses) {
         Write-Host ("  PID {0} : {1}" -f $process.ProcessId, $process.CommandLine) -ForegroundColor DarkYellow
     }
-    throw 'Fermez les serveurs frontend/backend et les tests de ce projet, puis relancez le menu. Cela évite le verrouillage des fichiers natifs Prisma (EPERM rename).'
+    throw 'Fermez les serveurs frontend/backend et les tests de ce projet. Utilisez .\scripts\stop-dev-all.ps1 si les serveurs ont été lancés par le menu.'
 }
 
-Test-ExternalCommand -Name 'node'
-Test-ExternalCommand -Name 'npm'
-
-$nodeVersion = (& node --version).Trim()
-Write-Host "Node.js détecté : $nodeVersion" -ForegroundColor Cyan
-Write-Host 'Installation des dépendances du projet...' -ForegroundColor Cyan
-
-Invoke-Npm -Arguments @('install', '--legacy-peer-deps', '--no-audit', '--no-fund')
+Write-Host 'Installation déterministe des dépendances depuis package-lock.json...' -ForegroundColor Cyan
+Invoke-Npm -Arguments @('ci', '--legacy-peer-deps', '--no-audit', '--no-fund')
 
 $envFile = Join-Path $script:ProjectRoot '.env'
 $envExample = Join-Path $script:ProjectRoot '.env.example'
-if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
-    Copy-Item $envExample $envFile
-    Write-Host 'Fichier .env local créé depuis .env.example. Adaptez les valeurs pour votre environnement.' -ForegroundColor Yellow
+if (-not (Test-Path -LiteralPath $envFile) -and (Test-Path -LiteralPath $envExample)) {
+    Copy-Item -LiteralPath $envExample -Destination $envFile
+    Write-Host 'Fichier .env local créé depuis .env.example. Vérifiez ses valeurs avant utilisation.' -ForegroundColor Yellow
 }
 
 Invoke-Npm -Arguments @('run', 'db:generate')
 Invoke-Npm -Arguments @('run', 'db:deploy')
+Invoke-Npm -Arguments @('run', 'db:status')
+Invoke-Npm -Arguments @('run', 'db:check-schema-parity')
 
 if ($InstallPlaywrightBrowsers) {
-    Write-Host 'Installation du navigateur Chromium pour les tests E2E...' -ForegroundColor Cyan
+    Write-Host 'Installation de Chromium pour Playwright...' -ForegroundColor Cyan
     Invoke-Npm -Arguments @('exec', '--', 'playwright', 'install', 'chromium')
 }
 
-Write-Host 'Installation terminée. Aucun test exécuté.' -ForegroundColor Green
+Write-Host 'Préparation terminée. Aucun serveur ni test n’a été lancé.' -ForegroundColor Green
