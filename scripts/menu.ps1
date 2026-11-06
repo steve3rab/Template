@@ -40,7 +40,9 @@ function Show-MenuHeader {
     Write-Host '============================================================' -ForegroundColor DarkCyan
     Write-Host $Title -ForegroundColor Yellow
     Write-Host "Projet : $script:ProjectRoot" -ForegroundColor DarkGray
-    Write-Host "Node : $((node --version 2>$null)) | npm : $((npm.cmd --version 2>$null))" -ForegroundColor DarkGray
+    $nodeLabel = if (Get-Command node -ErrorAction SilentlyContinue) { (& node --version 2>$null) } else { 'absent' }
+    $npmLabel = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { (& npm.cmd --version 2>$null) } else { 'absent' }
+    Write-Host "Node : $nodeLabel | npm : $npmLabel" -ForegroundColor DarkGray
     Write-Host ''
 }
 
@@ -61,9 +63,6 @@ function Invoke-MenuAction {
             }
             $scriptArguments = @($Item.Arguments)
             & $scriptPath @scriptArguments
-        }
-        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-            throw "La commande s’est terminée avec le code $LASTEXITCODE."
         }
     }
     catch {
