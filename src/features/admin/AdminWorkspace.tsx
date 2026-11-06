@@ -79,7 +79,13 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   }, [t]);
 
   useEffect(() => {
-    void load(false);
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void load(false);
+    });
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
