@@ -138,6 +138,25 @@ export const apiSchemas = {
       }),
     ),
   }),
+  reconciliationResult: z.object({
+    checkedAt: z.string(),
+    checkedOrders: z.number().int(),
+    matched: z.number().int(),
+    discrepancies: z.number().int(),
+    unverified: z.number().int(),
+    results: z.array(
+      z.object({
+        orderId: z.string(),
+        state: z.enum(['MATCHED', 'DISCREPANCY', 'UNVERIFIED']),
+        issues: z.array(z.string()),
+        orderTotalCents: z.number().int().optional(),
+        stripeCapturedCents: z.number().int().nullable().optional(),
+        refundedCents: z.number().int().optional(),
+        stripeRefundedCents: z.number().int().optional(),
+        currency: z.string().optional(),
+      }),
+    ),
+  }),
   refundResult: z.union([
     z.object({
       refund: z.object({
