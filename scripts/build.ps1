@@ -1,10 +1,11 @@
 ﻿[CmdletBinding()]
 param(
     [switch]$Preview,
-    [int]$Port = 4173,
+    [ValidateRange(1, 65535)][int]$Port = 4173,
     [switch]$Expose
 )
 
+$ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 Assert-DependenciesInstalled
 Invoke-Npm -Arguments @('run', 'build')
