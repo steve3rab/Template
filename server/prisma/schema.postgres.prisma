@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/postgres-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String               @id @default(cuid())
+  publicId          String               @unique @default("")
+  email             String               @unique
+  passwordHash      String
+  role              String               @default("CUSTOMER")
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  sessions          Session[]
+  addresses         Address[]
+  favorites         Favorite[]
+  cartItems         CartItem[]
+  customerOrders    Order[]              @relation("CustomerOrders")
+  sellerOrders      Order[]              @relation("SellerOrders")
+  sellerProducts    Product[]            @relation("SellerProducts")
+  passwordResets    PasswordResetToken[]
+
+  @@index([createdAt])
+  @@index([role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  sellerId    String?
+  name        String
+  description String      @default("")
+  category    String
+  priceCents  Int
+  stock       Int         @default(0)
+  imageUrl    String?
+  imageUrls   String      @default("[]")
+  sizes       String      @default("[]")
+  dimensions  String      @default("{}")
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  seller      User?       @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: SetNull)
+  favorites   Favorite[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  @@index([sellerId, active])
+  @@index([sellerId, stock])
+  @@index([category, active])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String   @default("Domicile")
+  recipient    String
+  line1        String
+  line2        String?
+  postalCode   String
+  city         String
+  country      String   @default("FR")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders       Order[]
+
+  @@index([userId])
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  userId            String
+  sellerId          String?
+  addressId         String?
+  status            String      @default("PENDING")
+  totalCents        Int
+  currency          String      @default("EUR")
+  paymentStatus     String      @default("UNPAID")
+  paymentReference  String?
+  refundedCents     Int         @default(0)
+  shippingRecipient String
+  shippingLine1     String
+  shippingLine2     String?
+  shippingPostal    String
+  shippingCity      String
+  shippingCountry   String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  customer          User        @relation("CustomerOrders", fields: [userId], references: [id], onDelete: Restrict)
+  seller            User?       @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: SetNull)
+  address           Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  items             OrderItem[]
+  financialTransactions FinancialTransaction[]
+
+  @@index([sellerId, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
+  productId       String?
+  productName     String
+  unitPriceCents  Int
+  quantity        Int
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model StripeWebhookEvent {
+  id             String   @id @default(cuid())
+  stripeEventId  String   @unique
+  type           String
+  objectId       String?
+  receivedAt     DateTime @default(now())
+  processedAt    DateTime?
+
+  @@index([type, receivedAt])
+  @@index([processedAt])
+}
+
+model FinancialTransaction {
+  id             String   @id @default(cuid())
+  orderId        String
+  stripeObjectId String   @unique
+  type           String
+  amountCents    Int
+  currency       String
+  createdAt      DateTime @default(now())
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([type, createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+
+model RegistrationVerification {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  passwordHash String
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt])
+}
