@@ -26,7 +26,7 @@ const roleResult = z.object({
 });
 
 export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
   const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
@@ -68,7 +68,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, [t]);
 
   useEffect(() => {
     let active = true;
