@@ -51,7 +51,7 @@ npx playwright install chromium
 Les seuils sont définis dans `vite.config.ts` et sont bloquants :
 
 - **Ensemble du projet** : statements 55 %, branches 45 %, functions 50 %, lines 55 %.
-- **Backend (`server/src/**`)** : statements 75 %, branches 65 %, functions 80 %, lines 78 %.
+- **Backend (`server/src/**`)** : statements 75 %, branches 60 %, functions 80 %, lines 77 %.
 
 Ces seuils ont été relevés après observation du dernier rapport CI (couverture globale : 68,16 % statements / 61,21 % branches / 61,57 % functions / 70,12 % lines ; backend isolé : 81,82 % / 73,59 % / 86,50 % / 84,14 %). Ils restent des planchers et doivent être augmentés par étapes, sans masquer les fichiers insuffisamment couverts.
 
