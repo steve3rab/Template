@@ -465,7 +465,9 @@ export function AdminWorkspace() {
                     .map((result) => (
                       <article key={result.orderId}>
                         <strong>Commande {result.orderId.slice(-8)}</strong>
-                        {result.issues.map((issue) => <span key={issue}>{issue}</span>)}
+                        {result.issues.map((issue) => (
+                          <span key={issue}>{issue}</span>
+                        ))}
                       </article>
                     ))}
                 </div>
