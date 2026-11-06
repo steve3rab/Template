@@ -1110,23 +1110,34 @@ export function App() {
             {filteredProducts.length === 0 && (
               <div className="empty-state">
                 <span>⌕</span>
-                <h3>{translate('Aucun article trouvé', 'No items found')}</h3>
+                <h3>
+                  {catalog.length === 0
+                    ? translate('Aucun produit disponible pour le moment', 'No products available yet')
+                    : translate('Aucun article trouvé', 'No items found')}
+                </h3>
                 <p>
-                  {translate(
-                    'Essayez une autre recherche ou une autre catégorie.',
-                    'Try another search or category.',
-                  )}
+                  {catalog.length === 0
+                    ? translate(
+                        'La boutique ne propose pas encore de produit. Revenez bientôt.',
+                        'The shop has no products yet. Please check back soon.',
+                      )
+                    : translate(
+                        'Essayez une autre recherche ou une autre catégorie.',
+                        'Try another search or category.',
+                      )}
                 </p>
-                <button
-                  className="outline-button"
-                  onClick={() => {
-                    setQuery('');
-                    setCategory('Tout');
-                    setFavoritesOnly(false);
-                  }}
-                >
-                  {translate('Réinitialiser les filtres', 'Reset filters')}
-                </button>
+                {catalog.length > 0 && (
+                  <button
+                    className="outline-button"
+                    onClick={() => {
+                      setQuery('');
+                      setCategory('Tout');
+                      setFavoritesOnly(false);
+                    }}
+                  >
+                    {translate('Réinitialiser les filtres', 'Reset filters')}
+                  </button>
+                )}
               </div>
             )}
           </section>
