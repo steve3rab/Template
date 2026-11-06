@@ -127,20 +127,31 @@ Le contrôle global `npm run check` enchaîne le typage, ESLint, Prettier, les c
 ## Scripts PowerShell (Windows)
 
 ```powershell
-.\scripts\setup.ps1
-.\scripts\dev-all.ps1
+.\scripts\menu.ps1                 # menu interactif par rubriques
+.\scripts\setup.ps1                # installation reproductible + Prisma
+.\scripts\dev-all.ps1              # démarre API + frontend
+.\scripts\stop-dev-all.ps1         # arrête les deux serveurs et leurs enfants
 .\scripts\dev.ps1 -Port 5173
 .\scripts\backend.ps1 -Port 3001
-.\scripts\preview.ps1
-.\scripts\test.ps1
-.\scripts\test.ps1 -Coverage
-.\scripts\test.ps1 -E2E -InstallBrowser
+.\scripts\preview.ps1               # build + prévisualisation
+.\scripts\test.ps1 -Mode Unit
+.\scripts\test.ps1 -Mode Coverage
+.\scripts\test.ps1 -Mode E2E -InstallBrowser
+.\scripts\test.ps1 -Mode LoadSmoke
+.\scripts\test.ps1 -Mode LoadStress # BASE_URL requis
+.\scripts\seed-test-users.ps1      # demande un mot de passe masqué
 .\scripts\check.ps1
 .\scripts\docker.ps1 -Action Build
-.\scripts\clean.ps1
+.\scripts\docker.ps1 -Action Run
+.\scripts\docker.ps1 -Action Status
+.\scripts\clean.ps1 -WhatIf          # simulation du nettoyage
 ```
 
-Le menu interactif est disponible via `.\scripts\menu.ps1`. L'option **17** exécute la préparation de l'option 1, puis crée/réinitialise les trois comptes de test locaux avec le mot de passe indiqué dans la section « Comptes de test ».
+Le menu interactif `.\scripts\menu.ps1` est organisé en six rubriques : démarrage/arrêt, qualité/build, tests/charge, base de données, Docker et maintenance. Les serveurs lancés ensemble sont arrêtables depuis le menu ou avec `.\scripts\stop-dev-all.ps1`. La préparation utilise `npm ci`, vérifie les versions minimales Node.js/npm, contrôle les processus Node du dépôt, génère les deux clients Prisma, applique les migrations et contrôle leur statut ainsi que la parité SQLite/PostgreSQL.
+
+La création des comptes de test est une action séparée : `.\scripts\seed-test-users.ps1` demande un mot de passe masqué (12 à 128 caractères). Il est transmis au seed via une variable d'environnement temporaire, sans être affiché ni placé dans les arguments de commande. L'opération remplace les mots de passe des trois comptes et révoque leurs sessions. Elle est réservée à une base locale ; le seed vérifie l'environnement et l'origine configurée. Le mot de passe local historique reste un repli de compatibilité uniquement si le seed est lancé manuellement sans `TEST_USERS_PASSWORD`.
+
+Les scripts partagés affichent les commandes exécutées, conservent la sortie dans le terminal, vérifient les codes de retour et récapitulent les références fichier/ligne détectées en cas d'échec. Aucun fichier de trace n'est créé.
 
 ## Architecture
 
