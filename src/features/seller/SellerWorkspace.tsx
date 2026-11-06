@@ -117,13 +117,46 @@ export function SellerWorkspace({
 
   async function createProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+
+    const normalizedName = name.trim();
+    const parsedPrice = Number(price);
+    const parsedStock = Number(stock);
+    const dimensions = [length, width, height];
+    const invalidDimension = dimensions.some(
+      (value) => value.trim() !== '' && (!Number.isFinite(Number(value)) || Number(value) <= 0),
+    );
+    if (
+      normalizedName.length < 2 ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice <= 0 ||
+      parsedPrice > 1_000_000 ||
+      !Number.isSafeInteger(parsedStock) ||
+      parsedStock < 0 ||
+      parsedStock > 1_000_000 ||
+      invalidDimension
+    ) {
+      window.dispatchEvent(
+        new CustomEvent('template-toast', {
+          detail: {
+            message: t(
+              'Vérifiez le nom, le prix, le stock et les dimensions du produit.',
+              'Check the product name, price, stock and dimensions.',
+            ),
+            type: 'error',
+          },
+        }),
+      );
+      return;
+    }
+
     setBusy(true);
     try {
       await apiRequest('/api/seller/products', apiSchemas.productResult, {
         method: 'POST',
         body: JSON.stringify({
-          name,
-          description,
+          name: normalizedName,
+          description: description.trim(),
           category,
           priceCents: Math.round(Number(price) * 100),
           stock: Number(stock),
@@ -341,7 +374,11 @@ export function SellerWorkspace({
             </p>
           </div>
         </div>
-        <form className="checkout-form" onSubmit={(event) => void createProduct(event)}>
+        <form
+          className="checkout-form"
+          onSubmit={(event) => void createProduct(event)}
+          aria-busy={busy}
+        >
           <label>
             {t('Nom du produit', 'Product name')}
             <input
@@ -521,6 +558,7 @@ export function SellerWorkspace({
                 min="0.01"
                 max="1000000"
                 step="0.01"
+                inputMode="decimal"
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
               />
