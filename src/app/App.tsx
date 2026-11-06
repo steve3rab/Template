@@ -221,7 +221,6 @@ export function App() {
   const [catalog, setCatalog] = useState<Product[]>(products);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogFailed, setCatalogFailed] = useState(false);
-  const [catalogRetry, setCatalogRetry] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
@@ -317,13 +316,14 @@ export function App() {
     window.addEventListener('template-auth-changed', onAuthChanged);
     return () => window.removeEventListener('template-auth-changed', onAuthChanged);
   }, []);
-  useEffect(() => {
-    let active = true;
-    setCatalogLoading(true);
-    setCatalogFailed(false);
-    void apiRequest('/api/products', apiSchemas.products)
-      .then((payload) => {
-        if (!active) return;
+  const loadCatalog = useCallback(
+    async (showProgress = true) => {
+      if (showProgress) {
+        setCatalogLoading(true);
+        setCatalogFailed(false);
+      }
+      try {
+        const payload = await apiRequest('/api/products', apiSchemas.products);
         setCatalog(
           payload.products.map((item) => {
             const fallback = products.find((product) => product.id === item.id);
@@ -367,9 +367,8 @@ export function App() {
             };
           }),
         );
-      })
-      .catch(() => {
-        if (!active) return;
+        setCatalogFailed(false);
+      } catch {
         setCatalog([]);
         setCatalogFailed(true);
         setToastKind('error');
@@ -379,14 +378,16 @@ export function App() {
             'Unable to load the catalogue. Check your connection and try again.',
           ),
         );
-      })
-      .finally(() => {
-        if (active) setCatalogLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [catalogRetry, language]);
+      } finally {
+        setCatalogLoading(false);
+      }
+    },
+    [translate],
+  );
+
+  useEffect(() => {
+    void loadCatalog(false);
+  }, [loadCatalog]);
 
   useEffect(() => {
     let active = true;
@@ -1084,7 +1085,7 @@ export function App() {
                 <button
                   type="button"
                   className="outline-button"
-                  onClick={() => setCatalogRetry((current) => current + 1)}
+                  onClick={() => void loadCatalog()}
                   disabled={catalogLoading}
                 >
                   {translate('Réessayer', 'Try again')}
