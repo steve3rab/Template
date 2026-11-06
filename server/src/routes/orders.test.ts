@@ -100,7 +100,10 @@ describe('customer order access control', () => {
     expect(response.statusCode).toBe(200);
     expect(store.prisma.order.findMany).toHaveBeenCalledWith({
       where: { userId: user.id },
-      include: { items: true },
+      include: {
+        items: true,
+        financialTransactions: { orderBy: { createdAt: 'asc' } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   });
