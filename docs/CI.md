@@ -6,9 +6,10 @@ Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `mai
 
 - **`quality`** : installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur.
 - **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright.
+- **`postgres-concurrency`** : démarre PostgreSQL 16, génère le client Prisma dédié, pousse le schéma PostgreSQL et vérifie les réservations de stock et transitions de commande concurrentes.
 - **`docker`** : construction de l'image avec Buildx, sans publication (`push: false`).
 
-La CI utilise une base SQLite éphémère et des secrets de session réservés aux tests. Ces valeurs ne doivent jamais être réutilisées en production.
+Les jobs `quality` et `e2e` utilisent une base SQLite éphémère ; le job `postgres-concurrency` utilise un service PostgreSQL 16 éphémère. Les secrets de session et identifiants de base sont réservés aux tests et ne doivent jamais être réutilisés en production.
 
 ## Commandes locales
 
@@ -59,7 +60,8 @@ Le contrôle frontend inclut les fichiers de test configurés par Vitest ; le ba
 - Toute correction de bug doit inclure un test qui échoue avant la correction et passe après.
 - Toute route protégée doit tester l'absence de session, le rôle incorrect et l'accès autorisé.
 - Les limites de débit doivent vérifier le nombre de requêtes autorisées puis la réponse `429`, avec une clé client déterministe dans les tests.
-- Les flux de paiement doivent tester les signatures webhook, les événements répétés, les expirations et les états de commande.
+- Les flux de paiement doivent tester les signatures webhook, les événements répétés, les expirations, les remboursements partiels/complets, les reprises idempotentes et le rapprochement externe.
+- Les opérations sensibles aux courses doivent avoir des tests PostgreSQL réels, pas uniquement des mocks Prisma ou SQLite.
 - Les changements de schéma doivent inclure une migration Prisma et une vérification sur une base temporaire.
 - Les parcours critiques doivent être couverts par Playwright, sur desktop et mobile lorsque l'interface est concernée.
 - Ne pas modifier les attentes d'un test uniquement pour masquer une régression ; corriger le comportement ou expliquer précisément le contrat attendu.
