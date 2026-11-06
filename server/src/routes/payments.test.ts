@@ -258,7 +258,7 @@ describe('Stripe payment routes', () => {
 
   it('retries an uncertain refund with the same durable Stripe idempotency key', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
-    const prisma = setup(async () => admin);
+    const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(
@@ -325,7 +325,7 @@ describe('Stripe payment routes', () => {
 
   it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
-    const prisma = setup(async () => admin);
+    const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     updateMany.mockResolvedValueOnce({ count: 0 });
     const fetchMock = vi.fn();
