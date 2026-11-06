@@ -30,24 +30,7 @@ beforeEach(() => {
   toastMessages = [];
   window.addEventListener('template-toast', onToast);
 
-  it('blocks malformed email addresses in the browser before sending credentials', async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(response(false));
-    vi.stubGlobal('fetch', fetchMock);
 
-    render(<AuthPanel language="en" initialMode="login" />);
-    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
-
-    await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
-    await user.type(screen.getByLabelText(/password/i), 'legacy123');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/auth/me',
-      expect.objectContaining({ credentials: 'include' }),
-    );
-  });
 });
 
 afterEach(() => {
@@ -284,6 +267,24 @@ describe('AuthPanel', () => {
         method: 'POST',
         body: JSON.stringify({ email: 'test@example.com' }),
       }),
+    );
+  });
+  it('rejects an invalid email format before submission', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(response(false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AuthPanel language="en" initialMode="login" />);
+    await waitFor(() => expect(screen.queryByText('Loading account…')).not.toBeInTheDocument());
+
+    await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
+    await user.type(screen.getByLabelText(/password/i), 'legacy123');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/auth/me',
+      expect.objectContaining({ credentials: 'include' }),
     );
   });
 });
