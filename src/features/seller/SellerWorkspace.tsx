@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { PRODUCT_CATEGORIES } from '../../shared/categories';
+import { translateText, type Language } from '../../shared/i18n';
 
 import {
   apiRequest,
@@ -13,7 +14,8 @@ import {
   type SellerProduct as Product,
 } from '../../shared/api/client';
 
-export function SellerWorkspace({ range }: { range: string }) {
+export function SellerWorkspace({ range, language = 'fr' }: { range: string; language?: Language }) {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -46,7 +48,7 @@ export function SellerWorkspace({ range }: { range: string }) {
           new CustomEvent('template-toast', {
             detail: {
               message:
-                'Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.',
+                t('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.', 'Your session or seller permissions are no longer valid. Please sign in again.'),
               type: 'error',
             },
           }),
@@ -59,7 +61,7 @@ export function SellerWorkspace({ range }: { range: string }) {
             message:
               error instanceof Error
                 ? error.message
-                : 'Impossible de charger les données du vendeur.',
+                : t('Impossible de charger les données du vendeur.', 'Unable to load seller data.'),
             type: 'error',
           },
         }),
@@ -74,7 +76,7 @@ export function SellerWorkspace({ range }: { range: string }) {
         window.dispatchEvent(
           new CustomEvent('template-toast', {
             detail: {
-              message: 'Erreur réseau pendant le chargement du tableau de bord.',
+              message: t('Erreur réseau pendant le chargement du tableau de bord.', 'Network error while loading the dashboard.'),
               type: 'error',
             },
           }),
@@ -123,7 +125,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       setDimensionUnit('cm');
       window.dispatchEvent(
         new CustomEvent('template-toast', {
-          detail: { message: 'Produit créé.', type: 'success' },
+          detail: { message: t('Produit créé.', 'Product created.'), type: 'success' },
         }),
       );
       await load();
@@ -131,7 +133,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       window.dispatchEvent(
         new CustomEvent('template-toast', {
           detail: {
-            message: error instanceof Error ? error.message : 'Erreur lors de la création.',
+            message: error instanceof Error ? error.message : t('Erreur lors de la création.', 'Error creating the product.'),
             type: 'error',
           },
         }),
@@ -160,7 +162,7 @@ export function SellerWorkspace({ range }: { range: string }) {
       window.dispatchEvent(
         new CustomEvent('template-toast', {
           detail: {
-            message: error instanceof Error ? error.message : 'Erreur réseau.',
+            message: error instanceof Error ? error.message : t('Erreur réseau.', 'Network error.'),
             type: 'error',
           },
         }),
@@ -182,7 +184,7 @@ export function SellerWorkspace({ range }: { range: string }) {
             message:
               error instanceof Error
                 ? error.message
-                : 'Impossible de modifier le statut de cette commande.',
+                : t('Impossible de modifier le statut de cette commande.', 'Unable to update this order status.'),
             type: 'error',
           },
         }),
@@ -194,16 +196,16 @@ export function SellerWorkspace({ range }: { range: string }) {
     <section className="seller-page">
       <div className="seller-topline">
         <div>
-          <span className="eyebrow">ATELIER · ESPACE VENDEUR</span>
+          <span className="eyebrow">{t('ATELIER · ESPACE VENDEUR', 'ATELIER · SELLER SPACE')}</span>
           <h1>
-            Tableau de bord<span className="brand-period">.</span>
+            {t('Tableau de bord', 'Dashboard')}<span className="brand-period">.</span>
           </h1>
-          <p>Indicateurs calculés à partir des commandes et produits enregistrés.</p>
+          <p>{t('Indicateurs calculés à partir des commandes et produits enregistrés.', 'Metrics calculated from recorded orders and products.')}</p>
         </div>
       </div>
       <div className="kpi-grid">
         <article className="kpi-card">
-          <div className="kpi-label">Chiffre d’affaires payé</div>
+          <div className="kpi-label">{t('Chiffre d’affaires payé', 'Paid revenue')}</div>
           <strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong>
           <p>
             {dashboard?.paidOrders ?? 0} commandes payées sur{' '}
@@ -211,31 +213,31 @@ export function SellerWorkspace({ range }: { range: string }) {
           </p>
         </article>
         <article className="kpi-card">
-          <div className="kpi-label">Commandes</div>
+          <div className="kpi-label">{t('Commandes', 'Orders')}</div>
           <strong>{dashboard?.orders ?? '—'}</strong>
-          <p>Commandes sur la période sélectionnée</p>
+          <p>{t('Commandes sur la période sélectionnée', 'Orders in the selected period')}</p>
         </article>
         <article className="kpi-card">
-          <div className="kpi-label">Unités vendues</div>
+          <div className="kpi-label">{t('Unités vendues', 'Units sold')}</div>
           <strong>{dashboard?.unitsSold ?? '—'}</strong>
-          <p>Basé sur les lignes de commande</p>
+          <p>{t('Basé sur les lignes de commande', 'Based on order line items')}</p>
         </article>
         <article className="kpi-card">
-          <div className="kpi-label">Catalogue</div>
+          <div className="kpi-label">{t('Catalogue', 'Catalogue')}</div>
           <strong>{dashboard?.products ?? '—'}</strong>
-          <p>{dashboard?.lowStockProducts ?? 0} produit(s) avec stock inférieur ou égal à 5</p>
+          <p>{t(`${dashboard?.lowStockProducts ?? 0} produit(s) avec stock inférieur ou égal à 5`, `${dashboard?.lowStockProducts ?? 0} product(s) with stock of 5 or less`)}</p>
         </article>
       </div>
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
           <div>
-            <h2>Ajouter un produit</h2>
-            <p>Les prix sont saisis en euros et enregistrés en centimes.</p>
+            <h2>{t('Ajouter un produit', 'Add a product')}</h2>
+            <p>{t('Les prix sont saisis en euros et enregistrés en centimes.', 'Prices are entered in euros and stored in cents.')}</p>
           </div>
         </div>
         <form className="checkout-form" onSubmit={(event) => void createProduct(event)}>
           <label>
-            Nom du produit
+            {t('Nom du produit', 'Product name')}
             <input
               required
               minLength={2}
@@ -245,7 +247,7 @@ export function SellerWorkspace({ range }: { range: string }) {
             />
           </label>
           <label>
-            Description
+            {t('Description', 'Description')}
             <textarea
               maxLength={4000}
               value={description}
@@ -253,7 +255,7 @@ export function SellerWorkspace({ range }: { range: string }) {
             />
           </label>
           <label className="product-image-upload">
-            Photos du produit (5 maximum)
+            {t('Photos du produit (5 maximum)', 'Product photos (up to 5)')}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -272,8 +274,8 @@ export function SellerWorkspace({ range }: { range: string }) {
                         reader.onload = () =>
                           typeof reader.result === 'string'
                             ? resolve(reader.result)
-                            : reject(new Error('Lecture de photo impossible.'));
-                        reader.onerror = () => reject(new Error('Lecture de photo impossible.'));
+                            : reject(new Error(t('Lecture de photo impossible.', 'Unable to read image.')));
+                        reader.onerror = () => reject(new Error(t('Lecture de photo impossible.', 'Unable to read image.')));
                         reader.readAsDataURL(file);
                       }),
                   ),
@@ -283,7 +285,7 @@ export function SellerWorkspace({ range }: { range: string }) {
                     window.dispatchEvent(
                       new CustomEvent('template-toast', {
                         detail: {
-                          message: error instanceof Error ? error.message : 'Photo invalide.',
+                          message: error instanceof Error ? error.message : t('Photo invalide.', 'Invalid image.'),
                           type: 'error',
                         },
                       }),
@@ -291,7 +293,7 @@ export function SellerWorkspace({ range }: { range: string }) {
                   );
               }}
             />
-            <span className="field-hint">PNG, JPEG ou WebP · 1,2 Mo maximum par photo.</span>
+            <span className="field-hint">{t('PNG, JPEG ou WebP · 1,2 Mo maximum par photo.', 'PNG, JPEG or WebP · 1.2 MB maximum per image.')}</span>
             {images.length > 0 && (
               <div className="product-image-previews">
                 {images.map((image, index) => (
@@ -299,7 +301,7 @@ export function SellerWorkspace({ range }: { range: string }) {
                     <img src={image} alt={`Aperçu du produit ${index + 1}`} />
                     <button
                       type="button"
-                      aria-label={`Retirer la photo ${index + 1}`}
+                      aria-label={t(`Retirer la photo ${index + 1}`, `Remove photo ${index + 1}`)}
                       onClick={() =>
                         setImages((current) => current.filter((_, item) => item !== index))
                       }
@@ -312,17 +314,17 @@ export function SellerWorkspace({ range }: { range: string }) {
             )}
           </label>
           <label>
-            Tailles disponibles
+            {t('Tailles disponibles', 'Available sizes')}
             <input
               value={sizes}
-              placeholder="Ex. XS, S, M, L, XL ou 38, 39, 40"
+              placeholder={t('Ex. XS, S, M, L, XL ou 38, 39, 40', 'E.g. XS, S, M, L, XL or 38, 39, 40')}
               onChange={(event) => setSizes(event.target.value)}
             />
-            <span className="field-hint">Séparez les tailles par des virgules.</span>
+            <span className="field-hint">{t('Séparez les tailles par des virgules.', 'Separate sizes with commas.')}</span>
           </label>
           <div className="form-two-col product-dimensions">
             <label>
-              Longueur
+              {t('Longueur', 'Length')}
               <input
                 type="number"
                 min="0.01"
@@ -332,7 +334,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               />
             </label>
             <label>
-              Largeur
+              {t('Largeur', 'Width')}
               <input
                 type="number"
                 min="0.01"
@@ -342,7 +344,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               />
             </label>
             <label>
-              Hauteur
+              {t('Hauteur', 'Height')}
               <input
                 type="number"
                 min="0.01"
@@ -352,7 +354,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               />
             </label>
             <label>
-              Unité
+              {t('Unité', 'Unit')}
               <select
                 value={dimensionUnit}
                 onChange={(event) => setDimensionUnit(event.target.value)}
@@ -366,7 +368,7 @@ export function SellerWorkspace({ range }: { range: string }) {
           </div>
           <div className="form-two-col">
             <label>
-              Catégorie
+              {t('Catégorie', 'Category')}
               <select value={category} onChange={(event) => setCategory(event.target.value)}>
                 {PRODUCT_CATEGORIES.map((item) => (
                   <option key={item} value={item}>
@@ -376,7 +378,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               </select>
             </label>
             <label>
-              Prix (€)
+              {t('Prix (€)', 'Price (€)')}
               <input
                 required
                 type="number"
@@ -388,7 +390,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               />
             </label>
             <label>
-              Stock initial
+              {t('Stock initial', 'Initial stock')}
               <input
                 required
                 type="number"
@@ -401,32 +403,32 @@ export function SellerWorkspace({ range }: { range: string }) {
             </label>
           </div>
           <button className="dark-button" type="submit" disabled={busy}>
-            {busy ? 'Enregistrement…' : 'Créer le produit'}
+            {busy ? t('Enregistrement…', 'Saving…') : t('Créer le produit', 'Create product')}
           </button>
         </form>
       </section>
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
           <div>
-            <h2>Mes produits</h2>
-            <p>{products.length} produit(s) géré(s) par ce compte</p>
+            <h2>{t('Mes produits', 'My products')}</h2>
+            <p>{t(`${products.length} produit(s) géré(s) par ce compte`, `${products.length} product(s) managed by this account`)}</p>
           </div>
         </div>
         {products.length === 0 ? (
-          <p>Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.</p>
+          <p>{t('Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.', 'No products yet. Add your first product above.')}</p>
         ) : (
           products.map((product) => (
             <div className="best-seller-row" key={product.id}>
               <div className="best-seller-name">
                 <strong>{product.name}</strong>
                 <span>
-                  {formatCents(product.priceCents)} · {product.active ? 'Publié' : 'Masqué'}
+                  {formatCents(product.priceCents)} · {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
                 </span>
               </div>
               <label>
                 Nom{' '}
                 <input
-                  aria-label={`Nom ${product.name}`}
+                  aria-label={t(`Nom ${product.name}`, `Name ${product.name}`)}
                   defaultValue={product.name}
                   maxLength={120}
                   onBlur={(event) => {
@@ -437,9 +439,9 @@ export function SellerWorkspace({ range }: { range: string }) {
                 />
               </label>
               <label>
-                Prix (€){' '}
+                {t('Prix (€)', 'Price (€)')}{' '}
                 <input
-                  aria-label={`Prix ${product.name}`}
+                  aria-label={t(`Prix ${product.name}`, `Price ${product.name}`)}
                   type="number"
                   min="0.01"
                   max="1000000"
@@ -456,7 +458,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               <label>
                 Stock{' '}
                 <input
-                  aria-label={`Stock ${product.name}`}
+                  aria-label={t(`Stock ${product.name}`, `Stock ${product.name}`)}
                   type="number"
                   min="0"
                   max="1000000"
@@ -472,7 +474,7 @@ export function SellerWorkspace({ range }: { range: string }) {
                 className="text-action"
                 onClick={() => void updateProduct(product, { active: !product.active })}
               >
-                {product.active ? 'Masquer' : 'Publier'}
+                {product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}
               </button>
             </div>
           ))
@@ -481,23 +483,23 @@ export function SellerWorkspace({ range }: { range: string }) {
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
           <div>
-            <h2>Commandes clients</h2>
-            <p>Suivez la préparation et l’expédition des commandes contenant vos produits.</p>
+            <h2>{t('Commandes clients', 'Customer orders')}</h2>
+            <p>{t('Suivez la préparation et l’expédition des commandes contenant vos produits.', 'Track the preparation and shipment of orders containing your products.')}</p>
           </div>
         </div>
         {orders.length === 0 ? (
-          <p>Aucune commande enregistrée pour le moment.</p>
+          <p>{t('Aucune commande enregistrée pour le moment.', 'No orders have been recorded yet.')}</p>
         ) : (
           orders.map((order) => (
             <div className="best-seller-row" key={order.id}>
               <div className="best-seller-name">
                 <strong>Commande {order.id.slice(-8)}</strong>
                 <span>
-                  {order.customer?.email ?? 'Client'} ·{' '}
+                  {order.customer?.email ?? t('Client', 'Customer')} ·{' '}
                   {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}
                 </span>
                 <span>
-                  {new Date(order.createdAt).toLocaleDateString('fr-FR')} · Paiement :{' '}
+                  {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')} · {t('Paiement :', 'Payment:')}{' '}
                   {order.paymentStatus}
                 </span>
               </div>
@@ -505,7 +507,7 @@ export function SellerWorkspace({ range }: { range: string }) {
               <label>
                 Statut
                 <select
-                  aria-label={`Statut commande ${order.id}`}
+                  aria-label={t(`Statut commande ${order.id}`, `Order status ${order.id}`)}
                   value={order.status}
                   disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'}
                   onChange={(event) => {
@@ -513,17 +515,17 @@ export function SellerWorkspace({ range }: { range: string }) {
                     if (parsedStatus.success) void updateOrder(order.id, parsedStatus.data);
                   }}
                 >
-                  <option value="PENDING">En attente</option>
+                  <option value="PENDING">{t('En attente', 'Pending')}</option>
                   <option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>
-                    En préparation
+                    {t('En préparation', 'Processing')}
                   </option>
                   <option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>
-                    Expédiée
+                    {t('Expédiée', 'Shipped')}
                   </option>
                   <option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>
-                    Livrée
+                    {t('Livrée', 'Delivered')}
                   </option>
-                  <option value="CANCELLED">Annulée</option>
+                  <option value="CANCELLED">{t('Annulée', 'Cancelled')}</option>
                 </select>
               </label>
             </div>
@@ -531,8 +533,7 @@ export function SellerWorkspace({ range }: { range: string }) {
         )}
       </section>
       <p className="fine-print">
-        Le paiement en ligne et les webhooks de confirmation ne sont pas encore configurés ; le
-        chiffre d’affaires payé reste à zéro tant qu’aucun paiement n’est confirmé.
+        {t('Le paiement en ligne et les webhooks de confirmation ne sont pas encore configurés ; le chiffre d’affaires payé reste à zéro tant qu’aucun paiement n’est confirmé.', 'Online payments and confirmation webhooks are not configured yet; paid revenue remains zero until a payment is confirmed.')}
       </p>
     </section>
   );
