@@ -17,7 +17,7 @@ jobs:
       APP_ORIGIN: http://localhost:5173
       SESSION_SECRET: ci-only-secret-that-is-long-enough-for-tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate PowerShell script syntax
         shell: pwsh
         run: |
@@ -64,7 +64,7 @@ jobs:
       APP_ORIGIN: http://127.0.0.1:4173
       SESSION_SECRET: e2e-only-secret-that-is-long-enough-for-tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
@@ -96,7 +96,7 @@ jobs:
       DATABASE_URL: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
       DATABASE_URL_POSTGRES: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
@@ -115,7 +115,7 @@ jobs:
       APP_ORIGIN: http://127.0.0.1:15173
       SESSION_SECRET: windows-ci-only-secret-that-is-long-enough
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
@@ -148,7 +148,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       - uses: docker/build-push-action@v6
         with:
