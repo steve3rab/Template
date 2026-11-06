@@ -3285,6 +3285,47 @@ button {
   line-height: 1.5;
 }
 
+.admin-order-actions {
+  min-width: min(100%, 260px);
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.admin-order-actions form {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+  width: 100%;
+}
+
+.admin-order-actions label {
+  display: grid;
+  gap: 5px;
+  color: #77796e;
+  font-size: 0.72rem;
+}
+
+.admin-order-actions input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #dedfd4;
+  border-radius: 5px;
+  background: #fffefa;
+}
+
+.financial-history {
+  display: grid;
+  gap: 3px;
+  margin-top: 7px;
+}
+
+.financial-history span {
+  color: #77796e;
+  font-size: 0.72rem;
+}
+
 .admin-row select {
   min-width: 130px;
   padding: 9px 12px;
