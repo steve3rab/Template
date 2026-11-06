@@ -167,6 +167,37 @@ describe('customer order access control', () => {
     expect(store.txCartDeleteMany).not.toHaveBeenCalled();
   });
 
+  it('rejects a checkout when stock is consumed by a concurrent transaction', async () => {
+    const store = makePrisma();
+    store.txCartFindMany.mockResolvedValueOnce([{ productId: 'product-1', quantity: 2 }]);
+    store.txProductFindFirst.mockResolvedValueOnce({
+      id: 'product-1',
+      name: 'Chemise',
+      sellerId: 'seller-1',
+      active: true,
+      stock: 2,
+      priceCents: 2500,
+    });
+    store.txProductUpdateMany.mockResolvedValueOnce({ count: 0 });
+    await startApp(store.prisma as unknown as PrismaClient, async () => user);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/customer/orders',
+      payload: { addressId: address.id },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'Insufficient stock for one or more products.',
+    });
+    expect(store.txProductUpdateMany).toHaveBeenCalledWith({
+      where: { id: 'product-1', active: true, stock: { gte: 2 } },
+      data: { stock: { decrement: 2 } },
+    });
+    expect(store.txCartDeleteMany).not.toHaveBeenCalled();
+  });
+
   it('splits multi-seller carts and reserves stock using server-side prices', async () => {
     const store = makePrisma();
     store.txCartFindMany.mockResolvedValueOnce([
