@@ -3651,7 +3651,6 @@ button {
   }
 }
 
-
 /* Recoverable loading and error states for customer and seller workspaces */
 .workspace-loading {
   display: flex;
