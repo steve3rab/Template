@@ -28,6 +28,26 @@ const stripeRefundSessionSchema = z.object({
   payment_intent: z.string().min(1).nullable(),
 });
 
+const stripeReconciliationSessionSchema = z.object({
+  id: z.string().min(1),
+  payment_status: z.string(),
+  amount_total: z.number().int().nullable(),
+  currency: z.string().nullable(),
+  payment_intent: z.string().nullable(),
+});
+
+const stripeRefundListSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string(),
+      amount: z.number().int(),
+      currency: z.string(),
+      status: z.string(),
+      metadata: z.object({ orderId: z.string().optional() }).passthrough().optional(),
+    }),
+  ),
+});
+
 const stripeRefundSchema = z.object({
   id: z.string().min(1),
   amount: z.number().int().positive(),
@@ -303,6 +323,135 @@ export function registerPaymentRoutes(
       return reply.send({ checkoutUrl: session.data.url });
     },
   );
+
+  app.get('/api/admin/payments/reconciliation', async (request, reply) => {
+    const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
+    if (!admin) return;
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) return reply.code(503).send({ error: 'Stripe is not configured.' });
+
+    const orders = await prisma.order.findMany({
+      where: {
+        paymentReference: { not: null },
+        paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED', 'REFUNDED'] },
+      },
+      include: {
+        financialTransactions: {
+          where: { status: 'SUCCEEDED' },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 50,
+    });
+
+    const results = await Promise.all(
+      orders.map(async (order) => {
+        try {
+          const sessionResponse = await fetch(
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(order.paymentReference ?? '')}`,
+            {
+              headers: { Authorization: `Bearer ${secretKey}` },
+              signal: AbortSignal.timeout(10000),
+            },
+          );
+          if (!sessionResponse.ok) {
+            return {
+              orderId: order.id,
+              state: 'UNVERIFIED',
+              issues: [`Stripe session lookup returned HTTP ${sessionResponse.status}.`],
+            };
+          }
+          const session = stripeReconciliationSessionSchema.safeParse(
+            await sessionResponse.json().catch(() => null),
+          );
+          if (!session.success || !session.data.payment_intent) {
+            return {
+              orderId: order.id,
+              state: 'UNVERIFIED',
+              issues: ['Stripe session response is incomplete.'],
+            };
+          }
+
+          const refundsUrl = new URL('https://api.stripe.com/v1/refunds');
+          refundsUrl.searchParams.set('payment_intent', session.data.payment_intent);
+          refundsUrl.searchParams.set('limit', '100');
+          const refundsResponse = await fetch(refundsUrl, {
+            headers: { Authorization: `Bearer ${secretKey}` },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!refundsResponse.ok) {
+            return {
+              orderId: order.id,
+              state: 'UNVERIFIED',
+              issues: [`Stripe refund lookup returned HTTP ${refundsResponse.status}.`],
+            };
+          }
+          const refunds = stripeRefundListSchema.safeParse(
+            await refundsResponse.json().catch(() => null),
+          );
+          if (!refunds.success) {
+            return {
+              orderId: order.id,
+              state: 'UNVERIFIED',
+              issues: ['Stripe refund response is invalid.'],
+            };
+          }
+
+          const localPayments = order.financialTransactions
+            .filter((transaction) => transaction.type === 'PAYMENT')
+            .reduce((sum, transaction) => sum + transaction.amountCents, 0);
+          const localRefunds = order.financialTransactions
+            .filter((transaction) => transaction.type === 'REFUND')
+            .reduce((sum, transaction) => sum + transaction.amountCents, 0);
+          const stripeRefunds = refunds.data
+            .filter(
+              (refund) =>
+                refund.status === 'succeeded' && refund.metadata?.orderId === order.id,
+            )
+            .reduce((sum, refund) => sum + refund.amount, 0);
+          const issues: string[] = [];
+          if (session.data.payment_status !== 'paid')
+            issues.push('Stripe does not report this Checkout Session as paid.');
+          if (session.data.amount_total !== order.totalCents)
+            issues.push('Stripe captured amount differs from the order total.');
+          if (session.data.currency?.toUpperCase() !== order.currency.toUpperCase())
+            issues.push('Stripe currency differs from the order currency.');
+          if (localPayments !== order.totalCents)
+            issues.push('Financial payment ledger differs from the order total.');
+          if (localRefunds !== order.refundedCents)
+            issues.push('Financial refund ledger differs from the order refund balance.');
+          if (stripeRefunds !== order.refundedCents)
+            issues.push('Stripe refund total differs from the order refund balance.');
+
+          return {
+            orderId: order.id,
+            state: issues.length === 0 ? 'MATCHED' : 'DISCREPANCY',
+            issues,
+            orderTotalCents: order.totalCents,
+            stripeCapturedCents: session.data.amount_total,
+            refundedCents: order.refundedCents,
+            stripeRefundedCents: stripeRefunds,
+            currency: order.currency,
+          };
+        } catch {
+          return {
+            orderId: order.id,
+            state: 'UNVERIFIED',
+            issues: ['Stripe could not be reached to verify this order.'],
+          };
+        }
+      }),
+    );
+
+    return {
+      checkedAt: new Date().toISOString(),
+      checkedOrders: results.length,
+      matched: results.filter((result) => result.state === 'MATCHED').length,
+      discrepancies: results.filter((result) => result.state === 'DISCREPANCY').length,
+      unverified: results.filter((result) => result.state === 'UNVERIFIED').length,
+      results,
+    };
+  });
 
   app.get('/api/admin/financial-transactions', async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
