@@ -285,6 +285,7 @@ describe('admin role management', () => {
       where: { userId: 'target-user' },
     });
   });
+
   it.each(['SELLER', 'CUSTOMER'] as const)(
     'denies %s from every administrator route before database access',
     async (role) => {
@@ -307,9 +308,7 @@ describe('admin role management', () => {
         }),
       ]);
 
-      expect(responses.map((response) => response.statusCode)).toEqual([
-        403, 403, 403, 403, 403,
-      ]);
+      expect(responses.map((response) => response.statusCode)).toEqual([403, 403, 403, 403, 403]);
       expect(userFindUnique).not.toHaveBeenCalled();
       expect(userUpdate).not.toHaveBeenCalled();
       expect(userCount).not.toHaveBeenCalled();
