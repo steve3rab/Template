@@ -41,6 +41,21 @@ describe('typed API client', () => {
     );
   });
 
+  it('normalizes invalid JSON from a successful response into an API error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('not-json', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      ),
+    );
+
+    await expect(apiRequest('/api/products', apiSchemas.products)).rejects.toMatchObject({
+      name: 'ApiError',
+      message: 'The server returned an unexpected response.',
+      status: 200,
+    });
+  });
+
   it('surfaces structured API errors and HTTP status codes', async () => {
     vi.stubGlobal(
       'fetch',
