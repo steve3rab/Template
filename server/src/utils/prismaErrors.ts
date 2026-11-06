@@ -1,8 +1,5 @@
 /** Narrow Prisma's known-request errors without trusting arbitrary thrown values. */
-export function hasPrismaErrorCode(
-  error: unknown,
-  code: string,
-): error is { code: string } {
+export function hasPrismaErrorCode(error: unknown, code: string): error is { code: string } {
   return (
     typeof error === 'object' &&
     error !== null &&
