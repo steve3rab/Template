@@ -14,8 +14,9 @@ type AdminUser = {
 type AdminProduct = z.infer<typeof apiSchemas.adminProducts>['products'][number];
 
 type AdminOrder = z.infer<typeof apiSchemas.adminOrders>['orders'][number];
-type AdminFinancialTransaction =
-  z.infer<typeof apiSchemas.adminFinancialTransactions>['transactions'][number];
+type AdminFinancialTransaction = z.infer<
+  typeof apiSchemas.adminFinancialTransactions
+>['transactions'][number];
 
 type Section = 'users' | 'products' | 'orders' | 'finances';
 
@@ -30,9 +31,7 @@ export function AdminWorkspace() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [financialTransactions, setFinancialTransactions] = useState<
-    AdminFinancialTransaction[]
-  >([]);
+  const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([]);
   const [refundRequestKeys, setRefundRequestKeys] = useState<Record<string, string>>({});
   const [reconciliation, setReconciliation] = useState<
     z.infer<typeof apiSchemas.reconciliationResult> | null
@@ -143,9 +142,7 @@ export function AdminWorkspace() {
       setReconciliation(result);
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Impossible de rapprocher les paiements Stripe.',
+        cause instanceof Error ? cause.message : 'Impossible de rapprocher les paiements Stripe.',
       );
     } finally {
       setLoading(false);
@@ -365,8 +362,7 @@ export function AdminWorkspace() {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? 'Sans vendeur'} ·{' '}
-                      {formatCents(product.priceCents)}{' '}
+                      {product.seller?.email ?? 'Sans vendeur'} · {formatCents(product.priceCents)}{' '}
                       · Stock : {product.stock}
                     </span>
                   </div>
@@ -451,13 +447,11 @@ export function AdminWorkspace() {
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
                   <strong>
-                    {reconciliation.matched} rapprochées ·{' '}
-                    {reconciliation.discrepancies} écarts ·{' '}
+                    {reconciliation.matched} rapprochées · {reconciliation.discrepancies} écarts ·{' '}
                     {reconciliation.unverified} non vérifiées
                   </strong>
                   <span>
-                    Vérification du{' '}
-                    {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
+                    Vérification du {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
                     {reconciliation.checkedOrders} commandes contrôlées
                   </span>
                   {reconciliation.results
@@ -476,8 +470,8 @@ export function AdminWorkspace() {
                 <article className="admin-row" key={transaction.id}>
                   <div>
                     <strong>
-                      {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} ·{' '}
-                      Commande {transaction.order.id.slice(-8)}
+                      {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} · Commande{' '}
+                      {transaction.order.id.slice(-8)}
                     </strong>
                     <span>
                       {transaction.status === 'PENDING'
