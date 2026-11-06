@@ -502,9 +502,6 @@ export function registerPaymentRoutes(
     if (!params.success || !body.success)
       return reply.code(400).send({ error: 'Invalid refund request.' });
 
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (!secretKey) return reply.code(503).send({ error: 'Stripe is not configured.' });
-
     const order = await prisma.order.findUnique({ where: { id: params.data.id } });
     if (!order) return reply.code(404).send({ error: 'Order not found.' });
     const existingRefund = await prisma.financialTransaction.findFirst({
@@ -524,6 +521,9 @@ export function registerPaymentRoutes(
         paymentStatus: order.paymentStatus,
       });
     }
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) return reply.code(503).send({ error: 'Stripe is not configured.' });
+
     if (!['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) || !order.paymentReference) {
       return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
     }
