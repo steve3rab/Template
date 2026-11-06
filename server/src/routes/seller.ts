@@ -7,6 +7,7 @@ import {
   sellerOrderStatusSchema,
 } from '../schemas/commerce.js';
 import { requireUser } from '../auth/requireUser.js';
+import { canTransitionOrderStatus } from '../domain/orderTransitions.js';
 
 export function registerSellerRoutes(
   app: FastifyInstance,
@@ -153,12 +154,7 @@ export function registerSellerRoutes(
         include: { items: true },
       });
       if (!order) return reply.code(404).send({ error: 'Order not found.' });
-      const transitions: Record<string, string[]> = {
-        PENDING: ['PROCESSING', 'CANCELLED'],
-        PROCESSING: ['SHIPPED', 'CANCELLED'],
-        SHIPPED: ['DELIVERED'],
-      };
-      if (!transitions[order.status]?.includes(body.data.status))
+      if (!canTransitionOrderStatus(order.status, body.data.status))
         return reply.code(409).send({ error: 'Invalid order status transition.' });
       if (
         ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(body.data.status) &&
