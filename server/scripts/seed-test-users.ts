@@ -39,6 +39,22 @@ if (!['localhost', '127.0.0.1', '::1'].includes(appHost)) {
   throw new Error('Test users can only be seeded when APP_ORIGIN points to localhost.');
 }
 
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL must be set before seeding test users.');
+}
+if (!databaseUrl.startsWith('file:')) {
+  let databaseHost: string;
+  try {
+    databaseHost = new URL(databaseUrl).hostname.toLowerCase();
+  } catch {
+    throw new Error('DATABASE_URL must be a local SQLite file or a valid local database URL.');
+  }
+  if (!['localhost', '127.0.0.1', '::1'].includes(databaseHost)) {
+    throw new Error('Test users can only be seeded into a local database.');
+  }
+}
+
 // A per-run password can be supplied by the PowerShell helper. The fallback is
 // retained for backwards compatibility and is protected by the local-origin guard.
 const password = process.env.TEST_USERS_PASSWORD ?? 'Local-Test-Password-2026!';
