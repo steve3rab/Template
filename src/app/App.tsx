@@ -158,7 +158,7 @@ export function App() {
   const languageRef = useRef(language);
   languageRef.current = language;
   const translate = (fr: string, en: string) => languageRef.current === 'en' ? en : fr;
-  const formatPrice = (amount: number) => formatPrice(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
+  const formatPrice = (amount: number) => formatCurrency(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
   const productTag = (tag: string) => {
     if (language === 'fr') return tag;
     const labels: Record<string, string> = { 'NOUVEAU': 'NEW', 'ESSENTIEL': 'ESSENTIAL', 'BEST-SELLER': 'BESTSELLER' };
