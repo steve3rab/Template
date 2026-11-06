@@ -33,10 +33,17 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
   const financialTransactionFindFirst = vi.fn(async () => null);
   const financialTransactionDeleteMany = vi.fn(async () => ({ count: 1 }));
   const financialTransactionUpdate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
+  const financialTransactionUpdateMany = vi.fn(async () => ({ count: 1 }));
   const transaction = {
     order: {
       updateMany,
       findMany: vi.fn(async () => [order]),
+      findUnique: vi.fn(async () => ({
+        ...order,
+        paymentStatus: 'PAID',
+        paymentReference: 'cs_test_123',
+        refundedCents: 1200,
+      })),
     },
     product: { updateMany: productUpdateMany },
     stripeWebhookEvent: { create: webhookEventCreate, update: webhookEventUpdate },
@@ -44,6 +51,8 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
       create: financialTransactionCreate,
       deleteMany: financialTransactionDeleteMany,
       update: financialTransactionUpdate,
+      updateMany: financialTransactionUpdateMany,
+      findFirst: financialTransactionFindFirst,
     },
   };
   const prisma = {
@@ -85,6 +94,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
     financialTransactionFindFirst,
     financialTransactionDeleteMany,
     financialTransactionUpdate,
+    financialTransactionUpdateMany,
   });
 }
 
@@ -244,6 +254,73 @@ describe('Stripe payment routes', () => {
         currency: 'EUR',
       },
     });
+  });
+
+  it('retries an uncertain refund with the same durable Stripe idempotency key', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+      .mockRejectedValueOnce(new Error('network timeout'))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 'cs_test_123', payment_intent: 'pi_test_123' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({
+          id: 're_retry_123',
+          amount: 1200,
+          currency: 'eur',
+          status: 'succeeded',
+        }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const first = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: { amountCents: 1200 },
+    });
+    expect(first.statusCode).toBe(202);
+    const pendingCall = vi.mocked(prisma.financialTransactionCreate).mock.calls[0]?.[0] as {
+      data: { stripeObjectId: string };
+    };
+    const idempotencyKey = pendingCall.data.stripeObjectId;
+
+    vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+      ...order,
+      paymentStatus: 'PAID',
+      paymentReference: 'cs_test_123',
+      refundedCents: 1200,
+    } as never);
+    vi.mocked(prisma.financialTransactionFindFirst).mockResolvedValueOnce({
+      id: 'financial-transaction-1',
+      stripeObjectId: idempotencyKey,
+      amountCents: 1200,
+      createdAt: new Date(),
+    } as never);
+
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: { amountCents: 1200 },
+    });
+    expect(second.statusCode).toBe(200);
+    const retryHeaders = fetchMock.mock.calls[3]?.[1]?.headers as Record<string, string>;
+    expect(retryHeaders['Idempotency-Key']).toBe(idempotencyKey);
+    expect(second.json().refund.id).toBe('re_retry_123');
   });
 
   it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
