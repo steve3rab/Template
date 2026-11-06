@@ -36,7 +36,7 @@ export function AdminWorkspace() {
 
   const load = useCallback(async () => {
     try {
-      const [stats, userData, productData, orderData] = await Promise.all([
+      const [stats, userData, productData, orderData, financialData] = await Promise.all([
         apiRequest('/api/admin/dashboard', apiSchemas.adminDashboard),
         apiRequest('/api/admin/users', apiSchemas.adminUsers),
         apiRequest('/api/admin/products', apiSchemas.adminProducts),
