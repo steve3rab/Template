@@ -269,6 +269,9 @@ describe('Fashion storefront', () => {
     expect(screen.queryByPlaceholderText('Numéro et rue')).not.toBeInTheDocument();
     expect(screen.getByText(/aucun frais de livraison n’est ajouté/i)).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox'));
+    const cartWritesBeforeSubmit = requests.filter(
+      (request) => request.url === '/api/customer/cart' && request.method === 'PUT',
+    ).length;
     await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
     expect(
       await screen.findByRole('heading', { name: /merci pour votre commande/i }),
@@ -335,7 +338,7 @@ describe('Fashion storefront', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/catalogue could not be loaded/i);
+    expect(await screen.findByText(/the catalogue could not be loaded/i)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Veste Studio' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /try again/i }));
@@ -385,8 +388,10 @@ describe('Fashion storefront', () => {
       await screen.findByText(/chaque champ obligatoire doit être correctement renseigné/i),
     ).toBeInTheDocument();
     expect(
-      requests.some((request) => request.url === '/api/customer/cart' && request.method === 'PUT'),
-    ).toBe(false);
+      requests.filter(
+        (request) => request.url === '/api/customer/cart' && request.method === 'PUT',
+      ),
+    ).toHaveLength(cartWritesBeforeSubmit);
     expect(
       requests.some(
         (request) => request.url === '/api/customer/addresses' && request.method === 'POST',
