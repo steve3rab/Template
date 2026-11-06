@@ -603,7 +603,7 @@ export function registerPaymentRoutes(
         });
 
         const refundEvent =
-          event.data.type === 'refund.updated'
+          ['refund.created', 'refund.updated'].includes(event.data.type)
             ? stripeRefundEventSchema.safeParse(event.data.data.object)
             : null;
         if (refundEvent?.success && refundEvent.data.metadata?.orderId) {
