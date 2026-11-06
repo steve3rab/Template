@@ -1,0 +1,1 @@
+ALTER TABLE "FinancialTransaction" ADD COLUMN "status" TEXT NOT NULL DEFAULT 'SUCCEEDED';
