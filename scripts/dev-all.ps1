@@ -51,8 +51,8 @@ $backendProcess = $null
 $frontendProcess = $null
 try {
     $env:APP_ORIGIN = "http://127.0.0.1:$FrontendPort"
-    $backendArguments = "-NoExit -ExecutionPolicy Bypass -File `"$backendScript`" -Port $BackendPort"
-    $backendProcess = Start-Process -FilePath $shellPath -ArgumentList $backendArguments -WorkingDirectory $script:ProjectRoot -PassThru
+    $backendArguments = "-ExecutionPolicy Bypass -File `"$backendScript`" -Port $BackendPort"
+    $backendProcess = Start-Process -FilePath $shellPath -ArgumentList $backendArguments -WorkingDirectory $script:ProjectRoot -PassThru -NoNewWindow
 
     $backendDeadline = (Get-Date).AddSeconds(20)
     while ((Test-PortAvailable -Port $BackendPort) -and (Get-Date) -lt $backendDeadline) {
@@ -66,8 +66,8 @@ try {
         throw "API non disponible sur le port $BackendPort après 20 secondes."
     }
 
-    $frontendArguments = "-NoExit -ExecutionPolicy Bypass -File `"$frontendScript`" -Port $FrontendPort"
-    $frontendProcess = Start-Process -FilePath $shellPath -ArgumentList $frontendArguments -WorkingDirectory $script:ProjectRoot -PassThru
+    $frontendArguments = "-ExecutionPolicy Bypass -File `"$frontendScript`" -Port $FrontendPort"
+    $frontendProcess = Start-Process -FilePath $shellPath -ArgumentList $frontendArguments -WorkingDirectory $script:ProjectRoot -PassThru -NoNewWindow
 
     $frontendDeadline = (Get-Date).AddSeconds(20)
     while ((Test-PortAvailable -Port $FrontendPort) -and (Get-Date) -lt $frontendDeadline) {
@@ -108,7 +108,7 @@ finally {
 }
 
 Write-Host ''
-Write-Host 'Les deux serveurs sont démarrés dans des fenêtres séparées.' -ForegroundColor Green
+Write-Host 'Les deux serveurs sont démarrés dans le terminal courant, avec des processus séparés.' -ForegroundColor Green
 Write-Host "Frontend : http://localhost:$FrontendPort  (PID $($frontendProcess.Id))" -ForegroundColor Cyan
 Write-Host "Backend  : http://127.0.0.1:$BackendPort/api/health  (PID $($backendProcess.Id))" -ForegroundColor Cyan
 Write-Host 'Arrêt groupé : .\scripts\stop-dev-all.ps1' -ForegroundColor Yellow
