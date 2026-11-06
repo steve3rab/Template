@@ -168,10 +168,13 @@ export function registerSellerRoutes(
           .code(409)
           .send({ error: 'A confirmed payment is required before fulfillment.' });
       }
-      if (body.data.status === 'CANCELLED' && order.paymentStatus === 'PAID') {
+      if (
+        body.data.status === 'CANCELLED' &&
+        ['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus)
+      ) {
         return reply
           .code(409)
-          .send({ error: 'Paid orders require a refund workflow before cancellation.' });
+          .send({ error: 'Paid orders must be fully refunded before cancellation.' });
       }
       if (
         body.data.status === 'CANCELLED' &&
