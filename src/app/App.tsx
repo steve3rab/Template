@@ -211,10 +211,10 @@ export function App() {
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
     if (paymentState === 'success') {
-      return 'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.';
+      return translate('Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.', 'Payment submitted. The order status will be confirmed after verification by the payment provider.');
     }
     if (paymentState === 'cancelled') {
-      return 'Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.';
+      return translate('Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.', 'Payment cancelled. Your orders remain available in your account so you can try again.');
     }
     return '';
   });
@@ -682,7 +682,7 @@ export function App() {
   return (
     <main className="store-app">
       <div className="announcement">
-        SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE
+        {translate('SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE', 'ATELIER SELECTION · ONLINE PAYMENT · RETURNS POLICY IN THE FOOTER')}
       </div>
       <header className="store-header">
         <a
@@ -799,9 +799,7 @@ export function App() {
               <div className="hero-note">
                 <span className="note-star">✳</span>
                 <span>
-                  Une mode à porter
-                  <br />
-                  et à reporter.
+                  {translate('Une mode à porter et à reporter.', 'Style to wear, and wear again.')}
                 </span>
               </div>
             </div>
@@ -809,21 +807,21 @@ export function App() {
               <img
                 className="hero-photo"
                 src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=90"
-                alt="Silhouette en tenue contemporaine dans des tons neutres"
+                alt={translate('Silhouette en tenue contemporaine dans des tons neutres', 'Model wearing a contemporary outfit in neutral tones')}
                 loading="eager"
                 decoding="async"
               />
               <div className="hero-shape shape-one" />
               <div className="hero-shape shape-two" />
               <div className="hero-sticker">
-                NOUVELLE
+                {translate('NOUVELLE', 'NEW')}
                 <br />
-                COLLECTION <span>✳</span>
+                {translate('COLLECTION', 'COLLECTION')} <span>✳</span>
               </div>
               <div className="hero-caption">
-                LES PETITS DÉTAILS
+                {translate('LES PETITS DÉTAILS', 'THE LITTLE DETAILS')}
                 <br />
-                FONT LE STYLE.
+                {translate('FONT LE STYLE.', 'MAKE THE STYLE.')}
               </div>
             </div>
           </section>
@@ -858,7 +856,7 @@ export function App() {
                   <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span> {translate('Favoris', 'Favourites')}
                 </button>
                 <label className="sort-label">
-                  <span className="visually-hidden">Trier les produits</span>
+                  <span className="visually-hidden">{translate('Trier les produits', 'Sort products')}</span>
                   <select value={sort} onChange={(event) => setSort(event.target.value)}>
                     <option value="featured">{translate('À la une', 'Featured')}</option>
                     <option value="price-up">{translate('Prix croissant', 'Price: low to high')}</option>
@@ -881,8 +879,8 @@ export function App() {
                       }
                       aria-label={
                         favorites.includes(product.id)
-                          ? `Retirer ${product.name} des favoris`
-                          : `Ajouter ${product.name} aux favoris`
+                          ? translate(`Retirer ${product.name} des favoris`, `Remove ${product.name} from favourites`)
+                          : translate(`Ajouter ${product.name} aux favoris`, `Add ${product.name} to favourites`)
                       }
                       aria-pressed={favorites.includes(product.id)}
                       onClick={() => toggleFavorite(product.id)}
@@ -919,11 +917,11 @@ export function App() {
                   </div>
                   <p className="product-description">{productDescription(product)}</p>
                   {product.sizes && product.sizes.length > 0 && (
-                    <p className="product-variants">Tailles : {product.sizes.join(', ')}</p>
+                    <p className="product-variants">{translate('Tailles :', 'Sizes:')} {product.sizes.join(', ')}</p>
                   )}
                   {product.dimensions && (
                     <p className="product-variants">
-                      Dimensions :{' '}
+                      {translate('Dimensions :', 'Dimensions:')}{' '}
                       {(() => {
                         try {
                           const value = JSON.parse(product.dimensions) as {
@@ -972,7 +970,7 @@ export function App() {
             <div>
               <span>✳</span>
               <strong>{translate('Des essentiels durables', 'Timeless essentials')}</strong>
-              <p>Des pièces pensées pour durer.</p>
+              <p>{translate('Des pièces pensées pour durer.', 'Pieces designed to last.')}</p>
             </div>
             <div>
               <span>↗</span>
@@ -1002,14 +1000,14 @@ export function App() {
               setView('shop');
             }}
           >
-            ← Retour à la boutique
+            {translate('← Retour à la boutique', '← Back to shop')}
           </button>
           <span className="eyebrow">{translate('VOTRE ESPACE PERSONNEL', 'YOUR ACCOUNT')}</span>
           <h1 className="workspace-title">
             {translate('Bonjour, bienvenue', 'Hello, welcome')}<span className="brand-period">.</span>
           </h1>
           <p className="workspace-intro">
-            Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.
+            {translate('Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.', 'Sign in to view your orders and manage your delivery details.')}
           </p>
           <div className="account-benefits">
             <div>
@@ -1060,7 +1058,7 @@ export function App() {
           />
           <CustomerAccountData language={language} />
           <p className="fine-print">
-            Retrouvez vos commandes et vos adresses depuis votre espace client.
+            {translate('Retrouvez vos commandes et vos adresses depuis votre espace client.', 'View your orders and addresses from your customer account.')}
           </p>
         </section>
       )}
@@ -1081,12 +1079,10 @@ export function App() {
               <span className="success-icon">✓</span>
               <span className="eyebrow">{translate('COMMANDE ENREGISTRÉE', 'ORDER SAVED')}</span>
               <h1>
-                Merci pour votre commande<span className="brand-period">.</span>
+                {translate('Merci pour votre commande', 'Thank you for your order')}<span className="brand-period">.</span>
               </h1>
               <p>
-                Votre commande est enregistrée pour {orderEmail}. Aucun paiement n’a été effectué
-                pour le moment. Si le paiement n’a pas pu être préparé, retrouvez cette commande
-                dans votre compte pour réessayer.
+                {translate(`Votre commande est enregistrée pour ${orderEmail}. Aucun paiement n’a été effectué pour le moment. Si le paiement n’a pas pu être préparé, retrouvez cette commande dans votre compte pour réessayer.`, `Your order has been saved for ${orderEmail}. No payment has been made yet. If payment could not be prepared, you can find this order in your account and try again.`)}
               </p>
               <button
                 className="dark-button"
@@ -1095,25 +1091,24 @@ export function App() {
                   setCheckoutDone(false);
                 }}
               >
-                Retour à la boutique ↗
+                {translate('Retour à la boutique', 'Back to shop')} ↗
               </button>
             </div>
           ) : (
             <>
               <span className="eyebrow">{translate('DERNIÈRE ÉTAPE', 'FINAL STEP')}</span>
               <h1 className="workspace-title">
-                Finaliser ma commande<span className="brand-period">.</span>
+                {translate('Finaliser ma commande', 'Complete your order')}<span className="brand-period">.</span>
               </h1>
               <p className="workspace-intro">
-                Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe.
-                L’expédition ne démarre qu’après confirmation du paiement.
+                {translate('Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.', 'Your order will be saved before secure Stripe checkout opens. Shipment only begins after payment is confirmed.')}
               </p>
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeCheckout}>
                   <h2>{translate('Informations de livraison', 'Delivery information')}</h2>
                   {checkoutAddresses.length > 0 && (
                     <label>
-                      Choisir une adresse enregistrée
+                      {translate('Choisir une adresse enregistrée', 'Choose a saved address')}
                       <select
                         aria-label={translate('Choisir une adresse enregistrée', 'Choose a saved address')}
                         value={checkoutAddressId || '__new__'}
@@ -1126,16 +1121,16 @@ export function App() {
                         {checkoutAddresses.map((address) => (
                           <option key={address.id} value={address.id}>
                             {address.label}
-                            {address.isDefault ? ' · Par défaut' : ''} — {address.recipient},{' '}
+                            {address.isDefault ? ` · ${translate('Par défaut', 'Default')}` : ''} — {address.recipient},{' '}
                             {address.line1}, {address.postalCode} {address.city}
                           </option>
                         ))}
-                        <option value="__new__">Utiliser une nouvelle adresse</option>
+                        <option value="__new__">{translate('Utiliser une nouvelle adresse', 'Use a new address')}</option>
                       </select>
                     </label>
                   )}
                   <label>
-                    Adresse e-mail du compte
+                    {translate('Adresse e-mail du compte', 'Account email address')}
                     <input type="email" autoComplete="email" value={orderEmail} readOnly />
                   </label>
                   {(!checkoutAddressId ||
@@ -1143,7 +1138,7 @@ export function App() {
                     <>
                       <div className="form-two-col">
                         <label>
-                          Destinataire (prénom et nom)
+                          {translate('Destinataire (prénom et nom)', 'Recipient (first and last name)')}
                           <input
                             required
                             name="recipient"
@@ -1152,7 +1147,7 @@ export function App() {
                           />
                         </label>
                         <label>
-                          Complément d’adresse (facultatif)
+                          {translate('Complément d’adresse (facultatif)', 'Address line 2 (optional)')}
                           <input
                             name="line2"
                             autoComplete="address-line2"
@@ -1161,7 +1156,7 @@ export function App() {
                         </label>
                       </div>
                       <label>
-                        Adresse
+                        {translate('Adresse', 'Address')}
                         <input
                           required
                           name="line1"
@@ -1192,8 +1187,7 @@ export function App() {
                     </>
                   )}
                   <label className="checkbox-line">
-                    <input type="checkbox" required /> Je confirme que les informations de livraison
-                    sont exactes.
+                    <input type="checkbox" required /> {translate('Je confirme que les informations de livraison sont exactes.', 'I confirm that the delivery information is correct.')}
                   </label>
                   <button
                     className="dark-button full-button"
@@ -1201,12 +1195,11 @@ export function App() {
                     disabled={checkoutSubmitting}
                   >
                     {checkoutSubmitting
-                      ? 'Enregistrement en cours…'
-                      : 'Enregistrer la commande et continuer vers le paiement ↗'}
+                      ? translate('Enregistrement en cours…', 'Saving…')
+                      : translate('Enregistrer la commande et continuer vers le paiement ↗', 'Save order and continue to payment ↗')}
                   </button>
                   <p className="fine-print">
-                    Le paiement sécurisé sera effectué sur Stripe après validation de cette étape.
-                    L’expédition ne démarre qu’après confirmation du paiement.
+                    {translate('Le paiement sécurisé sera effectué sur Stripe après validation de cette étape. L’expédition ne démarre qu’après confirmation du paiement.', 'Secure payment will be processed through Stripe after this step. Shipment only begins once payment is confirmed.')}
                   </p>
                 </form>
                 <aside className="order-summary">
@@ -1226,7 +1219,7 @@ export function App() {
                       </div>
                     ))}
                   {cartCount === 0 && (
-                    <p>Votre panier est vide. Retournez au catalogue pour ajouter des articles.</p>
+                    <p>{translate('Votre panier est vide. Retournez au catalogue pour ajouter des articles.', 'Your cart is empty. Return to the catalogue to add items.')}</p>
                   )}
                   <div className="summary-total">
                     <span>{translate('Sous-total', 'Subtotal')}</span>
@@ -1237,9 +1230,7 @@ export function App() {
                     <strong>{translate('Non configurée', 'Not configured')}</strong>
                   </div>
                   <p className="summary-note">
-                    Le paiement de cette version porte uniquement sur les articles affichés. Aucun
-                    frais de livraison n’est ajouté. Les conditions de retour sont disponibles en
-                    pied de page.
+                    {translate('Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.', 'Payment in this version applies only to the items shown. No delivery charge is added. The returns policy is available in the footer.')}
                   </p>
                 </aside>
               </div>
@@ -1265,7 +1256,7 @@ export function App() {
       {view === 'admin' && (
         <section className="workspace-page">
           <button className="back-link" onClick={() => setView('shop')}>
-            ← Retour à la boutique
+            {translate('← Retour à la boutique', '← Back to shop')}
           </button>
           <AdminWorkspace language={language} />
         </section>
@@ -1298,7 +1289,7 @@ export function App() {
         <div className="footer-links">
           <button onClick={() => setView('account')}>{translate('Mon compte', 'My account')}</button>
           <button onClick={() => setNotice(translate('Le centre d’aide sera bientôt disponible.', 'The help centre will be available soon.'))}>
-            Aide & contact
+            {translate('Aide & contact', 'Help & contact')}
           </button>
           <button
             onClick={() => {
@@ -1306,7 +1297,7 @@ export function App() {
               setView('legal');
             }}
           >
-            Conditions générales de vente
+            {translate('Conditions générales de vente', 'Terms and conditions')}
           </button>
           <button
             onClick={() => {
@@ -1314,7 +1305,7 @@ export function App() {
               setView('legal');
             }}
           >
-            Confidentialité
+            {translate('Confidentialité', 'Privacy')}
           </button>
           <button
             onClick={() => {
@@ -1322,24 +1313,24 @@ export function App() {
               setView('legal');
             }}
           >
-            Retours et remboursements
+            {translate('Retours et remboursements', 'Returns and refunds')}
           </button>
         </div>
-        <span className="copyright">© 2026 atelier. · Démonstration</span>
+        <span className="copyright">© 2026 atelier. · {translate('Démonstration', 'Demo')}</span>
       </footer>
       {currentRole === 'SELLER' && view !== 'seller' && (
         <button className="seller-entry" onClick={openSeller}>
-          <span>▦</span> Espace vendeur
+          <span>▦</span> {translate('Espace vendeur', 'Seller area')}
         </button>
       )}
       {currentRole === 'ADMIN' && view !== 'admin' && (
         <button className="admin-entry" onClick={openAdmin}>
-          <span>⚙</span> Administration
+          <span>⚙</span> {translate('Administration', 'Administration')}
         </button>
       )}
       {view === 'seller' && (
         <button className="seller-exit" onClick={() => setView('shop')}>
-          ← Retour à la boutique
+          {translate('← Retour à la boutique', '← Back to shop')}
         </button>
       )}
       {cartOpen && (
@@ -1360,7 +1351,7 @@ export function App() {
               </div>
               <button
                 className="close-drawer"
-                aria-label="Fermer le panier"
+                aria-label={translate('Fermer le panier', 'Close cart')}
                 onClick={() => setCartOpen(false)}
               >
                 ×
@@ -1390,14 +1381,14 @@ export function App() {
                           <span>{formatCurrency(product.price)}</span>
                           <div className="quantity-control">
                             <button
-                              aria-label={`Retirer un ${product.name}`}
+                              aria-label={translate(`Retirer un ${product.name}`, `Remove one ${product.name}`)}
                               onClick={() => changeQuantity(product.id, -1)}
                             >
                               −
                             </button>
                             <span>{cart[product.id] ?? 0}</span>
                             <button
-                              aria-label={`Ajouter un ${product.name}`}
+                              aria-label={translate(`Ajouter un ${product.name}`, `Add one ${product.name}`)}
                               onClick={() => changeQuantity(product.id, 1)}
                             >
                               ＋
@@ -1414,8 +1405,7 @@ export function App() {
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p>
-                    Livraison non configurée : aucun frais de livraison n’est ajouté au montant des
-                    articles.
+                    {translate('Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.', 'Shipping is not configured: no delivery charge is added to the item total.')}
                   </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     {translate('Passer à la commande', 'Proceed to checkout')} ↗
