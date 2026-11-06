@@ -24,7 +24,7 @@ let app: FastifyInstance;
 let updateMany: ReturnType<typeof vi.fn>;
 let productUpdateMany: ReturnType<typeof vi.fn>;
 
-function setup(resolveUser: () => Promise<User | null> = async () => customer, rateLimitMax = 1000) {
+function setup(rateLimitMax = 1000, resolveUser: () => Promise<User | null> = async () => customer) {
   updateMany = vi.fn(async () => ({ count: 1 }));
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
   const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
@@ -193,7 +193,7 @@ describe('Stripe payment routes', () => {
 
   it('processes a partial refund and records it in the financial ledger', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
-    const prisma = setup(async () => admin);
+    const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     vi.stubGlobal(
       'fetch',
