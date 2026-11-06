@@ -29,10 +29,6 @@ jobs:
       - run: npm run db:deploy
       - run: npm run typecheck
       - run: npm run lint
-      - name: Preview Prettier changes for the five modified source files
-        run: |
-          npx prettier --write server/src/routes/payments.ts server/src/routes/payments.test.ts server/src/routes/seller.test.ts src/features/admin/AdminWorkspace.tsx src/features/admin/AdminWorkspace.test.tsx
-          git --no-pager diff -- server/src/routes/payments.ts server/src/routes/payments.test.ts server/src/routes/seller.test.ts src/features/admin/AdminWorkspace.tsx src/features/admin/AdminWorkspace.test.tsx
       - run: npm run format:check
       - name: Frontend coverage with regression thresholds
         run: npm run test:coverage
