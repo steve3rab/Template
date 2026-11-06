@@ -55,6 +55,37 @@ jobs:
       - run: npm run db:deploy
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+  postgres-concurrency:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: template
+          POSTGRES_PASSWORD: template-ci-password
+          POSTGRES_DB: template_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U template -d template_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL_POSTGRES: postgresql://template:template-ci-password@localhost:5432/template_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Pin npm to a stable version
+        run: npm install --global npm@10.9.4
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - run: npm run db:generate:postgres
+      - run: npx prisma db push --schema server/prisma/schema.postgres.prisma
+      - name: Verify concurrent stock reservations against PostgreSQL
+        run: npx vitest run server/src/postgres-concurrency.test.ts
+
   docker:
     runs-on: ubuntu-latest
     steps:
