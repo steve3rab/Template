@@ -159,7 +159,9 @@ export function registerPaymentRoutes(
         let existingResponse: Response;
         try {
           existingResponse = await fetch(
-            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(existingReferences[0] ?? '')}`,
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
+              existingReferences[0] ?? '',
+            )}`,
             {
               headers: { Authorization: `Bearer ${secretKey}` },
               signal: AbortSignal.timeout(10000),
@@ -309,7 +311,9 @@ export function registerPaymentRoutes(
       if (saved.count !== orderIds.length) {
         try {
           await fetch(
-            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session.data.id)}/expire`,
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
+              session.data.id,
+            )}/expire`,
             {
               method: 'POST',
               headers: { Authorization: `Bearer ${secretKey}` },
@@ -350,7 +354,9 @@ export function registerPaymentRoutes(
       orders.map(async (order) => {
         try {
           const sessionResponse = await fetch(
-            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(order.paymentReference ?? '')}`,
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
+              order.paymentReference ?? '',
+            )}`,
             {
               headers: { Authorization: `Bearer ${secretKey}` },
               signal: AbortSignal.timeout(10000),
@@ -485,7 +491,10 @@ export function registerPaymentRoutes(
 
     const params = z.object({ id: z.string().min(1).max(128) }).safeParse(request.params);
     const body = z
-      .object({ amountCents: z.number().int().positive().optional(), requestKey: z.string().uuid() })
+      .object({
+        amountCents: z.number().int().positive().optional(),
+        requestKey: z.string().uuid(),
+      })
       .strict()
       .safeParse(request.body ?? {});
     if (!params.success || !body.success)
@@ -545,7 +554,9 @@ export function registerPaymentRoutes(
       amountCents < 1 ||
       (!isRetry && amountCents > remainingCents)
     ) {
-      return reply.code(400).send({ error: 'Refund amount exceeds the remaining refundable amount.' });
+      return reply
+        .code(400)
+        .send({ error: 'Refund amount exceeds the remaining refundable amount.' });
     }
 
     const reservedCents = order.refundedCents + (isRetry ? 0 : amountCents);
@@ -593,7 +604,10 @@ export function registerPaymentRoutes(
         },
       );
     } catch {
-      request.log.error({ orderId: order.id }, 'Stripe payment lookup failed; refund intent retained.');
+      request.log.error(
+        { orderId: order.id },
+        'Stripe payment lookup failed; refund intent retained.',
+      );
       return reply.code(202).send({
         pending: true,
         message: 'Refund is reserved and will be retried with the same idempotency key.',
@@ -640,7 +654,10 @@ export function registerPaymentRoutes(
       });
     } catch {
       // Keep the durable pending intent and repeat the exact Stripe idempotency key on retry.
-      request.log.error({ orderId: order.id }, 'Stripe refund outcome is unknown; refund intent retained.');
+      request.log.error(
+        { orderId: order.id },
+        'Stripe refund outcome is unknown; refund intent retained.',
+      );
       return reply.code(202).send({
         pending: true,
         message: 'Refund outcome is being reconciled. Retry will reuse the same Stripe request.',
@@ -680,11 +697,15 @@ export function registerPaymentRoutes(
       refund.data.amount !== amountCents ||
       refund.data.currency.toUpperCase() !== order.currency.toUpperCase()
     ) {
-      request.log.error({ orderId: order.id, stripeRefundId: refund.data.id }, 'Stripe refund amount or currency mismatch.');
+      request.log.error(
+        { orderId: order.id, stripeRefundId: refund.data.id },
+        'Stripe refund amount or currency mismatch.',
+      );
       return reply.code(202).send({
         pending: true,
         refundId: refund.data.id,
-        message: 'Stripe refund details do not match the requested amount. Manual reconciliation is required.',
+        message:
+          'Stripe refund details do not match the requested amount. Manual reconciliation is required.',
       });
     }
 
