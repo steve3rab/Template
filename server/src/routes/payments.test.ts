@@ -191,6 +191,70 @@ describe('Stripe payment routes', () => {
     expect(prisma.order.findUnique).not.toHaveBeenCalled();
   });
 
+  it('reconciles captured payments and refunds with live Stripe records', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(1000, async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    vi.mocked(prisma.order.findMany).mockResolvedValueOnce([
+      {
+        ...order,
+        paymentStatus: 'PAID',
+        paymentReference: 'cs_test_123',
+        refundedCents: 0,
+        financialTransactions: [
+          {
+            id: 'payment-ledger-1',
+            orderId: 'order-1',
+            stripeObjectId: 'evt_test_123:order-1',
+            type: 'PAYMENT',
+            status: 'SUCCEEDED',
+            amountCents: 5000,
+            currency: 'EUR',
+            createdAt: new Date(),
+          },
+        ],
+      },
+    ] as never);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({
+            id: 'cs_test_123',
+            payment_status: 'paid',
+            amount_total: 5000,
+            currency: 'eur',
+            payment_intent: 'pi_test_123',
+          }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ data: [] }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
+    );
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/payments/reconciliation',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      checkedOrders: 1,
+      matched: 1,
+      discrepancies: 0,
+      unverified: 0,
+      results: [{ orderId: 'order-1', state: 'MATCHED', issues: [] }],
+    });
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
   it('processes a partial refund and records it in the financial ledger', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
