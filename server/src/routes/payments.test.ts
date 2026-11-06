@@ -228,7 +228,8 @@ describe('Stripe payment routes', () => {
     ] as never);
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(
           new Response(
             JSON.stringify({
@@ -513,9 +514,7 @@ describe('Stripe payment routes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it(
-    'does not call Stripe when another concurrent refund already changed the refund balance',
-    async () => {
+  it('does not call Stripe when another concurrent refund already changed the refund balance', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
@@ -724,9 +723,7 @@ describe('Stripe payment routes', () => {
     });
   });
 
-  it(
-    'does not restore stock twice when Stripe concurrently replays an expiration webhook',
-    async () => {
+  it('does not restore stock twice when Stripe concurrently replays an expiration webhook', async () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     const prisma = setup();
     updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
