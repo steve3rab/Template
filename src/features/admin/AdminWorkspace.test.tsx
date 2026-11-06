@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AdminWorkspace } from './AdminWorkspace';
 
-function jsonResponse(body: unknown) {
-  return { ok: true, status: 200, json: async () => body } as Response;
+function jsonResponse(body: unknown, status = 200) {
+  return { ok: status >= 200 && status < 300, status, json: async () => body } as Response;
 }
 
 afterEach(() => vi.unstubAllGlobals());
