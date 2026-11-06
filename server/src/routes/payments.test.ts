@@ -428,6 +428,7 @@ describe('Stripe payment routes', () => {
     vi.mocked(prisma.financialTransactionFindFirst).mockResolvedValueOnce({
       id: 'financial-transaction-1',
       stripeObjectId: idempotencyKey,
+      status: 'PENDING',
       amountCents: 1200,
       createdAt: new Date(),
     } as never);
@@ -565,7 +566,7 @@ describe('Stripe payment routes', () => {
     expect(response.json()).toEqual({ received: true });
     expect(updateMany).toHaveBeenCalledWith({
       where: {
-        id: { in: ['order-1'] },
+        id: 'order-1',
         paymentReference: 'cs_test_123',
         paymentStatus: 'UNPAID',
         status: 'PENDING',
@@ -727,7 +728,10 @@ describe('Stripe payment routes', () => {
   it('does not restore stock twice when Stripe concurrently replays an expiration webhook', async () => {
     vi.stubEnv('STRIPE_WEBHOOK_SECRET', 'whsec_test_example');
     const prisma = setup();
-    updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+    vi.mocked(prisma.webhookEventCreate)
+      .mockResolvedValueOnce({ id: 'webhook-event-1' })
+      .mockRejectedValueOnce({ code: 'P2002' });
+    updateMany.mockResolvedValueOnce({ count: 1 });
     await app.ready();
 
     const rawBody = Buffer.from(
@@ -755,8 +759,7 @@ describe('Stripe payment routes', () => {
 
     expect(first.statusCode).toBe(200);
     expect(replay.statusCode).toBe(200);
-    expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
-    expect(updateMany).toHaveBeenCalledTimes(2);
+    expect(updateMany).toHaveBeenCalledTimes(1);
     expect(productUpdateMany).toHaveBeenCalledTimes(1);
   });
   it('rejects invalid and stale webhook signatures', async () => {
