@@ -65,6 +65,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   const [loadFailed, setLoadFailed] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutPending, setCheckoutPending] = useState(false);
+  const [addressPending, setAddressPending] = useState(false);
   const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
@@ -181,30 +182,53 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
 
   async function addAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (addressPending) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const values = {
+      label: String(form.get('label') ?? (language === 'en' ? 'Home' : 'Domicile')).trim(),
+      recipient: String(form.get('recipient') ?? '').trim(),
+      line1: String(form.get('line1') ?? '').trim(),
+      postalCode: String(form.get('postalCode') ?? '').trim(),
+      city: String(form.get('city') ?? '').trim(),
+    };
+    if (
+      values.label.length === 0 ||
+      values.recipient.length < 2 ||
+      values.line1.length < 3 ||
+      values.postalCode.length < 2 ||
+      values.city.length < 2
+    ) {
+      setMessage(
+        t(
+          'Vérifiez les champs : destinataire, adresse, code postal et ville doivent être renseignés correctement.',
+          'Check the fields: recipient, address, postal code and city must be completed correctly.',
+        ),
+      );
+      return;
+    }
+
+    setAddressPending(true);
+    setMessage('');
     try {
       await apiRequest('/api/customer/addresses', apiSchemas.addressCreated, {
         method: 'POST',
         body: JSON.stringify({
-          label: String(form.get('label') ?? (language === 'en' ? 'Home' : 'Domicile')),
-          recipient: String(form.get('recipient') ?? ''),
-          line1: String(form.get('line1') ?? ''),
-          postalCode: String(form.get('postalCode') ?? ''),
-          city: String(form.get('city') ?? ''),
+          ...values,
           country: 'FR',
           isDefault: addresses.length === 0,
         }),
       });
+      formElement.reset();
+      await load();
+      setMessage(t('Adresse enregistrée.', 'Address saved.'));
     } catch {
       setMessage(
-        t('Adresse non enregistrée. Vérifiez les champs.', 'Address not saved. Check the fields.'),
+        t('Adresse non enregistrée. Vérifiez les champs puis réessayez.', 'Address not saved. Check the fields and try again.'),
       );
-      return;
+    } finally {
+      setAddressPending(false);
     }
-    formElement.reset();
-    setMessage(t('Adresse enregistrée.', 'Address saved.'));
-    await load();
   }
 
   async function removeAddress(id: string) {
@@ -341,6 +365,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             className="checkout-form"
             onSubmit={(event) => void addAddress(event)}
             style={{ marginTop: 16 }}
+            aria-busy={addressPending}
           >
             <h3>{t('Ajouter une adresse', 'Add an address')}</h3>
             <label>
@@ -358,15 +383,17 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             <div className="form-two-col">
               <label>
                 {t('Code postal', 'Postal code')}
-                <input name="postalCode" required maxLength={20} />
+                <input name="postalCode" required minLength={2} maxLength={20} autoComplete="postal-code" />
               </label>
               <label>
                 {t('Ville', 'City')}
-                <input name="city" required maxLength={100} />
+                <input name="city" required minLength={2} maxLength={100} autoComplete="address-level2" />
               </label>
             </div>
-            <button className="dark-button" type="submit">
-              {t('Enregistrer l’adresse', 'Save address')}
+            <button className="dark-button" type="submit" disabled={addressPending}>
+              {addressPending
+                ? t('Enregistrement…', 'Saving…')
+                : t('Enregistrer l’adresse', 'Save address')}
             </button>
           </form>
         </>
