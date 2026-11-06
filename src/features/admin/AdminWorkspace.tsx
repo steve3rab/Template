@@ -101,7 +101,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
     return () => {
       active = false;
     };
-  }, [language]);
+  }, [t]);
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
     if (!transaction.requestKey) {
