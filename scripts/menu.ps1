@@ -136,8 +136,8 @@ $testItems = @(
     (New-MenuItem '4' 'Couverture frontend + backend avec seuils' Script 'test.ps1' @('-Mode', 'Coverage') -ConfirmFirst),
     (New-MenuItem '5' 'Tests E2E Playwright' Script 'test.ps1' @('-Mode', 'E2E') -ConfirmFirst),
     (New-MenuItem '6' 'Installer Chromium pour Playwright' Npm '' @('exec', '--', 'playwright', 'install', 'chromium')),
-    (New-MenuItem '7' 'Test de charge k6 (smoke, serveur local par défaut)' Script 'test.ps1' @('-Mode', 'LoadSmoke')),
-    (New-MenuItem '8' 'Test de charge k6 (stress, BASE_URL requis)' Script 'test.ps1' @('-Mode', 'LoadStress') -ConfirmFirst)
+    (New-MenuItem '7' 'Test de charge k6 — profil smoke local' Script 'test.ps1' @('-Mode', 'LoadSmoke')),
+    (New-MenuItem '8' 'Test de charge k6 — profil stress, BASE_URL requis' Script 'test.ps1' @('-Mode', 'LoadStress') -ConfirmFirst)
 )
 $databaseItems = @(
     (New-MenuItem '1' 'Générer les clients Prisma SQLite + PostgreSQL' Npm '' @('run', 'db:generate')),
