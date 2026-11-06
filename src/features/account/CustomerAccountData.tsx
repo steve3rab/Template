@@ -60,6 +60,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [message, setMessage] = useState('');
@@ -103,9 +104,11 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       const authenticated =
         event instanceof CustomEvent ? event.detail?.authenticated === true : false;
       if (!event) {
+        setAuthChecking(true);
         void fetch('/api/auth/me', { credentials: 'include' })
           .then((response) => {
             if (!active) return;
+            setAuthChecking(false);
             if (response.ok) void load();
             else {
               loadVersion.current += 1;
@@ -119,6 +122,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
           })
           .catch(() => {
             if (!active) return;
+            setAuthChecking(false);
             setAvailable(false);
             setLoading(false);
             setLoadFailed(true);
@@ -129,6 +133,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
         return;
       }
       loadVersion.current += 1;
+      setAuthChecking(false);
       if (authenticated) void load();
       else {
         setAddresses([]);
@@ -213,7 +218,11 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   return (
     <section className="seller-panel" style={{ marginTop: 24 }}>
       <h2>{t('Mes commandes et adresses', 'My orders and addresses')}</h2>
-      {!available && !loadFailed ? (
+      {authChecking ? (
+        <p className="workspace-loading" role="status" aria-live="polite">
+          {t('Vérification de votre session…', 'Checking your session…')}
+        </p>
+      ) : !available && !loadFailed ? (
         <p>
           {t(
             'Connectez-vous pour consulter votre historique et vos adresses enregistrées.',
