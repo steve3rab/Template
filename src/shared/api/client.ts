@@ -29,12 +29,25 @@ export const orderStatusSchema = z.enum([
   'CANCELLED',
 ]);
 
+const financialTransactionSchema = z.object({
+  id: z.string(),
+  orderId: z.string(),
+  stripeObjectId: z.string(),
+  type: z.string(),
+  status: z.string(),
+  amountCents: z.number().int(),
+  currency: z.string(),
+  createdAt: z.string(),
+});
+
 const orderSchema = z.object({
   id: z.string(),
   status: orderStatusSchema,
   paymentStatus: z.string(),
   totalCents: z.number().int(),
+  refundedCents: z.number().int().optional(),
   createdAt: z.string(),
+  financialTransactions: z.array(financialTransactionSchema).optional(),
   customer: z.object({ email: z.string().email() }).optional(),
   items: z.array(orderItemSchema),
 });
@@ -109,6 +122,36 @@ export const apiSchemas = {
     ),
   }),
   adminOrders: z.object({ orders: z.array(orderSchema) }),
+  adminFinancialTransactions: z.object({
+    transactions: z.array(
+      financialTransactionSchema.extend({
+        order: z.object({
+          id: z.string(),
+          userId: z.string(),
+          sellerId: z.string().nullable(),
+          totalCents: z.number().int(),
+          currency: z.string(),
+          paymentStatus: z.string(),
+          refundedCents: z.number().int(),
+          createdAt: z.string(),
+        }),
+      }),
+    ),
+  }),
+  refundResult: z.union([
+    z.object({
+      refund: z.object({
+        id: z.string(),
+        amountCents: z.number().int(),
+        currency: z.string(),
+        status: z.string(),
+      }),
+      refundedCents: z.number().int(),
+      remainingRefundableCents: z.number().int(),
+      paymentStatus: z.string(),
+    }),
+    z.object({ pending: z.literal(true), message: z.string(), refundId: z.string().optional() }),
+  ]),
   checkoutSession: z.object({ checkoutUrl: z.string().url() }),
 };
 
