@@ -403,7 +403,7 @@ export function registerPaymentRoutes(
           const localRefunds = order.financialTransactions
             .filter((transaction) => transaction.type === 'REFUND')
             .reduce((sum, transaction) => sum + transaction.amountCents, 0);
-          const stripeRefunds = refunds.data
+          const stripeRefunds = refunds.data.data
             .filter(
               (refund) =>
                 refund.status === 'succeeded' && refund.metadata?.orderId === order.id,
