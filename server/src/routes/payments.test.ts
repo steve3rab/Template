@@ -276,7 +276,8 @@ describe('Stripe payment routes', () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(
           new Response(
             JSON.stringify({
