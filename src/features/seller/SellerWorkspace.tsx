@@ -18,6 +18,12 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
   const languageRef = useRef(language);
   languageRef.current = language;
   const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
+  const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
+  const categoryLabel = (value: string) => {
+    if (language === 'fr') return value;
+    const labels: Record<string, string> = { 'Vêtements': 'Clothing', 'Chaussures': 'Shoes', 'Accessoires': 'Accessories', 'Maison': 'Home' };
+    return labels[value] ?? value;
+  };
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -208,7 +214,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
       <div className="kpi-grid">
         <article className="kpi-card">
           <div className="kpi-label">{t('Chiffre d’affaires payé', 'Paid revenue')}</div>
-          <strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong>
+          <strong>{dashboard ? formatMoney(dashboard.revenueCents) : '—'}</strong>
           <p>
             {dashboard?.paidOrders ?? 0} {t('commandes payées sur', 'paid orders out of')}{' '}
             {dashboard?.periodDays ?? Number(range)} jours
@@ -374,7 +380,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
               <select value={category} onChange={(event) => setCategory(event.target.value)}>
                 {PRODUCT_CATEGORIES.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {categoryLabel(item)}
                   </option>
                 ))}
               </select>
@@ -424,7 +430,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
               <div className="best-seller-name">
                 <strong>{product.name}</strong>
                 <span>
-                  {formatCents(product.priceCents)} · {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
+                  {formatMoney(product.priceCents)} · {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
                 </span>
               </div>
               <label>
@@ -505,7 +511,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                   {({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec du paiement', 'Payment failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}
                 </span>
               </div>
-              <strong>{formatCents(order.totalCents)}</strong>
+              <strong>{formatMoney(order.totalCents)}</strong>
               <label>
                 {t('Statut', 'Status')}
                 <select
