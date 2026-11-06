@@ -19,6 +19,7 @@ import {
 } from './schemas/auth.js';
 import { registerCommerceRoutes } from './commerce.js';
 import { registerPaymentRoutes } from './routes/payments.js';
+import { isPrismaUniqueConstraintError } from './utils/prismaErrors.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
