@@ -705,6 +705,31 @@ export function App() {
     checkoutSubmitRef.current = true;
     setCheckoutSubmitting(true);
     const form = new FormData(event.currentTarget);
+    const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
+    const addressValues = {
+      recipient: String(form.get('recipient') ?? '').trim(),
+      line1: String(form.get('line1') ?? '').trim(),
+      line2: String(form.get('line2') ?? '').trim(),
+      postalCode: String(form.get('postalCode') ?? '').trim(),
+      city: String(form.get('city') ?? '').trim(),
+    };
+    if (
+      !selectedAddress &&
+      (addressValues.recipient.length < 2 ||
+        addressValues.line1.length < 3 ||
+        addressValues.postalCode.length < 2 ||
+        addressValues.city.length < 2)
+    ) {
+      setNotice(
+        translate(
+          'Vérifiez le destinataire et l’adresse : chaque champ obligatoire doit être correctement renseigné.',
+          'Check the recipient and address: every required field must be completed correctly.',
+        ),
+      );
+      setCheckoutSubmitting(false);
+      checkoutSubmitRef.current = false;
+      return;
+    }
     setNotice('');
     try {
       const cartResponse = await fetch('/api/customer/cart', {
@@ -725,7 +750,6 @@ export function App() {
             'Unable to save your cart. Please sign in again.',
           ),
         );
-      const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
       let addressId = selectedAddress?.id ?? '';
       if (!selectedAddress) {
         const addressResponse = await fetch('/api/customer/addresses', {
@@ -734,11 +758,11 @@ export function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             label: 'Livraison',
-            recipient: String(form.get('recipient') ?? ''),
-            line1: String(form.get('line1') ?? ''),
-            line2: String(form.get('line2') ?? '') || null,
-            postalCode: String(form.get('postalCode') ?? ''),
-            city: String(form.get('city') ?? ''),
+            recipient: addressValues.recipient,
+            line1: addressValues.line1,
+            line2: addressValues.line2 || null,
+            postalCode: addressValues.postalCode,
+            city: addressValues.city,
             country: 'FR',
             isDefault: checkoutAddresses.length === 0,
           }),
@@ -1382,7 +1406,11 @@ export function App() {
                 )}
               </p>
               <div className="checkout-layout">
-                <form className="checkout-form" onSubmit={completeCheckout}>
+                <form
+                  className="checkout-form"
+                  onSubmit={completeCheckout}
+                  aria-busy={checkoutSubmitting}
+                >
                   <h2>{translate('Informations de livraison', 'Delivery information')}</h2>
                   {checkoutAddresses.length > 0 && (
                     <label>
@@ -1430,6 +1458,8 @@ export function App() {
                           <input
                             required
                             name="recipient"
+                            minLength={2}
+                            maxLength={120}
                             autoComplete="name"
                             placeholder={translate(
                               'Prénom et nom du destinataire',
@@ -1444,6 +1474,7 @@ export function App() {
                           )}
                           <input
                             name="line2"
+                            maxLength={180}
                             autoComplete="address-line2"
                             placeholder={translate(
                               'Appartement, bâtiment…',
@@ -1457,6 +1488,8 @@ export function App() {
                         <input
                           required
                           name="line1"
+                          minLength={3}
+                          maxLength={180}
                           autoComplete="street-address"
                           placeholder={translate('Numéro et rue', 'Street address')}
                         />
@@ -1467,6 +1500,8 @@ export function App() {
                           <input
                             required
                             name="postalCode"
+                            minLength={2}
+                            maxLength={20}
                             autoComplete="postal-code"
                             placeholder={translate('75000', 'Postal code')}
                           />
@@ -1476,6 +1511,8 @@ export function App() {
                           <input
                             required
                             name="city"
+                            minLength={2}
+                            maxLength={100}
                             autoComplete="address-level2"
                             placeholder={translate('Paris', 'City')}
                           />
@@ -1490,6 +1527,11 @@ export function App() {
                       'I confirm that the delivery information is correct.',
                     )}
                   </label>
+                  {checkoutSubmitting && (
+                    <p className="workspace-loading" role="status" aria-live="polite">
+                      {translate('Enregistrement de la commande…', 'Saving your order…')}
+                    </p>
+                  )}
                   <button
                     className="dark-button full-button"
                     type="submit"
