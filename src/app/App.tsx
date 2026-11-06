@@ -763,7 +763,7 @@ export function App() {
           <section className="hero-banner" aria-labelledby="hero-title">
             <div className="hero-copy">
               <span className="eyebrow">{translate('LA SÉLECTION DE LA SAISON', 'THIS SEASON’S EDIT')}</span>
-              <h1 id="hero-title" aria-label="Le style, en toute simplicité.">
+              <h1 id="hero-title" aria-label={translate('Le style, en toute simplicité.', 'Effortless style.')}>
                 {translate('Le style, en', 'Effortless')}
                 <br />
                 <em>{translate('toute simplicité.', 'by design.')}</em>
@@ -886,7 +886,7 @@ export function App() {
                         event.currentTarget.style.display = 'none';
                       }}
                     />
-                    <span className="visual-label">{product.category.toUpperCase()}</span>
+                    <span className="visual-label">{categoryLabel(product.category).toUpperCase()}</span>
                     <button className="quick-add" onClick={() => addToCart(product)}>
                       {translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
                     </button>
@@ -894,7 +894,7 @@ export function App() {
                   <div className="product-meta">
                     <div>
                       <h3>{product.name}</h3>
-                      <p>{product.category}</p>
+                      <p>{categoryLabel(product.category)}</p>
                     </div>
                     <div className="product-price">
                       {product.oldPrice && <del>{formatCurrency(product.oldPrice)}</del>}
