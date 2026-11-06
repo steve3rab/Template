@@ -25,6 +25,7 @@ const stripeSessionLookupSchema = z.object({
 
 const stripeEventSchema = z
   .object({
+    id: z.string().min(1),
     type: z.string(),
     data: z.object({ object: z.unknown() }),
   })
@@ -303,74 +304,121 @@ export function registerPaymentRoutes(
 
     const event = stripeEventSchema.safeParse(request.body);
     if (!event.success) return reply.code(400).send({ error: 'Invalid webhook payload.' });
-    if (
-      ![
-        'checkout.session.completed',
-        'checkout.session.async_payment_succeeded',
-        'checkout.session.expired',
-      ].includes(event.data.type)
-    ) {
-      return reply.send({ received: true });
-    }
 
-    const session = stripeCheckoutCompletedSchema.safeParse(event.data.data.object);
-    if (!session.success || !session.data.metadata?.orderIds) {
-      return reply.send({ received: true });
-    }
+    const session =
+      event.data.data.object && typeof event.data.data.object === 'object'
+        ? stripeCheckoutCompletedSchema.safeParse(event.data.data.object)
+        : null;
+    const sessionId = session?.success ? session.data.id : null;
+    const orderIds =
+      session?.success && session.data.metadata?.orderIds
+        ? [...new Set(session.data.metadata.orderIds.split(',').filter(Boolean))]
+        : [];
 
-    const orderIds = [...new Set(session.data.metadata.orderIds.split(',').filter(Boolean))];
-    if (orderIds.length === 0 || orderIds.length > 15) {
-      return reply.code(400).send({ error: 'Invalid order metadata.' });
-    }
+    if (orderIds.length > 15) return reply.code(400).send({ error: 'Invalid order metadata.' });
 
-    if (session.data.payment_status === 'paid') {
-      // Updating only pending orders linked to this exact Checkout Session makes
-      // repeated delivery of a successful event harmless.
-      await prisma.order.updateMany({
-        where: {
-          id: { in: orderIds },
-          paymentReference: session.data.id,
-          paymentStatus: 'UNPAID',
-          status: 'PENDING',
-        },
-        data: { paymentStatus: 'PAID' },
-      });
-      return reply.send({ received: true });
-    }
-
-    if (event.data.type === 'checkout.session.expired') {
-      const expiredOrders = await prisma.order.findMany({
-        where: {
-          id: { in: orderIds },
-          paymentReference: session.data.id,
-          paymentStatus: 'UNPAID',
-          status: 'PENDING',
-        },
-        include: { items: true },
-      });
+    try {
       await prisma.$transaction(async (tx) => {
-        for (const order of expiredOrders) {
-          const cancelled = await tx.order.updateMany({
+        // The unique Stripe event ID is the durable idempotency boundary. A duplicate
+        // delivery fails here and the whole transaction (including side effects) is skipped.
+        await tx.stripeWebhookEvent.create({
+          data: {
+            stripeEventId: event.data.id,
+            type: event.data.type,
+            objectId: sessionId,
+          },
+        });
+
+        if (
+          session?.success &&
+          orderIds.length > 0 &&
+          session.data.payment_status === 'paid' &&
+          ['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(
+            event.data.type,
+          )
+        ) {
+          const eligibleOrders = await tx.order.findMany({
             where: {
-              id: order.id,
+              id: { in: orderIds },
               paymentReference: session.data.id,
               paymentStatus: 'UNPAID',
               status: 'PENDING',
             },
-            data: { status: 'CANCELLED' },
           });
-          if (cancelled.count !== 1) continue;
-          for (const item of order.items) {
-            if (item.productId) {
-              await tx.product.updateMany({
-                where: { id: item.productId },
-                data: { stock: { increment: item.quantity } },
-              });
+          for (const order of eligibleOrders) {
+            const changed = await tx.order.updateMany({
+              where: {
+                id: order.id,
+                paymentReference: session.data.id,
+                paymentStatus: 'UNPAID',
+                status: 'PENDING',
+              },
+              data: { paymentStatus: 'PAID' },
+            });
+            if (changed.count !== 1) continue;
+            await tx.financialTransaction.create({
+              data: {
+                orderId: order.id,
+                stripeObjectId: `${event.data.id}:${order.id}`,
+                type: 'PAYMENT',
+                amountCents: order.totalCents,
+                currency: order.currency,
+              },
+            });
+          }
+        } else if (
+          session?.success &&
+          orderIds.length > 0 &&
+          event.data.type === 'checkout.session.expired'
+        ) {
+          const expiredOrders = await tx.order.findMany({
+            where: {
+              id: { in: orderIds },
+              paymentReference: session.data.id,
+              paymentStatus: 'UNPAID',
+              status: 'PENDING',
+            },
+            include: { items: true },
+          });
+          for (const order of expiredOrders) {
+            const cancelled = await tx.order.updateMany({
+              where: {
+                id: order.id,
+                paymentReference: session.data.id,
+                paymentStatus: 'UNPAID',
+                status: 'PENDING',
+              },
+              data: { status: 'CANCELLED' },
+            });
+            if (cancelled.count !== 1) continue;
+            for (const item of order.items) {
+              if (item.productId) {
+                await tx.product.updateMany({
+                  where: { id: item.productId },
+                  data: { stock: { increment: item.quantity } },
+                });
+              }
             }
           }
         }
+
+        await tx.stripeWebhookEvent.update({
+          where: { stripeEventId: event.data.id },
+          data: { processedAt: new Date() },
+        });
       });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: unknown }).code === 'P2002'
+      ) {
+        return reply.send({ received: true, duplicate: true });
+      }
+      throw error;
     }
+
     return reply.send({ received: true });
   });
 }
