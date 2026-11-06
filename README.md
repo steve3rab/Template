@@ -51,7 +51,7 @@ Le frontend n'accède jamais au secret de session : il est transmis automatiquem
 - La création d'un produit accepte jusqu'à 5 photos PNG/JPEG/WebP (1,2 Mo maximum par fichier), des tailles libres (ex. XS à XL ou 38 à 42) et des dimensions longueur/largeur/hauteur avec unité.
 - L'API vérifie la signature binaire des fichiers image téléversés, refuse les formats non pris en charge et exige HTTPS pour les images hébergées à distance.
 - Les images téléversées sont actuellement stockées sous forme de données encodées dans SQLite. Cette solution convient au prototype et aux petits catalogues ; avant une montée en charge, il faudra remplacer ce stockage par un adaptateur d'objets (S3, Cloudinary ou équivalent) et conserver les URL des médias en base.
-- L'espace administrateur est réservé au rôle `ADMIN`. Il fournit les indicateurs globaux, la liste des comptes avec identifiants publics, la modification des rôles client/vendeur, la modération de visibilité du catalogue et la consultation des commandes.
+- L'espace administrateur est réservé au rôle `ADMIN`. Il fournit les indicateurs globaux, la liste des comptes avec identifiants publics, la modification des rôles client/vendeur, la modération de visibilité du catalogue, la consultation des commandes, l'historique financier et les outils de remboursement et de rapprochement Stripe.
 - Les API d'administration sont protégées côté serveur par le contrôle de rôle ; masquer un bouton dans l'interface ne constitue jamais une mesure d'autorisation.
 
 ### Comptes de test (développement local uniquement)
@@ -86,7 +86,7 @@ npm run db:deploy
 - `db:deploy` applique les migrations existantes, notamment en déploiement.
 - `DATABASE_URL=file:./dev.db` est relatif au fichier de schéma Prisma.
 
-SQLite convient au développement et aux déploiements simples sur disque persistant. Pour une API multi-instance ou une forte concurrence d'écritures, préférez PostgreSQL et configurez le provider Prisma correspondant ; le code d'accès aux données reste isolé dans Prisma.
+SQLite reste la base de développement par défaut. Un schéma Prisma PostgreSQL dédié est disponible dans `server/prisma/schema.postgres.prisma`. La CI démarre PostgreSQL 16, applique le schéma avec `prisma db push` et exécute des tests de concurrence réels sur les réservations de stock et les transitions de commande. Pour utiliser PostgreSQL en local, définissez `DATABASE_URL_POSTGRES`, générez le client dédié avec `npm run db:generate:postgres`, puis appliquez le schéma avec `npx prisma db push --schema server/prisma/schema.postgres.prisma`.
 
 ## Architecture et standards de code
 
@@ -101,7 +101,7 @@ Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
 
 ## Contrôles qualité
 
-Les tests couvrent les composants et parcours frontend, les routes API (authentification, sessions, autorisations, validation, cookies, origine, limitation de débit, paiements et erreurs), ainsi que les parcours utilisateur Playwright. Les tests unitaires/API isolent les dépendances lorsque c'est pertinent ; les tests de persistance et les parcours E2E complètent ces vérifications. Les seuils de couverture sont contrôlés séparément pour le frontend et le backend.
+Les tests couvrent les composants et parcours frontend, les routes API (authentification, sessions, autorisations, validation, cookies, origine, limitation de débit, paiements, remboursements et rapprochement Stripe), ainsi que les parcours utilisateur Playwright. Des tests PostgreSQL dédiés vérifient les écritures concurrentes sur les stocks et les transitions de commandes. Les seuils de couverture sont contrôlés séparément pour le frontend et le backend.
 
 ```bash
 npm run typecheck
@@ -186,6 +186,6 @@ Voir [docs/PRODUCTION.md](docs/PRODUCTION.md), [docs/CI.md](docs/CI.md) et [serv
 
 Les pages CGV, confidentialité et retours/remboursements sont des **modèles à compléter et faire valider** avant toute vente. Les coordonnées de l'entreprise, du médiateur, les durées de conservation, les prestataires et les modalités de livraison doivent être exacts.
 
-**Paiement :** Stripe Checkout et les webhooks signés sont implémentés, mais doivent être configurés avec `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` avant utilisation. Le webhook doit écouter `checkout.session.completed`, `checkout.session.async_payment_succeeded` et `checkout.session.expired`. Les commandes ne passent à `PAID` qu'après confirmation signée ; une session impayée expirée annule la commande et libère le stock. Les remboursements, le suivi transporteur et les e-mails transactionnels restent à implémenter. Ne mettez pas en production avant que la CI soit verte et que le flux Stripe ait été testé en mode test puis validé pour l'environnement réel.
+**Paiements et remboursements :** Stripe Checkout et les webhooks signés doivent être configurés avec `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET`. Les événements sont enregistrés avec un identifiant unique pour empêcher les traitements en double. Les commandes ne passent à `PAID` qu'après confirmation signée ; une session impayée expirée annule la commande et libère le stock. Les remboursements partiels et complets sont réservés atomiquement, envoyés à Stripe avec une clé d'idempotence par demande, puis inscrits dans le registre financier. Les remboursements dont le résultat réseau est incertain restent en attente et peuvent être repris depuis l'administration ; les webhooks Stripe actualisent le registre. Le compte client affiche les paiements et remboursements. L'administration propose un rapprochement externe des montants encaissés et remboursés avec Stripe. Le rapprochement vérifie les 50 dernières commandes payées ; consultez les écarts avant toute clôture comptable. Le suivi transporteur et les e-mails transactionnels restent à implémenter. Ne mettez pas en production avant une CI verte et un test complet Stripe en mode test.
 
 Un smoke test de charge k6 est disponible dans `tests/load/k6-smoke.js`. Il nécessite k6 et doit être exécuté contre une préproduction isolée, par exemple `BASE_URL=https://staging.example.com k6 run tests/load/k6-smoke.js`. Ce script n'est pas une preuve qu'un test de charge ou un audit de sécurité a déjà été exécuté.
