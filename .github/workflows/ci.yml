@@ -18,6 +18,23 @@ jobs:
       SESSION_SECRET: ci-only-secret-that-is-long-enough-for-tests
     steps:
       - uses: actions/checkout@v4
+      - name: Validate PowerShell script syntax
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem scripts -Filter '*.ps1' -File | ForEach-Object {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+            foreach ($parseError in $parseErrors) {
+              $errors += "{0}:{1}:{2} {3}" -f $_.FullName, $parseError.Extent.StartLineNumber, $parseError.Extent.StartColumnNumber, $parseError.Message
+            }
+          }
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
+          Write-Host 'PowerShell syntax validated for all scripts.'
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
