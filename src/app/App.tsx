@@ -1112,7 +1112,10 @@ export function App() {
                 <span>⌕</span>
                 <h3>
                   {catalog.length === 0
-                    ? translate('Aucun produit disponible pour le moment', 'No products available yet')
+                    ? translate(
+                        'Aucun produit disponible pour le moment',
+                        'No products available yet',
+                      )
                     : translate('Aucun article trouvé', 'No items found')}
                 </h3>
                 <p>
