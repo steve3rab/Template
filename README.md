@@ -56,7 +56,7 @@ Le frontend n'accède jamais au secret de session : il est transmis automatiquem
 
 ### Comptes de test (développement local uniquement)
 
-Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes de test dans la base configurée par `DATABASE_URL`. Il utilise le mot de passe fixe `Local-Test-Password-2026!` :
+Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes de test dans la base configurée par `DATABASE_URL`. Depuis PowerShell, privilégiez `.\scripts\seed-test-users.ps1`, qui demande un mot de passe masqué ; en lancement direct npm, le mot de passe de repli local est `Local-Test-Password-2026!` :
 
 | Rôle                     | Identifiant                 |
 | ------------------------ | --------------------------- |
@@ -67,10 +67,10 @@ Le script `npm run db:seed:test-users` crée ou réinitialise trois comptes de t
 Lancez le seed en local depuis PowerShell, après avoir vérifié que `DATABASE_URL` pointe vers votre base locale :
 
 ```powershell
-npm run db:seed:test-users
+.\scripts\seed-test-users.ps1
 ```
 
-Le script charge d'abord `server/.env`, puis `.env` à la racine comme solution de repli. Il hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse explicitement de s'exécuter si l'environnement est déclaré `production`, `preproduction`, `preprod` ou `staging` via `NODE_ENV`, `APP_ENV`, `DEPLOYMENT_ENV`, `ENVIRONMENT`, `VERCEL_ENV` ou `RAILWAY_ENVIRONMENT`. Il exige également que `APP_ORIGIN` soit défini et pointe vers `localhost`, `127.0.0.1` ou `::1`. **Ces comptes et ce mot de passe sont exclusivement réservés au développement local et ne doivent jamais être utilisés en production ou en préproduction.**
+Le script charge d'abord `server/.env`, puis `.env` à la racine comme solution de repli. Il hache le mot de passe avec Argon2id et invalide les sessions existantes de ces comptes. Il refuse explicitement de s'exécuter si l'environnement est déclaré `production`, `preproduction`, `preprod` ou `staging` via `NODE_ENV`, `APP_ENV`, `DEPLOYMENT_ENV`, `ENVIRONMENT`, `VERCEL_ENV` ou `RAILWAY_ENVIRONMENT`. Il exige également que `APP_ORIGIN` soit défini et pointe vers `localhost`, `127.0.0.1` ou `::1`, et refuse une base dont l'hôte n'est pas local (SQLite fichier ou base locale). **Ces comptes et mots de passe sont exclusivement réservés au développement local et ne doivent jamais être utilisés en production ou en préproduction.**
 
 ## Base de données Prisma + SQLite
 
