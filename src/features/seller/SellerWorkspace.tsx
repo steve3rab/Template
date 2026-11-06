@@ -15,7 +15,7 @@ import {
 } from '../../shared/api/client';
 
 export function SellerWorkspace({ range, language = 'fr' }: { range: string; language?: Language }) {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
   const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const categoryLabel = (value: string) => {
     if (language === 'fr') return value;
@@ -73,7 +73,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         }),
       );
     }
-  }, [range, language]);
+  }, [range, t]);
 
   useEffect(() => {
     void Promise.resolve()
