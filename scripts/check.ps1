@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param()
 
+$ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
 Assert-DependenciesInstalled
-Write-Host 'Exécution des contrôles qualité complets...' -ForegroundColor Cyan
-Invoke-Npm -Arguments @('run', 'check')
+Invoke-Npm -Arguments @('run', 'check') -Description 'Contrôles complets : TypeScript, ESLint, Prettier, couverture et builds'
