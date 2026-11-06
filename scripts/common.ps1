@@ -14,8 +14,13 @@ function Get-CommandVersion {
     param([Parameter(Mandatory = $true)][string]$Name)
 
     Test-ExternalCommand -Name $Name
-    $versionText = (& $Name --version 2>&1 | Select-Object -First 1).ToString().Trim()
-    if ($LASTEXITCODE -ne 0 -or $versionText -notmatch '([0-9]+\.[0-9]+\.[0-9]+)') {
+    $command = Get-Command -Name $Name -ErrorAction Stop
+    $versionOutput = & $command.Source --version 2>&1
+    $exitCodeVariable = Get-Variable -Name LASTEXITCODE -ErrorAction SilentlyContinue
+    $exitCode = if ($null -eq $exitCodeVariable) { 0 } else { [int]$exitCodeVariable.Value }
+    $versionLine = $versionOutput | Select-Object -First 1
+    $versionText = if ($null -eq $versionLine) { '' } else { $versionLine.ToString().Trim() }
+    if ($exitCode -ne 0 -or $versionText -notmatch '([0-9]+\.[0-9]+\.[0-9]+)') {
         throw "Impossible de lire la version de $Name. Résultat : $versionText"
     }
     return [version]$Matches[1]
@@ -60,7 +65,8 @@ function Invoke-Npm {
             $capturedOutput.Add($line)
             Write-Host $line
         }
-        $exitCode = $LASTEXITCODE
+        $exitCodeVariable = Get-Variable -Name LASTEXITCODE -ErrorAction SilentlyContinue
+        $exitCode = if ($null -eq $exitCodeVariable) { 0 } else { [int]$exitCodeVariable.Value }
     }
     finally {
         $ErrorActionPreference = $previousErrorActionPreference
