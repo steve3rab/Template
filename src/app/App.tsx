@@ -218,7 +218,7 @@ export function App() {
   const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentRole, setCurrentRole] = useState('');
-  const [catalog, setCatalog] = useState<Product[]>([]);
+  const [catalog, setCatalog] = useState<Product[]>(products);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogFailed, setCatalogFailed] = useState(false);
   const [catalogRetry, setCatalogRetry] = useState(0);
@@ -646,8 +646,12 @@ export function App() {
     setCheckoutDone(false);
     checkoutPendingRef.current = false;
     try {
-      const response = await fetch('/api/auth/me', { credentials: 'include' });
-      if (response.ok) {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+          signal: AbortSignal.timeout(15000),
+        });
+        if (response.ok) {
         const payload = (await response.json()) as { user?: { email: string } };
         setOrderEmail(payload.user?.email ?? '');
         try {
@@ -672,24 +676,24 @@ export function App() {
             ),
           );
         }
-        setCartOpen(false);
-        setCheckoutPending(false);
-        setView('checkout');
-        return;
+          setCartOpen(false);
+          setCheckoutPending(false);
+          setView('checkout');
+          return;
+        }
+      } catch {
+        // Continue to account sign-in if the session cannot be verified.
       }
-    } catch {
-      // Continue to account sign-in if the session cannot be verified.
-    }
-    setCartOpen(false);
-    checkoutPendingRef.current = true;
-    setCheckoutPending(true);
-    setView('account');
-    setNotice(
-      translate(
-        'Connectez-vous ou créez un compte pour finaliser votre commande.',
-        'Sign in or create an account to complete your order.',
-      ),
-    );
+      setCartOpen(false);
+      checkoutPendingRef.current = true;
+      setCheckoutPending(true);
+      setView('account');
+      setNotice(
+        translate(
+          'Connectez-vous ou créez un compte pour finaliser votre commande.',
+          'Sign in or create an account to complete your order.',
+        ),
+      );
     } finally {
       checkoutStartRef.current = false;
       setCheckoutStarting(false);
