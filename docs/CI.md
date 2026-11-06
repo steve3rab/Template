@@ -41,7 +41,7 @@ Sous Windows, le menu interactif `.\\scripts\\menu.ps1` est organisé en rubriqu
 
 Avant une préparation Prisma sous Windows, arrêtez les serveurs et tests encore actifs. `setup.ps1` recherche les processus `node.exe` dont la ligne de commande référence le dépôt et interrompt la préparation en affichant leurs PID ; cela évite que le moteur natif Prisma chargé provoque `EPERM: operation not permitted, rename`. Utilisez `.\\scripts\\stop-dev-all.ps1` pour les serveurs démarrés par le menu ; fermez manuellement les autres processus Node du dépôt.
 
-Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en repli. Il refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Le mot de passe masqué fourni au script PowerShell est transmis via `TEST_USERS_PASSWORD` uniquement pour le processus du seed ; ne créez jamais ces comptes sur un environnement distant.
+Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en repli. Il refuse les environnements de production, préproduction et staging, exige une origine locale `APP_ORIGIN` et vérifie que `DATABASE_URL` désigne un fichier SQLite ou une base dont l'hôte est local. Le mot de passe masqué fourni au script PowerShell est transmis via `TEST_USERS_PASSWORD` uniquement pour le processus du seed ; ne créez jamais ces comptes sur un environnement distant.
 
 ## Accessibilité et tests de charge
 
