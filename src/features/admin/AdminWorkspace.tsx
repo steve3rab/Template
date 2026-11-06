@@ -288,28 +288,28 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
           className={section === 'users' ? 'active' : ''}
           onClick={() => setSection('users')}
         >
-          Utilisateurs ({users.length})
+          {t('Utilisateurs', 'Users')} ({users.length})
         </button>
         <button
           type="button"
           className={section === 'products' ? 'active' : ''}
           onClick={() => setSection('products')}
         >
-          Produits ({products.length})
+          {t('Produits', 'Products')} ({products.length})
         </button>
         <button
           type="button"
           className={section === 'orders' ? 'active' : ''}
           onClick={() => setSection('orders')}
         >
-          Commandes ({orders.length})
+          {t('Commandes', 'Orders')} ({orders.length})
         </button>
         <button
           type="button"
           className={section === 'finances' ? 'active' : ''}
           onClick={() => setSection('finances')}
         >
-          Finances ({financialTransactions.length})
+          {t('Finances', 'Finances')} ({financialTransactions.length})
         </button>
       </nav>
 
@@ -367,7 +367,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                     <strong>{product.name}</strong>
                     <span>
                       {product.seller?.email ?? t('Sans vendeur', 'No seller')} · {formatCents(product.priceCents)}{' '}
-                      · Stock : {product.stock}
+                      · {t('Stock :', 'Stock:')} {product.stock}
                     </span>
                   </div>
                   <button
@@ -390,7 +390,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 <article className="admin-row" key={order.id}>
                   <div>
                     <strong>
-                      Commande {order.id.slice(-8)} · {order.customer?.email ?? t('Client', 'Customer')}
+                      {t('Commande', 'Order')} {order.id.slice(-8)} · {order.customer?.email ?? t('Client', 'Customer')}
                     </strong>
                     <span>
                       {order.items
@@ -399,7 +399,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                       · {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')}
                     </span>
                     <span>
-                      {order.status} · {t('Paiement :', 'Payment:')} {order.paymentStatus}
+                      {({ PENDING: t('En attente', 'Pending'), PROCESSING: t('En préparation', 'Processing'), SHIPPED: t('Expédiée', 'Shipped'), DELIVERED: t('Livrée', 'Delivered'), CANCELLED: t('Annulée', 'Cancelled') } as Record<string, string>)[order.status] ?? order.status} · {t('Paiement :', 'Payment:')} {({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec', 'Failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}
                     </span>
                   </div>
                   <div className="admin-order-actions">
@@ -426,7 +426,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                           />
                         </label>
                         <button className="text-action" type="submit" disabled={loading}>
-                          Rembourser
+                          {t('Rembourser', 'Refund')}
                         </button>
                       </form>
                     )}
@@ -446,7 +446,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 onClick={() => void reconcilePayments()}
                 disabled={loading}
               >
-                Rapprocher avec Stripe
+                {t('Rapprocher avec Stripe', 'Reconcile with Stripe')}
               </button>
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
@@ -485,7 +485,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                           : t('Confirmé', 'Confirmed')}{' '}
                       · {transaction.stripeObjectId}
                     </span>
-                    <span>{new Date(transaction.createdAt).toLocaleString('fr-FR')}</span>
+                    <span>{new Date(transaction.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR')}</span>
                   </div>
                   <div className="admin-order-actions">
                     <strong>{formatCents(transaction.amountCents, transaction.currency)}</strong>
@@ -496,7 +496,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                         onClick={() => void retryPendingRefund(transaction)}
                         disabled={loading}
                       >
-                        Reprendre
+                        {t('Reprendre', 'Retry')}
                       </button>
                     )}
                   </div>
