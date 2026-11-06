@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react';
+import { translateText, type Language } from '../../shared/i18n';
 
-export function ResetPassword({ onDone }: { onDone: () => void }) {
+export function ResetPassword({ onDone, language = 'fr' }: { onDone: () => void; language?: Language }) {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const passwordRules = [
-    { label: '12 caractères minimum', valid: password.length >= 12 },
-    { label: 'Une lettre majuscule', valid: /[A-Z]/.test(password) },
-    { label: 'Une lettre minuscule', valid: /[a-z]/.test(password) },
-    { label: 'Un chiffre', valid: /[0-9]/.test(password) },
-    { label: 'Un caractère spécial', valid: /[^A-Za-z0-9\s]/.test(password) },
+    { label: t('12 caractères minimum', 'At least 12 characters'), valid: password.length >= 12 },
+    { label: t('Une lettre majuscule', 'One uppercase letter'), valid: /[A-Z]/.test(password) },
+    { label: t('Une lettre minuscule', 'One lowercase letter'), valid: /[a-z]/.test(password) },
+    { label: t('Un chiffre', 'One number'), valid: /[0-9]/.test(password) },
+    { label: t('Un caractère spécial', 'One special character'), valid: /[^A-Za-z0-9\s]/.test(password) },
   ];
   const passwordValid = passwordRules.every((rule) => rule.valid);
 
@@ -23,10 +25,10 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ token, password }),
       });
       const payload = (await response.json()) as { message?: string; error?: string };
-      if (!response.ok) throw new Error(payload.error ?? 'Lien invalide ou expiré.');
+      if (!response.ok) throw new Error(payload.error ?? t('Lien invalide ou expiré.', 'Invalid or expired link.'));
       window.dispatchEvent(
         new CustomEvent('template-toast', {
-          detail: { message: payload.message ?? 'Mot de passe modifié.', type: 'success' },
+          detail: { message: t('Mot de passe modifié.', 'Password updated.'), type: 'success' },
         }),
       );
       setPassword('');
@@ -37,7 +39,7 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
             message:
               error instanceof Error
                 ? error.message
-                : 'Impossible de réinitialiser le mot de passe.',
+                : t('Impossible de réinitialiser le mot de passe.', 'Unable to reset the password.'),
             type: 'error',
           },
         }),
@@ -49,17 +51,16 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
 
   return (
     <section className="workspace-page">
-      <span className="eyebrow">SÉCURITÉ DU COMPTE</span>
+      <span className="eyebrow">{t('SÉCURITÉ DU COMPTE', 'ACCOUNT SECURITY')}</span>
       <h1 className="workspace-title">
-        Réinitialiser le mot de passe<span className="brand-period">.</span>
+        {t('Réinitialiser le mot de passe', 'Reset your password')}<span className="brand-period">.</span>
       </h1>
       <p className="workspace-intro">
-        Choisissez un mot de passe de 12 à 128 caractères avec une majuscule, une minuscule, un
-        chiffre et un caractère spécial.
+        {t('Choisissez un mot de passe de 12 à 128 caractères avec une majuscule, une minuscule, un chiffre et un caractère spécial.', 'Choose a password between 12 and 128 characters, including an uppercase letter, a lowercase letter, a number and a special character.')}
       </p>
       <form className="checkout-form" onSubmit={(event) => void submit(event)}>
         <label>
-          Nouveau mot de passe
+          {t('Nouveau mot de passe', 'New password')}
           <input
             type="password"
             required
@@ -80,11 +81,11 @@ export function ResetPassword({ onDone }: { onDone: () => void }) {
           </ul>
         </label>
         <button className="dark-button" type="submit" disabled={busy || !passwordValid}>
-          {busy ? 'Enregistrement…' : 'Modifier le mot de passe'}
+          {busy ? t('Enregistrement…', 'Saving…') : t('Modifier le mot de passe', 'Update password')}
         </button>
       </form>
       <button className="back-link" onClick={onDone}>
-        Retour à la boutique
+        {t('Retour à la boutique', 'Back to shop')}
       </button>
     </section>
   );
