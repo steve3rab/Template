@@ -317,4 +317,30 @@ describe('Fashion storefront', () => {
       screen.queryByRole('button', { name: /réinitialiser les filtres/i }),
     ).not.toBeInTheDocument();
   });
+
+  it('shows a catalogue loading error and retries instead of showing an empty shop', async () => {
+    let productRequests = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/products') {
+        productRequests += 1;
+        if (productRequests === 1) return apiResponse({ error: 'Temporary failure.' }, 503);
+        return apiResponse({ products: catalogue });
+      }
+      if (url === '/api/auth/me') return apiResponse({ error: 'Not authenticated.' }, 401);
+      return apiResponse({ error: 'Not authenticated.' }, 401);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/catalogue could not be loaded/i);
+    expect(screen.queryByRole('heading', { name: 'Veste Studio' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByRole('heading', { name: 'Veste Studio' })).toBeInTheDocument();
+    expect(productRequests).toBe(2);
+  });
+
 });
