@@ -5,7 +5,7 @@
 Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `main`, d'une pull request et à la demande (`workflow_dispatch`). Les jobs s'exécutent sur Ubuntu avec Node.js 22.16.0 et npm 10.9.4.
 
 - **`quality`** : installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur.
-- **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright.
+- **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright desktop, mobile et tablette, y compris les contrôles d'accessibilité clavier et les attributs alternatifs des images.
 - **`postgres-concurrency`** : démarre PostgreSQL 16, génère le client Prisma dédié, pousse le schéma PostgreSQL et vérifie les réservations de stock et transitions de commande concurrentes.
 - **`docker`** : construction de l'image avec Buildx, sans publication (`push: false`).
 
@@ -39,6 +39,17 @@ Sous Windows, le menu interactif `.\\scripts\\menu.ps1` propose aussi :
 L'option 17 est réservée au développement local. Le seed refuse les environnements de production, préproduction et staging et exige une origine locale `APP_ORIGIN`. Avant de lancer les options 1 ou 17 sous Windows, arrêtez les serveurs frontend/backend et les tests encore actifs. `setup.ps1` recherche les processus `node.exe` dont la ligne de commande référence le dépôt et interrompt la préparation en affichant leurs PID ; cela évite que le moteur natif Prisma chargé provoque `EPERM: operation not permitted, rename` pendant la génération du client. Si l'erreur survient malgré tout, fermez les autres processus Node.js du dépôt puis relancez la commande.
 
 Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en repli ; l'origine configurée est conservée afin que le seed puisse refuser une cible distante. Le seed utilise le mot de passe de démonstration documenté dans le README ; ne le réutilisez jamais hors de votre machine de développement.
+
+## Accessibilité et tests de charge
+
+Les tests Playwright incluent des contrôles de fumée pour les landmarks, le titre principal, les noms accessibles des boutons, les attributs `alt` des images et l'ouverture/fermeture clavier du panier. Ils ne remplacent pas un audit WCAG complet avec lecteur d'écran et outils spécialisés.
+
+Deux profils k6 sont disponibles, mais ne sont pas exécutés automatiquement dans la CI :
+
+- `npm run test:load:smoke` : montée courte jusqu'à 25 utilisateurs virtuels, seuil p95 de 500 ms.
+- `npm run test:load:stress` : montée progressive jusqu'à 100 utilisateurs virtuels, seuils p95 de 800 ms et p99 de 1 500 ms.
+
+Exécutez-les uniquement contre une préproduction isolée, jamais contre la production sans autorisation et fenêtre de test. Exemple : `BASE_URL=https://staging.example.test npm run test:load:stress`. Les seuils sont des objectifs de test initiaux, pas une capacité garantie ; surveillez aussi CPU, mémoire, pool de connexions et latence de la base.
 
 Pour installer Chromium la première fois :
 
