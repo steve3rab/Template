@@ -350,7 +350,7 @@ describe('Stripe payment routes', () => {
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     const fetchMock = vi
       .fn(
-        async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        async (_input: string | URL, _init?: RequestInit) =>
           new Response(null, { status: 500 }),
       )
       .mockResolvedValueOnce(
@@ -513,7 +513,7 @@ describe('Stripe payment routes', () => {
     'does not call Stripe when another concurrent refund already changed the refund balance',
     async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
-    const prisma = setup(1000, async () => admin);
+    setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     updateMany.mockResolvedValueOnce({ count: 0 });
     const fetchMock = vi.fn();
