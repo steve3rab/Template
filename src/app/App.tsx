@@ -218,7 +218,10 @@ export function App() {
   const favoriteRequests = useRef(new Set<string>());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentRole, setCurrentRole] = useState('');
-  const [catalog, setCatalog] = useState<Product[]>(products);
+  const [catalog, setCatalog] = useState<Product[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogFailed, setCatalogFailed] = useState(false);
+  const [catalogRetry, setCatalogRetry] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
@@ -242,6 +245,8 @@ export function App() {
   const [checkoutAddresses, setCheckoutAddresses] = useState<CustomerAddress[]>([]);
   const [checkoutAddressId, setCheckoutAddressId] = useState('');
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  const [checkoutStarting, setCheckoutStarting] = useState(false);
+  const checkoutStartRef = useRef(false);
   const checkoutSubmitRef = useRef(false);
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
@@ -314,6 +319,8 @@ export function App() {
   }, []);
   useEffect(() => {
     let active = true;
+    setCatalogLoading(true);
+    setCatalogFailed(false);
     void apiRequest('/api/products', apiSchemas.products)
       .then((payload) => {
         if (!active) return;
@@ -362,17 +369,25 @@ export function App() {
         );
       })
       .catch(() => {
-        // Never present hard-coded demo products as if they came from the live catalogue.
         if (!active) return;
         setCatalog([]);
+        setCatalogFailed(true);
         setToastKind('error');
         setNotice(
           translate(
-            'Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.',
-            'Unable to load the catalogue. Check your connection and refresh the page.',
+            'Impossible de charger le catalogue. Vérifiez votre connexion puis réessayez.',
+            'Unable to load the catalogue. Check your connection and try again.',
           ),
         );
+      })
+      .finally(() => {
+        if (active) setCatalogLoading(false);
       });
+    return () => {
+      active = false;
+    };
+  }, [catalogRetry, language]);
+
     // Resolve authentication only from explicit session outcomes. A 5xx/network
     // failure must not be interpreted as logout or overwrite a valid client state.
     void fetch('/api/auth/me', { credentials: 'include', signal: AbortSignal.timeout(15000) })
@@ -623,7 +638,9 @@ export function App() {
     }
   }
   async function beginCheckout() {
-    setCartOpen(false);
+    if (checkoutStartRef.current) return;
+    checkoutStartRef.current = true;
+    setCheckoutStarting(true);
     setCheckoutDone(false);
     checkoutPendingRef.current = false;
     try {
@@ -653,6 +670,7 @@ export function App() {
             ),
           );
         }
+        setCartOpen(false);
         setCheckoutPending(false);
         setView('checkout');
         return;
@@ -660,6 +678,7 @@ export function App() {
     } catch {
       // Continue to account sign-in if the session cannot be verified.
     }
+    setCartOpen(false);
     checkoutPendingRef.current = true;
     setCheckoutPending(true);
     setView('account');
@@ -669,6 +688,10 @@ export function App() {
         'Sign in or create an account to complete your order.',
       ),
     );
+    } finally {
+      checkoutStartRef.current = false;
+      setCheckoutStarting(false);
+    }
   }
   async function completeCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1015,7 +1038,30 @@ export function App() {
                 </label>
               </div>
             </div>
-            <div className="product-grid">
+            {catalogLoading && (
+              <p className="workspace-loading" role="status" aria-live="polite" aria-busy="true">
+                {translate('Chargement du catalogue…', 'Loading catalogue…')}
+              </p>
+            )}
+            {catalogFailed && (
+              <div className="workspace-error" role="alert">
+                <p>
+                  {translate(
+                    'Le catalogue n’a pas pu être chargé. Les produits affichés ne sont pas disponibles.',
+                    'The catalogue could not be loaded. Products are temporarily unavailable.',
+                  )}
+                </p>
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => setCatalogRetry((current) => current + 1)}
+                  disabled={catalogLoading}
+                >
+                  {translate('Réessayer', 'Try again')}
+                </button>
+              </div>
+            )}
+            <div className="product-grid" aria-busy={catalogLoading}>
               {filteredProducts.map((product, index) => (
                 <article className="product-card" key={product.id}>
                   <div className={`product-visual ${product.color}`}>
@@ -1107,7 +1153,7 @@ export function App() {
                 </article>
               ))}
             </div>
-            {filteredProducts.length === 0 && (
+            {!catalogLoading && !catalogFailed && filteredProducts.length === 0 && (
               <div className="empty-state">
                 <span>⌕</span>
                 <h3>
@@ -1699,8 +1745,14 @@ export function App() {
                       'Shipping is not configured: no delivery charge is added to the item total.',
                     )}
                   </p>
-                  <button className="dark-button full-button" onClick={() => void beginCheckout()}>
-                    {translate('Passer à la commande', 'Proceed to checkout')} ↗
+                  <button
+                    className="dark-button full-button"
+                    onClick={() => void beginCheckout()}
+                    disabled={checkoutStarting}
+                  >
+                    {checkoutStarting
+                      ? translate('Préparation…', 'Preparing…')
+                      : translate('Passer à la commande', 'Proceed to checkout') + ' ↗'}
                   </button>
                   <button className="continue-link" onClick={() => setCartOpen(false)}>
                     {translate('Continuer mes achats', 'Continue shopping')}
