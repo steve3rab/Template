@@ -3315,6 +3315,28 @@ button {
   background: #fffefa;
 }
 
+.financial-reconciliation {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #e5e5da;
+  border-radius: 6px;
+  background: #fbfaf5;
+}
+
+.financial-reconciliation > span,
+.financial-reconciliation article span {
+  color: #77796e;
+  font-size: 0.76rem;
+}
+
+.financial-reconciliation article {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e5da;
+}
+
 .financial-history {
   display: grid;
   gap: 3px;
