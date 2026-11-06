@@ -155,7 +155,9 @@ export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
-  const translate = (fr: string, en: string) => language === 'en' ? en : fr;
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const translate = (fr: string, en: string) => languageRef.current === 'en' ? en : fr;
   const productDescription = (product: Product) => {
     if (language === 'fr') return product.description;
     const demoDescriptions: Record<string, string> = {
@@ -347,7 +349,7 @@ export function App() {
         setCatalog([]);
         setToastKind('error');
         setNotice(
-          'Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.',
+          translate('Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.', 'Unable to load the catalogue. Check your connection and refresh the page.'),
         );
       });
     // Resolve authentication only from explicit session outcomes. A 5xx/network
@@ -409,13 +411,13 @@ export function App() {
           body: JSON.stringify({ items: snapshot }),
         });
         if (!response.ok)
-          throw new Error('Impossible de synchroniser le panier avec votre compte.');
+          throw new Error(translate('Impossible de synchroniser le panier avec votre compte.', 'Unable to sync your cart with your account.'));
       })
       .catch(() => {
         if (epoch === authEpoch.current && version === cartSyncVersion.current) {
           setToastKind('error');
           setNotice(
-            'Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.',
+            translate('Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.', 'Your cart could not be synced. Check your connection and try again.'),
           );
         }
       });
@@ -445,7 +447,7 @@ export function App() {
         setCartHydrated(false);
         setToastKind('error');
         setNotice(
-          'Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.',
+          translate('Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.', 'Unable to load your account data. Your changes will not sync until the connection is restored.'),
         );
       });
     return () => {
@@ -458,15 +460,15 @@ export function App() {
       if (!response.ok) {
         setNotice(
           response.status === 401
-            ? 'Connectez-vous avec un compte vendeur autorisé pour accéder à cet espace.'
-            : 'Accès refusé : cet espace est réservé aux comptes vendeurs autorisés.',
+            ? translate('Connectez-vous avec un compte vendeur autorisé pour accéder à cet espace.', 'Sign in with an authorized seller account to access this area.')
+            : translate('Accès refusé : cet espace est réservé aux comptes vendeurs autorisés.', 'Access denied: this area is restricted to authorized seller accounts.'),
         );
         if (response.status === 401) setView('account');
         return;
       }
       setView('seller');
     } catch {
-      setNotice("Impossible de vérifier vos droits d'accès. Réessayez dans un instant.");
+      setNotice(translate("Impossible de vérifier vos droits d'accès. Réessayez dans un instant.", "Unable to verify your access permissions. Please try again shortly."));
     }
   }
   async function openAdmin() {
@@ -475,21 +477,21 @@ export function App() {
       if (!response.ok) {
         setNotice(
           response.status === 401
-            ? 'Connectez-vous avec un compte administrateur pour accéder à cet espace.'
-            : 'Accès refusé : cette zone est réservée aux administrateurs.',
+            ? translate('Connectez-vous avec un compte administrateur pour accéder à cet espace.', 'Sign in with an administrator account to access this area.')
+            : translate('Accès refusé : cette zone est réservée aux administrateurs.', 'Access denied: this area is restricted to administrators.'),
         );
         if (response.status === 401) setView('account');
         return;
       }
       setView('admin');
     } catch {
-      setNotice("Impossible de vérifier vos droits d'administration. Réessayez.");
+      setNotice(translate("Impossible de vérifier vos droits d'administration. Réessayez.", "Unable to verify your administrator permissions. Please try again."));
     }
   }
 
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
-    setNotice(`${product.name} ajouté au panier`);
+    setNotice(languageRef.current === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`);
     setCartOpen(true);
   }
   function changeQuantity(id: string, amount: number) {
@@ -523,8 +525,8 @@ export function App() {
       if (!response.ok) {
         throw new Error(
           response.status === 401
-            ? 'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.'
-            : 'Impossible de mettre à jour vos favoris. Réessayez.',
+            ? translate('Votre session a expiré. Reconnectez-vous pour modifier vos favoris.', 'Your session has expired. Sign in again to update your favourites.')
+            : translate('Impossible de mettre à jour vos favoris. Réessayez.', 'Unable to update your favourites. Please try again.'),
         );
       }
       if (epoch !== authEpoch.current) return;
@@ -537,7 +539,7 @@ export function App() {
       if (epoch !== authEpoch.current) return;
       setToastKind('error');
       setNotice(
-        error instanceof Error ? error.message : 'Impossible de mettre à jour vos favoris.',
+        error instanceof Error ? error.message : translate('Impossible de mettre à jour vos favoris.', 'Unable to update your favourites.'),
       );
     } finally {
       favoriteRequests.current.delete(productId);
@@ -568,7 +570,7 @@ export function App() {
           setCheckoutAddressId('');
           setToastKind('error');
           setNotice(
-            'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+            translate('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.', 'Unable to load your saved addresses. You can enter a new address.'),
           );
         }
         setCheckoutPending(false);
@@ -581,7 +583,7 @@ export function App() {
     checkoutPendingRef.current = true;
     setCheckoutPending(true);
     setView('account');
-    setNotice('Connectez-vous ou créez un compte pour finaliser votre commande.');
+    setNotice(translate('Connectez-vous ou créez un compte pour finaliser votre commande.', 'Sign in or create an account to complete your order.'));
   }
   async function completeCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -603,7 +605,7 @@ export function App() {
         }),
       });
       if (!cartResponse.ok)
-        throw new Error('Impossible d’enregistrer le panier. Reconnectez-vous.');
+        throw new Error(translate('Impossible d’enregistrer le panier. Reconnectez-vous.', 'Unable to save your cart. Please sign in again.'));
       const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
       let addressId = selectedAddress?.id ?? '';
       if (!selectedAddress) {
@@ -627,7 +629,7 @@ export function App() {
           error?: string;
         };
         if (!addressResponse.ok || !addressPayload.address)
-          throw new Error(addressPayload.error ?? 'Adresse de livraison invalide.');
+          throw new Error(addressPayload.error ?? translate('Adresse de livraison invalide.', 'Invalid delivery address.'));
         addressId = addressPayload.address.id;
       }
       const orderResponse = await fetch('/api/customer/orders', {
@@ -642,7 +644,7 @@ export function App() {
         error?: string;
       };
       if (!orderResponse.ok || !orderPayload.order)
-        throw new Error(orderPayload.error ?? 'Impossible d’enregistrer la commande.');
+        throw new Error(orderPayload.error ?? translate('Impossible d’enregistrer la commande.', 'Unable to save the order.'));
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
       checkoutPendingRef.current = false;
@@ -662,7 +664,7 @@ export function App() {
         setNotice(
           error instanceof Error
             ? error.message
-            : 'Commande enregistrée, mais paiement indisponible.',
+            : translate('Commande enregistrée, mais paiement indisponible.', 'Order saved, but payment is unavailable.'),
         );
         setCheckoutDone(true);
         setView('checkout');
@@ -671,7 +673,7 @@ export function App() {
       }
     } catch (error) {
       setNotice(
-        error instanceof Error ? error.message : 'Erreur pendant la validation de la commande.',
+        error instanceof Error ? error.message : translate('Erreur pendant la validation de la commande.', 'An error occurred while validating the order.'),
       );
       setCheckoutSubmitting(false);
       checkoutSubmitRef.current = false;
@@ -1048,7 +1050,7 @@ export function App() {
                   setCheckoutAddressId('');
                   setToastKind('error');
                   setNotice(
-                    'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+                    translate('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.', 'Unable to load your saved addresses. You can enter a new address.'),
                   );
                 }
                 setCheckoutPending(false);
@@ -1367,7 +1369,7 @@ export function App() {
               <div className="empty-cart">
                 <span>♡</span>
                 <h3>{translate('Votre panier est vide', 'Your cart is empty')}</h3>
-                <p>Vos prochains coups de cœur sont ici.</p>
+                <p>{translate('Vos prochains coups de cœur sont ici.', 'Your next favourites are waiting here.')}</p>
                 <button className="dark-button" onClick={() => setCartOpen(false)}>
                   {translate('Continuer mes achats', 'Continue shopping')}
                 </button>
