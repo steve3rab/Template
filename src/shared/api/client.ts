@@ -33,6 +33,7 @@ const financialTransactionSchema = z.object({
   id: z.string(),
   orderId: z.string(),
   stripeObjectId: z.string(),
+  requestKey: z.string().nullable().optional(),
   type: z.string(),
   status: z.string(),
   amountCents: z.number().int(),
