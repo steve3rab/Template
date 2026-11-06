@@ -37,6 +37,8 @@ function paymentStatusLabel(status: string): string {
       return 'À régler';
     case 'REFUNDED':
       return 'Remboursé';
+    case 'PARTIALLY_REFUNDED':
+      return 'Partiellement remboursé';
     case 'FAILED':
       return 'Échec du paiement';
     default:
