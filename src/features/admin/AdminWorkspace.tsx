@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { apiRequest, apiSchemas } from '../../shared/api/client';
+import { translateText, type Language } from '../../shared/i18n';
 
 type AdminUser = {
   id: string;
@@ -24,7 +25,8 @@ const roleResult = z.object({
   user: z.object({ id: z.string(), email: z.string(), role: z.string() }),
 });
 
-export function AdminWorkspace() {
+export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
   );
@@ -60,7 +62,7 @@ export function AdminWorkspace() {
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Impossible de charger les données administrateur.',
+          : t('Impossible de charger les données administrateur.', 'Unable to load administrator data.'),
       );
     } finally {
       setLoading(false);
@@ -89,7 +91,7 @@ export function AdminWorkspace() {
         setError(
           cause instanceof Error
             ? cause.message
-            : 'Impossible de charger les données administrateur.',
+            : t('Impossible de charger les données administrateur.', 'Unable to load administrator data.'),
         );
       })
       .finally(() => {
@@ -102,7 +104,7 @@ export function AdminWorkspace() {
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
     if (!transaction.requestKey) {
-      setError('Cette demande de remboursement ne possède pas de clé de reprise.');
+      setError(t('Cette demande de remboursement ne possède pas de clé de reprise.', 'This refund request has no retry key.'));
       return;
     }
     setLoading(true);
@@ -122,12 +124,12 @@ export function AdminWorkspace() {
       setError(
         'pending' in result
           ? result.message
-          : `Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`,
+          : `${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatCents(result.refund.amountCents)}.`,
       );
       await load();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Impossible de reprendre le remboursement.',
+        cause instanceof Error ? cause.message : t('Impossible de reprendre le remboursement.', 'Unable to retry the refund.'),
       );
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export function AdminWorkspace() {
       setReconciliation(result);
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Impossible de rapprocher les paiements Stripe.',
+        cause instanceof Error ? cause.message : t('Impossible de rapprocher les paiements Stripe.', 'Unable to reconcile Stripe payments.'),
       );
     } finally {
       setLoading(false);
@@ -160,7 +162,7 @@ export function AdminWorkspace() {
     const rawAmount = String(form.get('amountCents') ?? '').trim();
     const amountCents = rawAmount ? Number(rawAmount) : undefined;
     if (amountCents !== undefined && (!Number.isSafeInteger(amountCents) || amountCents < 1)) {
-      setError('Le montant du remboursement doit être un nombre entier de centimes positif.');
+      setError(t('Le montant du remboursement doit être un nombre entier de centimes positif.', 'The refund amount must be a positive whole number of cents.'));
       return;
     }
     setLoading(true);
@@ -180,7 +182,7 @@ export function AdminWorkspace() {
       if ('pending' in result) {
         setError(result.message);
       } else {
-        setError(`Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`);
+        setError(`${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatCents(result.refund.amountCents)}.`);
         setRefundRequestKeys((current) => {
           const next = { ...current };
           delete next[order.id];
@@ -194,7 +196,7 @@ export function AdminWorkspace() {
         delete next[order.id];
         return next;
       });
-      setError(cause instanceof Error ? cause.message : 'Impossible de traiter le remboursement.');
+      setError(cause instanceof Error ? cause.message : t('Impossible de traiter le remboursement.', 'Unable to process the refund.'));
       setLoading(false);
     }
   }
@@ -209,7 +211,7 @@ export function AdminWorkspace() {
       });
       await load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Impossible de modifier ce rôle.');
+      setError(cause instanceof Error ? cause.message : t('Impossible de modifier ce rôle.', 'Unable to change this role.'));
     }
   }
 
@@ -228,7 +230,7 @@ export function AdminWorkspace() {
       await load();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Impossible de modifier la visibilité du produit.',
+        cause instanceof Error ? cause.message : t('Impossible de modifier la visibilité du produit.', 'Unable to change product visibility.'),
       );
     }
   }
@@ -237,11 +239,11 @@ export function AdminWorkspace() {
     <section className="admin-page">
       <header className="admin-heading">
         <div>
-          <span className="eyebrow">ATELIER · ADMINISTRATION</span>
+          <span className="eyebrow">ATELIER · {t('ADMINISTRATION', 'ADMIN')}</span>
           <h1>
-            Centre de gestion<span className="brand-period">.</span>
+            {t('Centre de gestion', 'Management centre')}<span className="brand-period">.</span>
           </h1>
-          <p>Vue globale de la boutique, des comptes, du catalogue et des commandes.</p>
+          <p>{t('Vue globale de la boutique, des comptes, du catalogue et des commandes.', 'Overview of the store, accounts, catalogue and orders.')}</p>
         </div>
         <button
           className="outline-button"
@@ -259,28 +261,28 @@ export function AdminWorkspace() {
 
       <div className="admin-kpis">
         <article className="kpi-card">
-          <span>Utilisateurs</span>
+          <span>{t('Utilisateurs', 'Users')}</span>
           <strong>{dashboard?.users ?? '—'}</strong>
-          <small>{dashboard?.sellers ?? 0} vendeurs</small>
+          <small>{dashboard?.sellers ?? 0} {t('vendeurs', 'sellers')}</small>
         </article>
         <article className="kpi-card">
-          <span>Catalogue</span>
+          <span>{t('Catalogue', 'Catalogue')}</span>
           <strong>{dashboard?.products ?? '—'}</strong>
-          <small>{dashboard?.activeProducts ?? 0} produits publiés</small>
+          <small>{dashboard?.activeProducts ?? 0} {t('produits publiés', 'published products')}</small>
         </article>
         <article className="kpi-card">
-          <span>Commandes</span>
+          <span>{t('Commandes', 'Orders')}</span>
           <strong>{dashboard?.orders ?? '—'}</strong>
-          <small>{dashboard?.paidOrders ?? 0} paiements confirmés</small>
+          <small>{dashboard?.paidOrders ?? 0} {t('paiements confirmés', 'confirmed payments')}</small>
         </article>
         <article className="kpi-card">
-          <span>Chiffre d’affaires encaissé</span>
+          <span>{t('Chiffre d’affaires encaissé', 'Collected revenue')}</span>
           <strong>{dashboard ? formatCents(dashboard.revenueCents) : '—'}</strong>
-          <small>Commandes payées uniquement</small>
+          <small>{t('Commandes payées uniquement', 'Paid orders only')}</small>
         </article>
       </div>
 
-      <nav className="admin-tabs" aria-label="Sections administrateur">
+      <nav className="admin-tabs" aria-label={t('Sections administrateur', 'Administrator sections')}>
         <button
           type="button"
           className={section === 'users' ? 'active' : ''}
@@ -318,26 +320,26 @@ export function AdminWorkspace() {
       )}
 
       {loading ? (
-        <p>Chargement des données…</p>
+        <p>{t('Chargement des données…', 'Loading data…')}</p>
       ) : (
         <section className="seller-panel admin-data-panel">
           {section === 'users' && (
             <>
-              <h2>Gestion des comptes</h2>
+              <h2>{t('Gestion des comptes', 'Account management')}</h2>
               {users.map((user) => (
                 <article className="admin-row" key={user.id}>
                   <div>
                     <strong>{user.email}</strong>
                     <span>
-                      {user.publicId} · Créé le{' '}
-                      {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                      {user.publicId} · {t('Créé le', 'Created on')}{' '}
+                      {new Date(user.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')}
                     </span>
                   </div>
                   {user.role === 'ADMIN' ? (
-                    <strong className="admin-role">Administrateur</strong>
+                    <strong className="admin-role">{t('Administrateur', 'Administrator')}</strong>
                   ) : (
                     <select
-                      aria-label={`Rôle de ${user.email}`}
+                      aria-label={t(`Rôle de ${user.email}`, `Role for ${user.email}`)}
                       value={user.role}
                       onChange={(event) => {
                         const value = event.target.value;
@@ -346,25 +348,25 @@ export function AdminWorkspace() {
                         }
                       }}
                     >
-                      <option value="CUSTOMER">Client</option>
-                      <option value="SELLER">Vendeur</option>
+                      <option value="CUSTOMER">{t('Client', 'Customer')}</option>
+                      <option value="SELLER">{t('Vendeur', 'Seller')}</option>
                     </select>
                   )}
                 </article>
               ))}
-              {users.length === 0 && <p>Aucun utilisateur.</p>}
+              {users.length === 0 && <p>{t('Aucun utilisateur.', 'No users.')}</p>}
             </>
           )}
 
           {section === 'products' && (
             <>
-              <h2>Modération du catalogue</h2>
+              <h2>{t('Modération du catalogue', 'Catalogue moderation')}</h2>
               {products.map((product) => (
                 <article className="admin-row" key={product.id}>
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? 'Sans vendeur'} · {formatCents(product.priceCents)}{' '}
+                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} · {formatCents(product.priceCents)}{' '}
                       · Stock : {product.stock}
                     </span>
                   </div>
@@ -373,31 +375,31 @@ export function AdminWorkspace() {
                     type="button"
                     onClick={() => void toggleProduct(product)}
                   >
-                    {product.active ? 'Masquer' : 'Publier'}
+                    {product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}
                   </button>
                 </article>
               ))}
-              {products.length === 0 && <p>Aucun produit.</p>}
+              {products.length === 0 && <p>{t('Aucun produit.', 'No products.')}</p>}
             </>
           )}
 
           {section === 'orders' && (
             <>
-              <h2>Suivi des commandes</h2>
+              <h2>{t('Suivi des commandes', 'Order tracking')}</h2>
               {orders.map((order) => (
                 <article className="admin-row" key={order.id}>
                   <div>
                     <strong>
-                      Commande {order.id.slice(-8)} · {order.customer?.email ?? 'Client'}
+                      Commande {order.id.slice(-8)} · {order.customer?.email ?? t('Client', 'Customer')}
                     </strong>
                     <span>
                       {order.items
                         .map((item) => `${item.productName} × ${item.quantity}`)
                         .join(', ')}{' '}
-                      · {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+                      · {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')}
                     </span>
                     <span>
-                      {order.status} · Paiement : {order.paymentStatus}
+                      {order.status} · {t('Paiement :', 'Payment:')} {order.paymentStatus}
                     </span>
                   </div>
                   <div className="admin-order-actions">
@@ -413,14 +415,14 @@ export function AdminWorkspace() {
                           defaultValue={refundRequestKeys[order.id] ?? ''}
                         />
                         <label>
-                          Montant en centimes (facultatif)
+                          {t('Montant en centimes (facultatif)', 'Amount in cents (optional)')}
                           <input
                             name="amountCents"
                             type="number"
                             min="1"
                             max={Math.max(0, order.totalCents - (order.refundedCents ?? 0))}
                             step="1"
-                            placeholder="Solde complet"
+                            placeholder={t('Solde complet', 'Full balance')}
                           />
                         </label>
                         <button className="text-action" type="submit" disabled={loading}>
@@ -431,13 +433,13 @@ export function AdminWorkspace() {
                   </div>
                 </article>
               ))}
-              {orders.length === 0 && <p>Aucune commande.</p>}
+              {orders.length === 0 && <p>{t('Aucune commande.', 'No orders.')}</p>}
             </>
           )}
 
           {section === 'finances' && (
             <>
-              <h2>Historique financier</h2>
+              <h2>{t('Historique financier', 'Financial history')}</h2>
               <button
                 className="outline-button"
                 type="button"
@@ -449,18 +451,18 @@ export function AdminWorkspace() {
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
                   <strong>
-                    {reconciliation.matched} rapprochées · {reconciliation.discrepancies} écarts ·{' '}
-                    {reconciliation.unverified} non vérifiées
+                    {reconciliation.matched} {t('rapprochées', 'matched')} · {reconciliation.discrepancies} {t('écarts', 'discrepancies')} ·{' '}
+                    {reconciliation.unverified} {t('non vérifiées', 'unverified')}
                   </strong>
                   <span>
-                    Vérification du {new Date(reconciliation.checkedAt).toLocaleString('fr-FR')} ·{' '}
-                    {reconciliation.checkedOrders} commandes contrôlées
+                    {t('Vérification du', 'Checked on')} {new Date(reconciliation.checkedAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR')} ·{' '}
+                    {reconciliation.checkedOrders} {t('commandes contrôlées', 'orders checked')}
                   </span>
                   {reconciliation.results
                     .filter((result) => result.state !== 'MATCHED')
                     .map((result) => (
                       <article key={result.orderId}>
-                        <strong>Commande {result.orderId.slice(-8)}</strong>
+                        <strong>{t('Commande', 'Order')} {result.orderId.slice(-8)}</strong>
                         {result.issues.map((issue) => (
                           <span key={issue}>{issue}</span>
                         ))}
@@ -472,15 +474,15 @@ export function AdminWorkspace() {
                 <article className="admin-row" key={transaction.id}>
                   <div>
                     <strong>
-                      {transaction.type === 'REFUND' ? 'Remboursement' : 'Paiement'} · Commande{' '}
+                      {transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} · {t('Commande', 'Order')}{' '}
                       {transaction.order.id.slice(-8)}
                     </strong>
                     <span>
                       {transaction.status === 'PENDING'
-                        ? 'En attente de confirmation'
+                        ? t('En attente de confirmation', 'Awaiting confirmation')
                         : transaction.status === 'FAILED'
-                          ? 'Échec'
-                          : 'Confirmé'}{' '}
+                          ? t('Échec', 'Failed')
+                          : t('Confirmé', 'Confirmed')}{' '}
                       · {transaction.stripeObjectId}
                     </span>
                     <span>{new Date(transaction.createdAt).toLocaleString('fr-FR')}</span>
@@ -500,7 +502,7 @@ export function AdminWorkspace() {
                   </div>
                 </article>
               ))}
-              {financialTransactions.length === 0 && <p>Aucune transaction financière.</p>}
+              {financialTransactions.length === 0 && <p>{t('Aucune transaction financière.', 'No financial transactions.')}</p>}
             </>
           )}
         </section>
