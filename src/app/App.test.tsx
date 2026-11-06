@@ -197,7 +197,7 @@ describe('Fashion storefront', () => {
     expect(document.documentElement.lang).toBe('en');
     expect(window.localStorage.getItem('template-react-language')).toBe('en');
     expect(screen.getByText(/Effortless/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Search products' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search products' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Shoes' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Terms and conditions' }));
     expect(
@@ -210,7 +210,7 @@ describe('Fashion storefront', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /retour à la boutique/i }));
     expect(screen.getByText(/Le style, en/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rechercher un produit' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Rechercher un produit' })).toBeInTheDocument();
   });
 
   it('reuses a saved delivery address and explains the shipping amount', async () => {
