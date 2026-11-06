@@ -680,15 +680,13 @@ export function registerPaymentRoutes(
       });
     }
     if (!refundResponse.ok || !refund.success) {
-      if (!isRetry) {
-        await prisma.$transaction(async (tx) => {
-          await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
-          await tx.order.updateMany({
-            where: { id: order.id, refundedCents: reservedCents },
-            data: { refundedCents: { decrement: amountCents } },
-          });
+      await prisma.$transaction(async (tx) => {
+        await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
+        await tx.order.updateMany({
+          where: { id: order.id, refundedCents: reservedCents },
+          data: { refundedCents: { decrement: amountCents } },
         });
-      }
+      });
       request.log.error({ statusCode: refundResponse.status }, 'Stripe refund request failed.');
       return reply.code(502).send({ error: 'Stripe could not process this refund.' });
     }
@@ -711,15 +709,13 @@ export function registerPaymentRoutes(
 
     if (refund.data.status !== 'succeeded') {
       if (refund.data.status === 'failed' || refund.data.status === 'canceled') {
-        if (!isRetry) {
-          await prisma.$transaction(async (tx) => {
-            await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
-            await tx.order.updateMany({
-              where: { id: order.id, refundedCents: reservedCents },
-              data: { refundedCents: { decrement: amountCents } },
-            });
+        await prisma.$transaction(async (tx) => {
+          await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
+          await tx.order.updateMany({
+            where: { id: order.id, refundedCents: reservedCents },
+            data: { refundedCents: { decrement: amountCents } },
           });
-        }
+        });
         return reply.code(502).send({ error: 'Stripe did not complete the refund.' });
       }
       return reply.code(202).send({
