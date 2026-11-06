@@ -94,6 +94,37 @@ export function AdminWorkspace() {
     };
   }, []);
 
+  async function retryPendingRefund(transaction: AdminFinancialTransaction) {
+    if (!transaction.requestKey) {
+      setError('Cette demande de remboursement ne possède pas de clé de reprise.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const result = await apiRequest(
+        `/api/admin/orders/${encodeURIComponent(transaction.order.id)}/refund`,
+        apiSchemas.refundResult,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            requestKey: transaction.requestKey,
+            amountCents: transaction.amountCents,
+          }),
+        },
+      );
+      setError(
+        'pending' in result
+          ? result.message
+          : `Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`,
+      );
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Impossible de reprendre le remboursement.');
+      setLoading(false);
+    }
+  }
+
   async function reconcilePayments() {
     setLoading(true);
     setError('');
@@ -434,7 +465,19 @@ export function AdminWorkspace() {
                     </span>
                     <span>{new Date(transaction.createdAt).toLocaleString('fr-FR')}</span>
                   </div>
-                  <strong>{formatCents(transaction.amountCents, transaction.currency)}</strong>
+                  <div className="admin-order-actions">
+                    <strong>{formatCents(transaction.amountCents, transaction.currency)}</strong>
+                    {transaction.type === 'REFUND' && transaction.status === 'PENDING' && (
+                      <button
+                        className="text-action"
+                        type="button"
+                        onClick={() => void retryPendingRefund(transaction)}
+                        disabled={loading}
+                      >
+                        Reprendre
+                      </button>
+                    )}
+                  </div>
                 </article>
               ))}
               {financialTransactions.length === 0 && <p>Aucune transaction financière.</p>}
