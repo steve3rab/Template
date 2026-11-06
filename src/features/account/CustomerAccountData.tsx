@@ -155,7 +155,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       await apiRequest('/api/customer/addresses', apiSchemas.addressCreated, {
         method: 'POST',
         body: JSON.stringify({
-          label: String(form.get('label') ?? (languageRef.current === 'en' ? 'Home' : 'Domicile')),
+          label: String(form.get('label') ?? (language === 'en' ? 'Home' : 'Domicile')),
           recipient: String(form.get('recipient') ?? ''),
           line1: String(form.get('line1') ?? ''),
           postalCode: String(form.get('postalCode') ?? ''),
