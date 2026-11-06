@@ -26,10 +26,5 @@ export function formatDateTime(
   locale = 'fr-FR',
   fallback = '—',
 ): string {
-  return formatDate(
-    value,
-    locale,
-    { dateStyle: 'medium', timeStyle: 'short' },
-    fallback,
-  );
+  return formatDate(value, locale, { dateStyle: 'medium', timeStyle: 'short' }, fallback);
 }
