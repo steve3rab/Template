@@ -87,4 +87,49 @@ describe('SellerWorkspace translations', () => {
     expect(screen.getByText(/no products yet/i)).toBeInTheDocument();
     expect(dashboardRequests).toBe(2);
   });
+
+  it('rejects whitespace-only product names before calling the API', async () => {
+    const toastMessages: string[] = [];
+    const onToast = (event: Event) => {
+      if (event instanceof CustomEvent && typeof event.detail?.message === 'string') {
+        toastMessages.push(event.detail.message);
+      }
+    };
+    window.addEventListener('template-toast', onToast);
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/seller/dashboard')) {
+        return apiResponse({
+          periodDays: 30,
+          revenueCents: 0,
+          orders: 0,
+          paidOrders: 0,
+          unitsSold: 0,
+          products: 0,
+          lowStockProducts: 0,
+          currency: 'EUR',
+        });
+      }
+      if (url === '/api/seller/products') return apiResponse({ products: [] });
+      if (url === '/api/seller/orders') return apiResponse({ orders: [] });
+      return apiResponse({ error: 'Unexpected request.' }, 500);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const user = userEvent.setup();
+    render(<SellerWorkspace range="30" language="en" />);
+    await screen.findByRole('heading', { name: /add a product/i });
+
+    await user.clear(screen.getByLabelText(/product name/i));
+    await user.type(screen.getByLabelText(/product name/i), '  ');
+    await user.click(screen.getByRole('button', { name: /create product/i }));
+
+    expect(toastMessages).toContain(
+      'Check the product name, price, stock and dimensions.',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    window.removeEventListener('template-toast', onToast);
+  });
+
 });
