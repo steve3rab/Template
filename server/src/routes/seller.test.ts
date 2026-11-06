@@ -435,42 +435,45 @@ describe('seller data isolation and route validation', () => {
 
   it(
     'cancels an unpaid order without a payment session and restores linked product stock',
-      async () => {
+    async () => {
       const { orderFindFirst, orderUpdateMany, txProductUpdate, prisma } = setup();
       orderFindFirst.mockResolvedValueOnce({
-      id: 'order-1',
-      status: 'PENDING',
-      paymentStatus: 'UNPAID',
-      paymentReference: null,
-      items: [
-        { productId: 'product-1', quantity: 3 },
-        { productId: null, quantity: 1 },
-      ],
-    } as never);
-      await app.ready();
-      const response = await app.inject({
-      method: 'PATCH',
-      url: '/api/seller/orders/order-1/status',
-      payload: { status: 'CANCELLED' },
-    });
-      expect(response.statusCode).toBe(200);
-      expect(response.json().order.status).toBe('CANCELLED');
-      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(orderUpdateMany).toHaveBeenCalledWith({
-      where: {
         id: 'order-1',
         status: 'PENDING',
         paymentStatus: 'UNPAID',
         paymentReference: null,
-      },
-      data: { status: 'CANCELLED' },
-    });
+        items: [
+          { productId: 'product-1', quantity: 3 },
+          { productId: null, quantity: 1 },
+        ],
+      } as never);
+      await app.ready();
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/seller/orders/order-1/status',
+        payload: { status: 'CANCELLED' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().order.status).toBe('CANCELLED');
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(orderUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'order-1',
+          status: 'PENDING',
+          paymentStatus: 'UNPAID',
+          paymentReference: null,
+        },
+        data: { status: 'CANCELLED' },
+      });
       expect(txProductUpdate).toHaveBeenCalledTimes(1);
       expect(txProductUpdate).toHaveBeenCalledWith({
-      where: { id: 'product-1' },
-      data: { stock: { increment: 3 } },
-    });
-  });
+        where: { id: 'product-1' },
+        data: { stock: { increment: 3 } },
+      });
+    },
+  );
   it('does not restore stock when a concurrent order update wins first', async () => {
     const { orderFindFirst, orderUpdateMany, txProductUpdate } = setup();
     orderFindFirst.mockResolvedValueOnce({
