@@ -30,6 +30,9 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
   const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
   const webhookEventUpdate = vi.fn(async () => ({ id: 'webhook-event-1' }));
   const financialTransactionCreate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
+  const financialTransactionFindFirst = vi.fn(async () => null);
+  const financialTransactionDeleteMany = vi.fn(async () => ({ count: 1 }));
+  const financialTransactionUpdate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
   const transaction = {
     order: {
       updateMany,
@@ -37,7 +40,11 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
     },
     product: { updateMany: productUpdateMany },
     stripeWebhookEvent: { create: webhookEventCreate, update: webhookEventUpdate },
-    financialTransaction: { create: financialTransactionCreate },
+    financialTransaction: {
+      create: financialTransactionCreate,
+      deleteMany: financialTransactionDeleteMany,
+      update: financialTransactionUpdate,
+    },
   };
   const prisma = {
     order: {
@@ -46,6 +53,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
       updateMany,
     },
     product: { updateMany: productUpdateMany },
+    financialTransaction: { findFirst: financialTransactionFindFirst },
     $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback(transaction),
     ),
@@ -74,6 +82,9 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer, r
     webhookEventCreate,
     webhookEventUpdate,
     financialTransactionCreate,
+    financialTransactionFindFirst,
+    financialTransactionDeleteMany,
+    financialTransactionUpdate,
   });
 }
 
@@ -215,10 +226,20 @@ describe('Stripe payment routes', () => {
       data: { refundedCents: { increment: 1200 } },
     });
     expect(prisma.financialTransactionCreate).toHaveBeenCalledWith({
-      data: {
+      data: expect.objectContaining({
         orderId: 'order-1',
-        stripeObjectId: 're_test_123',
+        stripeObjectId: expect.any(String),
         type: 'REFUND',
+        status: 'PENDING',
+        amountCents: 1200,
+        currency: 'EUR',
+      }),
+    });
+    expect(prisma.financialTransactionUpdate).toHaveBeenCalledWith({
+      where: { stripeObjectId: expect.any(String) },
+      data: {
+        stripeObjectId: 're_test_123',
+        status: 'SUCCEEDED',
         amountCents: 1200,
         currency: 'EUR',
       },
