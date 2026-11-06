@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('accessibility smoke checks', () => {
-  test('storefront exposes landmarks, a single primary heading and named controls', async ({ page }) => {
+  test('storefront exposes landmarks, a single primary heading and named controls', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
@@ -20,7 +22,10 @@ test.describe('accessibility smoke checks', () => {
     expect(unnamedButtons, 'Every visible button should have an accessible name').toEqual([]);
 
     const imagesWithoutAlt = await page.locator('img:not([alt])').count();
-    expect(imagesWithoutAlt, 'Images must declare an alt attribute (empty is valid for decoration)').toBe(0);
+    expect(
+      imagesWithoutAlt,
+      'Images must declare an alt attribute (empty is valid for decoration)',
+    ).toBe(0);
   });
 
   test('cart can be opened and closed using the keyboard', async ({ page }) => {
