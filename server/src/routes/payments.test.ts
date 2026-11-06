@@ -32,9 +32,10 @@ function setup(
   productUpdateMany = vi.fn(async () => ({ count: 1 }));
   const webhookEventCreate = vi.fn(async () => ({ id: 'webhook-event-1' }));
   const webhookEventUpdate = vi.fn(async () => ({ id: 'webhook-event-1' }));
-  const financialTransactionCreate = vi.fn(async (_args: unknown) => ({
-    id: 'financial-transaction-1',
-  }));
+  const financialTransactionCreate = vi.fn(async (args: unknown) => {
+    void args;
+    return { id: 'financial-transaction-1' };
+  });
   const financialTransactionFindFirst = vi.fn(async () => null);
   const financialTransactionDeleteMany = vi.fn(async () => ({ count: 1 }));
   const financialTransactionUpdate = vi.fn(async () => ({ id: 'financial-transaction-1' }));
@@ -349,10 +350,10 @@ describe('Stripe payment routes', () => {
     const prisma = setup(1000, async () => admin);
     vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
     const fetchMock = vi
-      .fn(
-        async (_input: string | URL, _init?: RequestInit) =>
-          new Response(null, { status: 500 }),
-      )
+      .fn(async (...args: [string | URL, RequestInit?]) => {
+        void args;
+        return new Response(null, { status: 500 });
+      })
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
