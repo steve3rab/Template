@@ -41,7 +41,10 @@ if (!['localhost', '127.0.0.1', '::1'].includes(appHost)) {
 
 // Fixed credentials are deliberately restricted to local/test environments by the guard above.
 // Never use these accounts or this password outside a local development environment.
-const password = 'Local-Test-Password-2026!';
+const password = process.env.TEST_USERS_PASSWORD ?? 'Local-Test-Password-2026!';
+if (password.length < 12 || password.length > 128) {
+  throw new Error('TEST_USERS_PASSWORD must contain between 12 and 128 characters.');
+}
 
 const testUsers = [
   { email: 'test.customer@example.com', role: 'CUSTOMER' },
