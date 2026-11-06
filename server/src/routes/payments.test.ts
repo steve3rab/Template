@@ -387,6 +387,44 @@ describe('Stripe payment routes', () => {
     expect(second.json().refund.id).toBe('re_retry_123');
   });
 
+  it('returns the recorded result for a repeated completed full-refund request', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(1000, async () => admin);
+    vi.mocked(prisma.order.findUnique).mockResolvedValueOnce({
+      ...order,
+      paymentStatus: 'REFUNDED',
+      paymentReference: 'cs_test_123',
+      refundedCents: 5000,
+    } as never);
+    vi.mocked(prisma.financialTransactionFindFirst).mockResolvedValueOnce({
+      id: 'refund-ledger-1',
+      stripeObjectId: 're_full_123',
+      requestKey: '00000000-0000-4000-8000-000000000011',
+      status: 'SUCCEEDED',
+      amountCents: 5000,
+      currency: 'EUR',
+    } as never);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: { requestKey: '00000000-0000-4000-8000-000000000011' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      refund: { id: 're_full_123', amountCents: 5000, currency: 'EUR', status: 'succeeded' },
+      refundedCents: 5000,
+      remainingRefundableCents: 0,
+      paymentStatus: 'REFUNDED',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
   it('blocks a different refund request while an earlier refund is pending', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);
