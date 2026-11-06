@@ -2,6 +2,8 @@
 
 ## Déclenchement et jobs
 
+Le job qualité commence par analyser la syntaxe de tous les fichiers PowerShell du dossier `scripts/` avec PowerShell Core. Une erreur de parsing bloque la CI avant l'installation des dépendances.
+
 Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `main`, d'une pull request et à la demande (`workflow_dispatch`). Les jobs s'exécutent sur Ubuntu avec Node.js 22.16.0 et npm 10.9.4.
 
 - **`quality`** : installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur.
