@@ -1,15 +1,24 @@
-# Backend build output
+# Backend build output and generated artifacts
 /dist/
+/build/
 /coverage/
 /.cache/
+/.tmp/
+/tmp/
+/logs/
 
-# Backend environment and secrets
+# Runtime uploads and local storage (not source-controlled)
+/uploads/
+/storage/
+
+# Backend environment files and secrets
 .env
 .env.*
 !.env.example
 !.env.*.example
 
-# Prisma local databases and sidecar files
+# Prisma generated client and local database files
+/prisma/generated/
 /prisma/*.db
 /prisma/*.db-journal
 /prisma/*.db-shm
@@ -17,7 +26,18 @@
 /prisma/*.sqlite
 /prisma/*.sqlite3
 
-# Local runtime files
+# Logs and temporary files
 *.log
 *.pid
 *.pid.lock
+*.tmp
+*.temp
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
