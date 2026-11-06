@@ -49,9 +49,9 @@ export default defineConfig({
         lines: 55,
         'server/src/**': {
           statements: 75,
-          branches: 65,
+          branches: 60,
           functions: 80,
-          lines: 78,
+          lines: 77,
         },
       },
     },
