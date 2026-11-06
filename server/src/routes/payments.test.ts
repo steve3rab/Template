@@ -69,7 +69,11 @@ function setup(rateLimitMax = 1000) {
   app.after(() => {
     registerPaymentRoutes(app, prisma as unknown as PrismaClient, async () => customer);
   });
-  return Object.assign(prisma, { webhookEventCreate, webhookEventUpdate, financialTransactionCreate });
+  return Object.assign(prisma, {
+    webhookEventCreate,
+    webhookEventUpdate,
+    financialTransactionCreate,
+  });
 }
 
 function signatureFor(rawBody: Buffer, secret: string, timestamp = Math.floor(Date.now() / 1000)) {
@@ -191,7 +195,11 @@ describe('Stripe payment routes', () => {
     });
     expect(prisma.order.findMany).not.toHaveBeenCalled();
     expect(prisma.webhookEventCreate).toHaveBeenCalledWith({
-      data: { stripeEventId: 'evt_test_123', type: 'checkout.session.completed', objectId: 'cs_test_123' },
+      data: {
+        stripeEventId: 'evt_test_123',
+        type: 'checkout.session.completed',
+        objectId: 'cs_test_123',
+      },
     });
     expect(prisma.financialTransactionCreate).toHaveBeenCalledWith({
       data: {
@@ -213,11 +221,19 @@ describe('Stripe payment routes', () => {
     const prisma = setup();
     vi.mocked(prisma.webhookEventCreate).mockRejectedValueOnce({ code: 'P2002' });
     await app.ready();
-    const rawBody = Buffer.from(JSON.stringify({
-      id: 'evt_duplicate_123',
-      type: 'checkout.session.completed',
-      data: { object: { id: 'cs_test_123', payment_status: 'paid', metadata: { orderIds: 'order-1' } } },
-    }));
+    const rawBody = Buffer.from(
+      JSON.stringify({
+        id: 'evt_duplicate_123',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_test_123',
+            payment_status: 'paid',
+            metadata: { orderIds: 'order-1' },
+          },
+        },
+      }),
+    );
     const response = await app.inject({
       method: 'POST',
       url: '/api/webhooks/stripe',
