@@ -60,6 +60,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [available, setAvailable] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutPending, setCheckoutPending] = useState(false);
@@ -67,6 +68,8 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
 
   const load = useCallback(async () => {
     const version = ++loadVersion.current;
+    setLoading(true);
+    setLoadFailed(false);
     try {
       const [addressPayload, orderPayload] = await Promise.all([
         apiRequest('/api/customer/addresses', apiSchemas.customerAddresses),
@@ -89,6 +92,8 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
           'Unable to load your orders and addresses. Check your connection and try again.',
         ),
       );
+    } finally {
+      if (version === loadVersion.current) setLoading(false);
     }
   }, [t]);
 
@@ -107,12 +112,19 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
               setAddresses([]);
               setOrders([]);
               setAvailable(false);
+              setLoading(false);
               setLoadFailed(false);
               setMessage('');
             }
           })
           .catch(() => {
-            if (active) setAvailable(false);
+            if (!active) return;
+            setAvailable(false);
+            setLoading(false);
+            setLoadFailed(true);
+            setMessage(
+              t('Impossible de vérifier votre session. Réessayez.', 'Unable to verify your session. Please try again.'),
+            );
           });
         return;
       }
@@ -122,6 +134,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
         setAddresses([]);
         setOrders([]);
         setAvailable(false);
+        setLoading(false);
         setLoadFailed(false);
         setMessage('');
       }
@@ -133,7 +146,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       active = false;
       window.removeEventListener('template-auth-changed', onAuthChanged);
     };
-  }, [load]);
+  }, [load, t]);
 
   async function payUnpaidOrders() {
     const orderIds = orders
@@ -207,8 +220,22 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             'Sign in to view your order history and saved addresses.',
           )}
         </p>
+      ) : loading ? (
+        <p className="workspace-loading" role="status" aria-live="polite">
+          {t('Chargement de votre compte…', 'Loading your account…')}
+        </p>
       ) : loadFailed ? (
-        <p role="alert">{message}</p>
+        <div className="workspace-error" role="alert">
+          <p>{message}</p>
+          <button
+            type="button"
+            className="outline-button"
+            onClick={() => void load()}
+            disabled={loading}
+          >
+            {t('Réessayer', 'Try again')}
+          </button>
+        </div>
       ) : (
         <>
           <h3>{t('Historique des commandes', 'Order history')}</h3>
@@ -272,7 +299,14 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             ))
           )}
           <h3 style={{ marginTop: 24 }}>{t('Adresses enregistrées', 'Saved addresses')}</h3>
-          {addresses.map((address) => (
+          {addresses.length === 0 ? (
+            <p className="empty-state" role="status">
+              {t(
+                'Aucune adresse enregistrée. Ajoutez une adresse pour accélérer vos prochaines commandes.',
+                'No saved addresses yet. Add an address to speed up your next checkout.',
+              )}
+            </p>
+          ) : addresses.map((address) => (
             <article className="best-seller-row" key={address.id}>
               <div className="best-seller-name">
                 <strong>
