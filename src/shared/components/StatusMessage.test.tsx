@@ -15,7 +15,11 @@ describe('shared StatusMessage', () => {
   });
 
   it('renders an optional title and forwards custom attributes', () => {
-    render(<StatusMessage title="Attention" data-testid="notice">Détail</StatusMessage>);
+    render(
+      <StatusMessage title="Attention" data-testid="notice">
+        Détail
+      </StatusMessage>,
+    );
     expect(screen.getByTestId('notice')).toHaveTextContent('Attention');
     expect(screen.getByTestId('notice')).toHaveTextContent('Détail');
   });
