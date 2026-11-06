@@ -466,6 +466,26 @@ export function registerPaymentRoutes(
       return reply.code(502).send({ error: 'Stripe could not process this refund.' });
     }
 
+    if (refund.data.status !== 'succeeded') {
+      if (refund.data.status === 'failed' || refund.data.status === 'canceled') {
+        if (!isRetry) {
+          await prisma.$transaction(async (tx) => {
+            await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
+            await tx.order.updateMany({
+              where: { id: order.id, refundedCents: reservedCents },
+              data: { refundedCents: { decrement: amountCents } },
+            });
+          });
+        }
+        return reply.code(502).send({ error: 'Stripe did not complete the refund.' });
+      }
+      return reply.code(202).send({
+        pending: true,
+        refundId: refund.data.id,
+        message: 'Stripe is still processing this refund. The ledger will be updated by webhook.',
+      });
+    }
+
     const nextPaymentStatus =
       reservedCents === order.totalCents ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
     try {
