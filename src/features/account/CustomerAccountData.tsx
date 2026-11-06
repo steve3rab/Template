@@ -306,7 +306,8 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 'No saved addresses yet. Add an address to speed up your next checkout.',
               )}
             </p>
-          ) : addresses.map((address) => (
+          ) : (
+            addresses.map((address) => (
             <article className="best-seller-row" key={address.id}>
               <div className="best-seller-name">
                 <strong>
@@ -322,7 +323,8 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 {t('Supprimer', 'Delete')}
               </button>
             </article>
-          ))}
+            ))
+          )}
           <form
             className="checkout-form"
             onSubmit={(event) => void addAddress(event)}
