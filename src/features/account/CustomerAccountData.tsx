@@ -157,7 +157,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       await apiRequest('/api/customer/addresses', apiSchemas.addressCreated, {
         method: 'POST',
         body: JSON.stringify({
-          label: String(form.get('label') ?? 'Domicile'),
+          label: String(form.get('label') ?? (languageRef.current === 'en' ? 'Home' : 'Domicile')),
           recipient: String(form.get('recipient') ?? ''),
           line1: String(form.get('line1') ?? ''),
           postalCode: String(form.get('postalCode') ?? ''),
@@ -267,7 +267,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             <h3>{t('Ajouter une adresse', 'Add an address')}</h3>
             <label>
               {t('Libellé', 'Label')}
-              <input name="label" defaultValue="Domicile" required maxLength={60} />
+              <input name="label" defaultValue={t("Domicile", "Home")} required maxLength={60} />
             </label>
             <label>
               {t('Destinataire', 'Recipient')}
