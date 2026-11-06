@@ -183,22 +183,37 @@ export function registerSellerRoutes(
         });
       }
       const updated = await prisma.$transaction(async (tx) => {
-        const result = await tx.order.update({
-          where: { id: order.id },
+        // Compare-and-set prevents two concurrent requests from applying transitions
+        // based on the same stale order snapshot. Include payment fields so a webhook
+        // racing with a seller action cannot be overwritten by that stale action.
+        const changed = await tx.order.updateMany({
+          where: {
+            id: order.id,
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            paymentReference: order.paymentReference,
+          },
           data: { status: body.data.status },
-          include: { items: true },
         });
+        if (changed.count !== 1) return null;
+
         if (body.data.status === 'CANCELLED') {
           for (const item of order.items) {
-            if (item.productId)
+            if (item.productId) {
               await tx.product.update({
                 where: { id: item.productId },
                 data: { stock: { increment: item.quantity } },
               });
+            }
           }
         }
-        return result;
+        return { ...order, status: body.data.status };
       });
+      if (!updated) {
+        return reply.code(409).send({
+          error: 'Order changed while this update was being processed. Refresh and retry.',
+        });
+      }
       return { order: updated };
     },
   );
