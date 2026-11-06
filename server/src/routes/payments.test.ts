@@ -762,6 +762,7 @@ describe('Stripe payment routes', () => {
     expect(updateMany).toHaveBeenCalledTimes(1);
     expect(productUpdateMany).toHaveBeenCalledTimes(1);
   });
+
   it('rejects invalid and stale webhook signatures', async () => {
     setup();
     const rawBody = Buffer.from('{"type":"checkout.session.completed"}');
