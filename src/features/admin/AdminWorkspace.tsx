@@ -30,6 +30,7 @@ export function AdminWorkspace() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([]);
+  const [refundRequestKeys, setRefundRequestKeys] = useState<Record<string, string>>({});
   const [section, setSection] = useState<Section>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -95,7 +96,9 @@ export function AdminWorkspace() {
   async function refundOrder(order: AdminOrder, event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const requestKey = String(form.get('requestKey') ?? '');
+    const requestKey =
+      String(form.get('requestKey') ?? '') || refundRequestKeys[order.id] || crypto.randomUUID();
+    setRefundRequestKeys((current) => ({ ...current, [order.id]: requestKey }));
     const rawAmount = String(form.get('amountCents') ?? '').trim();
     const amountCents = rawAmount ? Number(rawAmount) : undefined;
     if (amountCents !== undefined && (!Number.isSafeInteger(amountCents) || amountCents < 1)) {
@@ -113,8 +116,16 @@ export function AdminWorkspace() {
           body: JSON.stringify({ requestKey, ...(amountCents === undefined ? {} : { amountCents }) }),
         },
       );
-      if ('pending' in result) setError(result.message);
-      else setError(`Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`);
+      if ('pending' in result) {
+        setError(result.message);
+      } else {
+        setError(`Remboursement confirmé : ${formatCents(result.refund.amountCents)}.`);
+        setRefundRequestKeys((current) => {
+          const next = { ...current };
+          delete next[order.id];
+          return next;
+        });
+      }
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Impossible de traiter le remboursement.');
@@ -326,8 +337,15 @@ export function AdminWorkspace() {
                   <div className="admin-order-actions">
                     <strong>{formatCents(order.totalCents)}</strong>
                     {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
-                      <form onSubmit={(event) => void refundOrder(order, event)}>
-                        <input type="hidden" name="requestKey" defaultValue={crypto.randomUUID()} />
+                      <form
+                        key={`${order.id}:${refundRequestKeys[order.id] ?? 'new'}`}
+                        onSubmit={(event) => void refundOrder(order, event)}
+                      >
+                        <input
+                          type="hidden"
+                          name="requestKey"
+                          defaultValue={refundRequestKeys[order.id] ?? ''}
+                        />
                         <label>
                           Montant en centimes (facultatif)
                           <input
