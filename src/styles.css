@@ -3442,3 +3442,104 @@ button {
   line-height: 1;
   box-shadow: 0 2px 8px rgb(35 39 29 / 12%);
 }
+
+
+/* Shared UI primitives */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.ui-button:focus-visible {
+  outline: 3px solid rgb(91 112 70 / 35%);
+  outline-offset: 2px;
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+}
+
+.ui-button--primary {
+  background: #38432f;
+  color: #fffef8;
+}
+
+.ui-button--primary:not(:disabled):hover {
+  background: #4a563d;
+}
+
+.ui-button--secondary {
+  border-color: #d8dacd;
+  background: #fffefa;
+  color: #394331;
+}
+
+.ui-button--secondary:not(:disabled):hover {
+  background: #f1f1e9;
+}
+
+.ui-button--danger {
+  background: #873f35;
+  color: #fff;
+}
+
+.ui-button--danger:not(:disabled):hover {
+  background: #6f3029;
+}
+
+.ui-button--ghost {
+  background: transparent;
+  color: inherit;
+}
+
+.ui-button--ghost:not(:disabled):hover {
+  background: rgb(0 0 0 / 5%);
+}
+
+.ui-button--small {
+  min-height: 34px;
+  padding: 7px 11px;
+  font-size: 0.82rem;
+}
+
+.ui-button--medium {
+  font-size: 0.9rem;
+}
+
+.ui-button--large {
+  min-height: 48px;
+  padding: 13px 20px;
+  font-size: 1rem;
+}
+
+.ui-button__spinner {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ui-button-spin 700ms linear infinite;
+}
+
+@keyframes ui-button-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button { transition: none; }
+  .ui-button__spinner { animation-duration: 1400ms; }
+}
