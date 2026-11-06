@@ -43,15 +43,15 @@ export default defineConfig({
       ],
       thresholds: {
         // Keep the existing frontend floor while making server-side access control measurable.
-        statements: 45,
-        branches: 35,
-        functions: 44,
-        lines: 47,
+        statements: 55,
+        branches: 45,
+        functions: 50,
+        lines: 55,
         'server/src/**': {
-          statements: 25,
-          branches: 20,
-          functions: 25,
-          lines: 25,
+          statements: 75,
+          branches: 65,
+          functions: 80,
+          lines: 78,
         },
       },
     },
