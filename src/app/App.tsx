@@ -155,6 +155,18 @@ export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
+  const translate = (fr: string, en: string) => language === 'en' ? en : fr;
+  const categoryLabel = (category: string) => {
+    if (language === 'fr') return category;
+    const labels: Record<string, string> = {
+      'Vêtements': 'Clothing',
+      'Chaussures': 'Shoes',
+      'Accessoires': 'Accessories',
+      'Maison': 'Home',
+      'Tout': 'All',
+    };
+    return labels[category] ?? category;
+  };
   const paymentState = new URLSearchParams(window.location.search).get('payment');
   const [view, setView] = useState<View>(() => {
     if (window.location.pathname === '/reset-password') return 'reset';
@@ -681,7 +693,7 @@ export function App() {
               setCategory('Tout');
             }}
           >
-            Collection
+            {translate('Collection', 'Collection')}
           </button>
           {PRODUCT_CATEGORIES.map((item) => (
             <button
@@ -694,12 +706,12 @@ export function App() {
                 setCategory(item);
               }}
             >
-              {item}
+              {categoryLabel(item)}
             </button>
           ))}
         </nav>
         <div className="header-actions">
-          <div className="language-switcher" role="group" aria-label="Choisir la langue">
+          <div className="language-switcher" role="group" aria-label={translate('Choisir la langue', 'Choose language')}>
             <button
               className="language-button"
               type="button"
@@ -721,7 +733,7 @@ export function App() {
           </div>
           <button
             className="icon-button"
-            aria-label="Compte client"
+            aria-label={translate('Compte client', 'Customer account')}
             onClick={() => setView('account')}
           >
             ♙
@@ -731,7 +743,7 @@ export function App() {
             onClick={() => setCartOpen((open) => !open)}
             aria-label={`Panier, ${cartCount} article(s)`}
           >
-            Panier <span className="cart-count">{cartCount}</span>
+            {translate('Panier', 'Cart')} <span className="cart-count">{cartCount}</span>
           </button>
         </div>
       </header>
@@ -750,15 +762,14 @@ export function App() {
         <>
           <section className="hero-banner" aria-labelledby="hero-title">
             <div className="hero-copy">
-              <span className="eyebrow">LA SÉLECTION DE LA SAISON</span>
+              <span className="eyebrow">{translate('LA SÉLECTION DE LA SAISON', 'THIS SEASON’S EDIT')}</span>
               <h1 id="hero-title" aria-label="Le style, en toute simplicité.">
-                Le style, en
+                {translate('Le style, en', 'Effortless')}
                 <br />
-                <em>toute simplicité.</em>
+                <em>{translate('toute simplicité.', 'by design.')}</em>
               </h1>
               <p>
-                Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui
-                vous ressemble.
+                {translate('Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui vous ressemble.', 'Thoughtful essentials and easy-to-wear pieces. Discover a collection that feels like you.')}
               </p>
               <button
                 className="dark-button"
@@ -767,7 +778,7 @@ export function App() {
                   document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
-                Découvrir la collection <span>↗</span>
+                {translate('Découvrir la collection', 'Discover the collection')} <span>↗</span>
               </button>
               <div className="hero-note">
                 <span className="note-star">✳</span>
@@ -803,21 +814,21 @@ export function App() {
           <section className="catalogue-section" id="catalogue">
             <div className="section-heading">
               <div>
-                <span className="eyebrow">À VOUS DE CHOISIR</span>
+                <span className="eyebrow">{translate('À VOUS DE CHOISIR', 'YOUR EDIT')}</span>
                 <h2>
-                  Les pièces du moment<span className="brand-period">.</span>
+                  {translate('Les pièces du moment', 'The latest pieces')}<span className="brand-period">.</span>
                 </h2>
-                <p>Des favoris à adopter sans hésiter.</p>
+                <p>{translate('Des favoris à adopter sans hésiter.', 'New favourites to make your own.')}</p>
               </div>
-              <span className="product-count">{filteredProducts.length} articles</span>
+              <span className="product-count">{filteredProducts.length} {translate('articles', 'items')}</span>
             </div>
             <div className="catalogue-toolbar">
               <div className="catalogue-tools">
                 <label className="search-box">
                   <span aria-hidden="true">⌕</span>
                   <input
-                    aria-label="Rechercher un produit"
-                    placeholder="Rechercher..."
+                    aria-label={translate('Rechercher un produit', 'Search products')}
+                    placeholder={translate('Rechercher...', 'Search...')}
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                   />
@@ -828,15 +839,15 @@ export function App() {
                   aria-pressed={favoritesOnly}
                   onClick={() => setFavoritesOnly((current) => !current)}
                 >
-                  <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span> Favoris
+                  <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span> {translate('Favoris', 'Favourites')}
                 </button>
                 <label className="sort-label">
                   <span className="visually-hidden">Trier les produits</span>
                   <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                    <option value="featured">À la une</option>
-                    <option value="price-up">Prix croissant</option>
-                    <option value="price-down">Prix décroissant</option>
-                    <option value="name">Nom A–Z</option>
+                    <option value="featured">{translate('À la une', 'Featured')}</option>
+                    <option value="price-up">{translate('Prix croissant', 'Price: low to high')}</option>
+                    <option value="price-down">{translate('Prix décroissant', 'Price: high to low')}</option>
+                    <option value="name">{translate('Nom A–Z', 'Name A–Z')}</option>
                   </select>
                 </label>
               </div>
@@ -877,7 +888,7 @@ export function App() {
                     />
                     <span className="visual-label">{product.category.toUpperCase()}</span>
                     <button className="quick-add" onClick={() => addToCart(product)}>
-                      Ajouter au panier <span>＋</span>
+                      {translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
                     </button>
                   </div>
                   <div className="product-meta">
@@ -926,8 +937,8 @@ export function App() {
             {filteredProducts.length === 0 && (
               <div className="empty-state">
                 <span>⌕</span>
-                <h3>Aucun article trouvé</h3>
-                <p>Essayez une autre recherche ou une autre catégorie.</p>
+                <h3>{translate('Aucun article trouvé', 'No items found')}</h3>
+                <p>{translate('Essayez une autre recherche ou une autre catégorie.', 'Try another search or category.')}</p>
                 <button
                   className="outline-button"
                   onClick={() => {
@@ -936,7 +947,7 @@ export function App() {
                     setFavoritesOnly(false);
                   }}
                 >
-                  Réinitialiser les filtres
+                  {translate('Réinitialiser les filtres', 'Reset filters')}
                 </button>
               </div>
             )}
@@ -944,22 +955,22 @@ export function App() {
           <section className="benefits-strip">
             <div>
               <span>✳</span>
-              <strong>Des essentiels durables</strong>
+              <strong>{translate('Des essentiels durables', 'Timeless essentials')}</strong>
               <p>Des pièces pensées pour durer.</p>
             </div>
             <div>
               <span>↗</span>
-              <strong>Paiement en ligne</strong>
+              <strong>{translate('Paiement en ligne', 'Online payment')}</strong>
               <p>Le paiement est traité via Stripe lorsque le service est configuré.</p>
             </div>
             <div>
               <span>↺</span>
-              <strong>Informations de retour</strong>
+              <strong>{translate('Informations de retour', 'Returns information')}</strong>
               <p>Consultez les conditions applicables avant toute commande.</p>
             </div>
             <div>
               <span>♡</span>
-              <strong>Informations utiles</strong>
+              <strong>{translate('Informations utiles', 'Useful information')}</strong>
               <p>Conditions de vente et confidentialité accessibles en pied de page.</p>
             </div>
           </section>
@@ -977,9 +988,9 @@ export function App() {
           >
             ← Retour à la boutique
           </button>
-          <span className="eyebrow">VOTRE ESPACE PERSONNEL</span>
+          <span className="eyebrow">{translate('VOTRE ESPACE PERSONNEL', 'YOUR ACCOUNT')}</span>
           <h1 className="workspace-title">
-            Bonjour, bienvenue<span className="brand-period">.</span>
+            {translate('Bonjour, bienvenue', 'Hello, welcome')}<span className="brand-period">.</span>
           </h1>
           <p className="workspace-intro">
             Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.
@@ -987,17 +998,17 @@ export function App() {
           <div className="account-benefits">
             <div>
               <span>01</span>
-              <strong>Vos commandes</strong>
+              <strong>{translate('Vos commandes', 'Your orders')}</strong>
               <p>Consultez le suivi et l’historique de vos achats.</p>
             </div>
             <div>
               <span>02</span>
-              <strong>Vos adresses</strong>
+              <strong>{translate('Vos adresses', 'Your addresses')}</strong>
               <p>Ajoutez ou supprimez vos adresses de livraison.</p>
             </div>
             <div>
               <span>03</span>
-              <strong>Votre compte</strong>
+              <strong>{translate('Votre compte', 'Your account')}</strong>
               <p>Gérez votre connexion et vos informations personnelles.</p>
             </div>
           </div>
@@ -1073,7 +1084,7 @@ export function App() {
             </div>
           ) : (
             <>
-              <span className="eyebrow">DERNIÈRE ÉTAPE</span>
+              <span className="eyebrow">{translate('DERNIÈRE ÉTAPE', 'FINAL STEP')}</span>
               <h1 className="workspace-title">
                 Finaliser ma commande<span className="brand-period">.</span>
               </h1>
@@ -1083,7 +1094,7 @@ export function App() {
               </p>
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeCheckout}>
-                  <h2>Informations de livraison</h2>
+                  <h2>{translate('Informations de livraison', 'Delivery information')}</h2>
                   {checkoutAddresses.length > 0 && (
                     <label>
                       Choisir une adresse enregistrée
@@ -1183,7 +1194,7 @@ export function App() {
                   </p>
                 </form>
                 <aside className="order-summary">
-                  <h2>Votre panier</h2>
+                  <h2>{translate('Votre panier', 'Your cart')}</h2>
                   {catalog
                     .filter((product) => cart[product.id])
                     .map((product) => (
@@ -1202,12 +1213,12 @@ export function App() {
                     <p>Votre panier est vide. Retournez au catalogue pour ajouter des articles.</p>
                   )}
                   <div className="summary-total">
-                    <span>Sous-total</span>
+                    <span>{translate('Sous-total', 'Subtotal')}</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <div className="summary-total">
-                    <span>Livraison</span>
-                    <strong>Non configurée</strong>
+                    <span>{translate('Livraison', 'Shipping')}</span>
+                    <strong>{translate('Non configurée', 'Not configured')}</strong>
                   </div>
                   <p className="summary-note">
                     Le paiement de cette version porte uniquement sur les articles affichés. Aucun
@@ -1266,9 +1277,9 @@ export function App() {
             atelier<span className="brand-period">.</span>
           </span>
         </a>
-        <p>Des essentiels pour votre quotidien.</p>
+        <p>{translate('Des essentiels pour votre quotidien.', 'Everyday essentials.')}</p>
         <div className="footer-links">
-          <button onClick={() => setView('account')}>Mon compte</button>
+          <button onClick={() => setView('account')}>{translate('Mon compte', 'My account')}</button>
           <button onClick={() => setNotice('Le centre d’aide sera bientôt disponible.')}>
             Aide & contact
           </button>
@@ -1322,12 +1333,12 @@ export function App() {
             aria-label="Fermer le panier"
             onClick={() => setCartOpen(false)}
           />
-          <aside className="cart-drawer" aria-label="Votre panier">
+          <aside className="cart-drawer" aria-label={translate('Votre panier', 'Your cart')}>
             <div className="drawer-heading">
               <div>
-                <span className="eyebrow">VOTRE SÉLECTION</span>
+                <span className="eyebrow">{translate('VOTRE SÉLECTION', 'YOUR SELECTION')}</span>
                 <h2>
-                  Mon panier <span>({cartCount})</span>
+                  {translate('Mon panier', 'My cart')} <span>({cartCount})</span>
                 </h2>
               </div>
               <button
@@ -1341,10 +1352,10 @@ export function App() {
             {cartCount === 0 ? (
               <div className="empty-cart">
                 <span>♡</span>
-                <h3>Votre panier est vide</h3>
+                <h3>{translate('Votre panier est vide', 'Your cart is empty')}</h3>
                 <p>Vos prochains coups de cœur sont ici.</p>
                 <button className="dark-button" onClick={() => setCartOpen(false)}>
-                  Continuer mes achats
+                  {translate('Continuer mes achats', 'Continue shopping')}
                 </button>
               </div>
             ) : (
@@ -1382,7 +1393,7 @@ export function App() {
                 </div>
                 <div className="drawer-total">
                   <div>
-                    <span>Sous-total</span>
+                    <span>{translate('Sous-total', 'Subtotal')}</span>
                     <strong>{formatCurrency(cartTotal)}</strong>
                   </div>
                   <p>
@@ -1390,10 +1401,10 @@ export function App() {
                     articles.
                   </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
-                    Passer à la commande ↗
+                    {translate('Passer à la commande', 'Proceed to checkout')} ↗
                   </button>
                   <button className="continue-link" onClick={() => setCartOpen(false)}>
-                    Continuer mes achats
+                    {translate('Continuer mes achats', 'Continue shopping')}
                   </button>
                 </div>
               </>
