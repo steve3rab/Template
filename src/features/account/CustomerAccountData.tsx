@@ -11,7 +11,9 @@ import {
 } from '../../shared/api/client';
 
 function orderStatusLabel(status: Order['status'], paymentStatus: string, language: Language): string {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const t = (fr: string, en: string) => translateText(languageRef.current, fr, en);
   switch (status) {
     case 'PENDING':
       if (paymentStatus.toUpperCase() === 'PAID') {
