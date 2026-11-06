@@ -22,6 +22,13 @@ afterEach(() => {
 
   it('shows a localized error when the reset token has expired', async () => {
     const user = userEvent.setup();
+    const toastMessages: string[] = [];
+    const onToast = (event: Event) => {
+      if (event instanceof CustomEvent && typeof event.detail?.message === 'string') {
+        toastMessages.push(event.detail.message);
+      }
+    };
+    window.addEventListener('template-toast', onToast);
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 400,
@@ -35,7 +42,8 @@ afterEach(() => {
     await user.click(screen.getByRole('button', { name: /update password/i }));
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText('Invalid or expired link.')).toBeInTheDocument();
+    expect(toastMessages).toContain('Invalid or expired link.');
+    window.removeEventListener('template-toast', onToast);
   });
 
 });
