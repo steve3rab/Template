@@ -24,9 +24,7 @@ describe('hashToken', () => {
   it('uses the configured session secret by default', () => {
     vi.stubEnv('SESSION_SECRET', 'configured-session-secret');
 
-    expect(hashToken('opaque-token')).toBe(
-      hashToken('opaque-token', 'configured-session-secret'),
-    );
+    expect(hashToken('opaque-token')).toBe(hashToken('opaque-token', 'configured-session-secret'));
   });
 
   it('does not return the raw token', () => {
