@@ -355,7 +355,7 @@ describe('Stripe payment routes', () => {
     const first = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1200 },
+      payload: { amountCents: 1200, requestKey: '00000000-0000-4000-8000-000000000003' },
     });
     expect(first.statusCode).toBe(202);
     const pendingCall = vi.mocked(prisma.financialTransactionCreate).mock.calls[0]?.[0] as {
