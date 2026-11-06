@@ -2,7 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import type { ResolveUser } from '../auth/requireUser.js';
 import { requireUser } from '../auth/requireUser.js';
-import { createCustomerOrdersFromCart, CustomerOrderCreationError } from '../domain/customerOrders.js';
+import {
+  createCustomerOrdersFromCart,
+  CustomerOrderCreationError,
+} from '../domain/customerOrders.js';
 import { createOrderInputSchema } from '../schemas/commerce.js';
 
 export function registerCustomerOrderRoutes(
@@ -32,7 +35,9 @@ export function registerCustomerOrderRoutes(
         if (error.code === 'EMPTY_CART') {
           return reply.code(400).send({ error: 'Cart is empty.' });
         }
-        return reply.code(409).send({ error: 'Insufficient stock for one or more products.' });
+        return reply
+          .code(409)
+          .send({ error: 'Insufficient stock for one or more products.' });
       }
       throw error;
     }
