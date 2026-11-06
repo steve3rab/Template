@@ -62,7 +62,10 @@ const stripeRefundEventSchema = z.object({
   amount: z.number().int().positive(),
   currency: z.string().length(3),
   status: z.string().min(1),
-  metadata: z.object({ orderId: z.string().min(1) }).passthrough().optional(),
+  metadata: z
+    .object({ orderId: z.string().min(1) })
+    .passthrough()
+    .optional(),
 });
 
 const stripeEventSchema = z
@@ -413,8 +416,7 @@ export function registerPaymentRoutes(
             .reduce((sum, transaction) => sum + transaction.amountCents, 0);
           const stripeRefunds = refunds.data.data
             .filter(
-              (refund) =>
-                refund.status === 'succeeded' && refund.metadata?.orderId === order.id,
+              (refund) => refund.status === 'succeeded' && refund.metadata?.orderId === order.id,
             )
             .reduce((sum, refund) => sum + refund.amount, 0);
           const issues: string[] = [];
@@ -522,10 +524,7 @@ export function registerPaymentRoutes(
         paymentStatus: order.paymentStatus,
       });
     }
-    if (
-      !['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) ||
-      !order.paymentReference
-    ) {
+    if (!['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) || !order.paymentReference) {
       return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
     }
     if (existingRefund && existingRefund.status !== 'PENDING') {
@@ -816,10 +815,9 @@ export function registerPaymentRoutes(
           },
         });
 
-        const refundEvent =
-          ['refund.created', 'refund.updated'].includes(event.data.type)
-            ? stripeRefundEventSchema.safeParse(event.data.data.object)
-            : null;
+        const refundEvent = ['refund.created', 'refund.updated'].includes(event.data.type)
+          ? stripeRefundEventSchema.safeParse(event.data.data.object)
+          : null;
         if (refundEvent?.success && refundEvent.data.metadata?.orderId) {
           const orderId = refundEvent.data.metadata.orderId;
           const pending = await tx.financialTransaction.findFirst({
