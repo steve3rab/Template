@@ -50,7 +50,7 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await expect(page.getByText(/En attente de paiement/i)).toBeVisible();
   await expect(page.getByText(/Paiement : À régler/i)).toBeVisible();
   await page.getByRole('button', { name: /payer mes commandes en attente/i }).click();
-  await expect(page.getByRole('status')).toContainText(
+  await expect(page.locator('.toast[role="status"]')).toContainText(
     /paiement en ligne n’est pas encore configuré/i,
   );
 });
