@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AuthPanel } from '../features/auth/AuthPanel';
 import { ResetPassword } from '../features/auth/ResetPassword';
 import { SellerWorkspace } from '../features/seller/SellerWorkspace';
@@ -155,7 +155,7 @@ export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
-  const translate = (fr: string, en: string) => language === 'en' ? en : fr;
+  const translate = useCallback((fr: string, en: string) => language === 'en' ? en : fr, [language]);
   const formatPrice = (amount: number) => formatCurrency(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
   const productTag = (tag: string) => {
     if (language === 'fr') return tag;
@@ -394,7 +394,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [translate]);
   useEffect(() => {
     writeStoredJson('atelier-cart', cart);
     if (!isAuthenticated || !cartHydrated) return;
@@ -425,7 +425,7 @@ export function App() {
           );
         }
       });
-  }, [cart, isAuthenticated, cartHydrated]);
+  }, [cart, isAuthenticated, cartHydrated, translate]);
   useEffect(() => {
     writeStoredJson('atelier-favorites', favorites);
   }, [favorites]);
@@ -457,7 +457,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, translate]);
   async function openSeller() {
     try {
       const response = await fetch('/api/seller/me', { credentials: 'include' });
