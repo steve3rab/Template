@@ -35,9 +35,7 @@ export function registerCustomerOrderRoutes(
         if (error.code === 'EMPTY_CART') {
           return reply.code(400).send({ error: 'Cart is empty.' });
         }
-        return reply
-          .code(409)
-          .send({ error: 'Insufficient stock for one or more products.' });
+        return reply.code(409).send({ error: 'Insufficient stock for one or more products.' });
       }
       throw error;
     }
