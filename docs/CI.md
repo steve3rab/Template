@@ -50,8 +50,10 @@ npx playwright install chromium
 
 Les seuils sont définis dans `vite.config.ts` et sont bloquants :
 
-- **Ensemble du projet** : statements 45 %, branches 35 %, functions 44 %, lines 47 %.
-- **Backend (`server/src/**`)** : statements 25 %, branches 20 %, functions 25 %, lines 25 %.
+- **Ensemble du projet** : statements 55 %, branches 45 %, functions 50 %, lines 55 %.
+- **Backend (`server/src/**`)** : statements 75 %, branches 65 %, functions 80 %, lines 78 %.
+
+Ces seuils ont été relevés après observation du dernier rapport CI (couverture globale : 68,16 % statements / 61,21 % branches / 61,57 % functions / 70,12 % lines ; backend isolé : 81,82 % / 73,59 % / 86,50 % / 84,14 %). Ils restent des planchers et doivent être augmentés par étapes, sans masquer les fichiers insuffisamment couverts.
 
 Le contrôle frontend inclut les fichiers de test configurés par Vitest ; le backend est également exécuté séparément avec `npm run test:coverage:server`. Les seuils constituent un plancher anti-régression, pas un objectif de couverture finale. Augmentez-les progressivement lorsque de nouveaux tests sont ajoutés. Ne diminuez jamais un seuil pour faire passer une CI sans justification documentée.
 
@@ -63,6 +65,7 @@ Le contrôle frontend inclut les fichiers de test configurés par Vitest ; le ba
 - Les flux de paiement doivent tester les signatures webhook, les événements répétés, les expirations, les remboursements partiels/complets, les reprises idempotentes et le rapprochement externe.
 - Les opérations sensibles aux courses doivent avoir des tests PostgreSQL réels, pas uniquement des mocks Prisma ou SQLite.
 - Les changements de schéma doivent inclure une migration Prisma et une vérification sur une base temporaire.
+- La CI exécute `prisma migrate status` après déploiement des migrations SQLite et compare les modèles Prisma SQLite/PostgreSQL pour empêcher leur dérive. Le job PostgreSQL exécute séparément le schéma PostgreSQL sur un service éphémère ; il ne prétend pas valider une chaîne de migrations PostgreSQL de production tant que celle-ci n'est pas versionnée séparément.
 - Les parcours critiques doivent être couverts par Playwright, sur desktop et mobile lorsque l'interface est concernée.
 - Ne pas modifier les attentes d'un test uniquement pour masquer une régression ; corriger le comportement ou expliquer précisément le contrat attendu.
 
