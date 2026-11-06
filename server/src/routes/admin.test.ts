@@ -283,8 +283,7 @@ describe('admin role management', () => {
   it.each(['SELLER', 'CUSTOMER'] as const)(
     'denies %s from every administrator route before database access',
     async (role) => {
-      const { userFindUnique, userUpdate, userCount, productCount, orderCount } =
-        setup(role);
+      const { userFindUnique, userUpdate, userCount, productCount, orderCount } = setup(role);
       await app.ready();
 
       const responses = await Promise.all([
