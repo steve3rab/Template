@@ -12,15 +12,23 @@ export function formatCurrency(amount: number, currency = 'EUR', locale = 'fr-FR
   const key = `${locale}:${currency}`;
   let formatter = currencyFormatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 2,
-    });
+    try {
+      formatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 2,
+      });
+    } catch {
+      return '—';
+    }
     currencyFormatters.set(key, formatter);
   }
 
-  return formatter.format(amount);
+  try {
+    return formatter.format(amount);
+  } catch {
+    return '—';
+  }
 }
 
 /** Formats an integer monetary amount stored in the smallest currency unit. */
