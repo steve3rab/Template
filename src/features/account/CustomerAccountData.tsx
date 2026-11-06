@@ -11,7 +11,7 @@ import {
 } from '../../shared/api/client';
 
 function orderStatusLabel(status: Order['status'], paymentStatus: string, language: Language): string {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
   switch (status) {
     case 'PENDING':
       if (paymentStatus.toUpperCase() === 'PAID') {
@@ -83,7 +83,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
         t('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.', 'Unable to load your orders and addresses. Check your connection and try again.'),
       );
     }
-  }, [language]);
+  }, [t]);
 
   useEffect(() => {
     let active = true;
