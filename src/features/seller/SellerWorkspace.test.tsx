@@ -87,5 +87,4 @@ describe('SellerWorkspace translations', () => {
     expect(screen.getByText(/no products yet/i)).toBeInTheDocument();
     expect(dashboardRequests).toBe(2);
   });
-
 });
