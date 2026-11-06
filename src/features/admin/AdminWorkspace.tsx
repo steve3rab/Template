@@ -145,6 +145,11 @@ export function AdminWorkspace() {
       }
       await load();
     } catch (cause) {
+      setRefundRequestKeys((current) => {
+        const next = { ...current };
+        delete next[order.id];
+        return next;
+      });
       setError(cause instanceof Error ? cause.message : 'Impossible de traiter le remboursement.');
       setLoading(false);
     }
