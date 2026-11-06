@@ -109,6 +109,11 @@ export const translations = {
 } as const;
 
 export type Language = keyof typeof translations;
+
+export function translateText(language: Language, french: string, english: string): string {
+  return language === 'en' ? english : french;
+}
+
 export type TranslationKey = {
   [Key in keyof typeof translations.fr]: (typeof translations.fr)[Key] extends string ? Key : never;
 }[keyof typeof translations.fr];
