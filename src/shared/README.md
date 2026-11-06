@@ -19,3 +19,8 @@ Keep feature-specific business rules inside their owning feature. Do not use thi
 - Keep formatting at the UI boundary; persist timestamps as ISO values and money as integer minor units.
 - Add focused unit tests whenever a shared utility or component is introduced.
 - Do not add feature-specific business rules here. Promote code only after at least two real consumers need the same behavior.
+
+- `components/TextField.tsx`: labelled input with generated IDs, hint/error associations, and native input attributes.
+- `components/StatusMessage.tsx`: consistent information, success, warning, and error feedback with appropriate live-region urgency.
+
+Form controls should use native input semantics and keep validation text programmatically associated with the control. Use urgent live regions only for warnings/errors; routine status should remain polite.
