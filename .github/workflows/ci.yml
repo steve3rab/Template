@@ -74,6 +74,8 @@ jobs:
       - run: npm ci --legacy-peer-deps --no-audit --no-fund
       - run: npm run db:generate
       - run: npm run db:deploy
+      - name: Seed isolated customer, seller and admin E2E accounts
+        run: npm run db:seed:test-users
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
   postgres-concurrency:
