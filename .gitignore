@@ -21,6 +21,12 @@ node_modules/
 secrets/
 **/secrets/
 
+# Generated source/artifact directories (all workspaces)
+generated/
+**/generated/
+.generated/
+**/.generated/
+
 # Frontend — React / TypeScript / Vite
 /dist/
 /build/
