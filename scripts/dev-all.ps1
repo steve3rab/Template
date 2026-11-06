@@ -19,7 +19,19 @@ foreach ($port in @($FrontendPort, $BackendPort)) {
 }
 
 if ($SeedTestUsers) {
-    & (Join-Path $PSScriptRoot 'seed-test-users.ps1')
+    $previousSeedOrigin = $env:APP_ORIGIN
+    try {
+        $env:APP_ORIGIN = "http://127.0.0.1:$FrontendPort"
+        & (Join-Path $PSScriptRoot 'seed-test-users.ps1')
+    }
+    finally {
+        if ($null -eq $previousSeedOrigin) {
+            Remove-Item Env:APP_ORIGIN -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:APP_ORIGIN = $previousSeedOrigin
+        }
+    }
 }
 
 $shellPath = if ($PSVersionTable.PSEdition -eq 'Core') {
