@@ -29,8 +29,6 @@ const onToast = (event: Event) => {
 beforeEach(() => {
   toastMessages = [];
   window.addEventListener('template-toast', onToast);
-
-
 });
 
 afterEach(() => {

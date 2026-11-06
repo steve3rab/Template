@@ -6,8 +6,6 @@ import { ResetPassword } from './ResetPassword';
 afterEach(() => {
   vi.unstubAllGlobals();
   window.history.replaceState({}, '', '/');
-
-
 });
 
 describe('ResetPassword', () => {
