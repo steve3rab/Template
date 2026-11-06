@@ -105,37 +105,34 @@ describe('CustomerAccountData', () => {
     ).toBeInTheDocument();
   });
 
-  it(
-    'shows a recoverable loading error and retries without treating it as an empty account',
-    async () => {
-      let orderRequests = 0;
-      vi.stubGlobal(
-        'fetch',
-        vi.fn(async (input: RequestInfo | URL) => {
-          const url = String(input);
-          if (url === '/api/auth/me') return apiResponse({ user: { email: 'client@example.com' } });
-          if (url === '/api/customer/addresses') return apiResponse({ addresses: [] });
-          if (url === '/api/customer/orders') {
-            orderRequests += 1;
-            if (orderRequests === 1) return apiResponse({ error: 'Temporary failure.' }, 503);
-            return apiResponse({ orders: [] });
-          }
-          return apiResponse({ error: 'Not found.' }, 404);
-        }),
-      );
+  it('shows a recoverable loading error and retries without treating it as an empty account', async () => {
+    let orderRequests = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/auth/me') return apiResponse({ user: { email: 'client@example.com' } });
+        if (url === '/api/customer/addresses') return apiResponse({ addresses: [] });
+        if (url === '/api/customer/orders') {
+          orderRequests += 1;
+          if (orderRequests === 1) return apiResponse({ error: 'Temporary failure.' }, 503);
+          return apiResponse({ orders: [] });
+        }
+        return apiResponse({ error: 'Not found.' }, 404);
+      }),
+    );
 
-      const user = userEvent.setup();
-      render(<CustomerAccountData language="en" />);
+    const user = userEvent.setup();
+    render(<CustomerAccountData language="en" />);
 
-      expect(await screen.findByRole('alert')).toHaveTextContent(
-        /unable to load your orders and addresses/i,
-      );
-      expect(screen.queryByText(/you have no orders yet/i)).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /unable to load your orders and addresses/i,
+    );
+    expect(screen.queryByText(/you have no orders yet/i)).not.toBeInTheDocument();
 
-      await user.click(screen.getByRole('button', { name: /try again/i }));
-      expect(await screen.findByText(/you have no orders yet/i)).toBeInTheDocument();
-      expect(screen.getByText(/no saved addresses yet/i)).toBeInTheDocument();
-      expect(orderRequests).toBe(2);
-    },
-  );
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+    expect(await screen.findByText(/you have no orders yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no saved addresses yet/i)).toBeInTheDocument();
+    expect(orderRequests).toBe(2);
+  });
 });

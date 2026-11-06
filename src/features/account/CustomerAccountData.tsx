@@ -127,7 +127,10 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             setLoading(false);
             setLoadFailed(true);
             setMessage(
-              t('Impossible de vérifier votre session. Réessayez.', 'Unable to verify your session. Please try again.'),
+              t(
+                'Impossible de vérifier votre session. Réessayez.',
+                'Unable to verify your session. Please try again.',
+              ),
             );
           });
         return;
