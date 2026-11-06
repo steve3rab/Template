@@ -155,11 +155,19 @@ export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
-  const translate = useCallback((fr: string, en: string) => language === 'en' ? en : fr, [language]);
-  const formatPrice = (amount: number) => formatCurrency(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
+  const translate = useCallback(
+    (fr: string, en: string) => (language === 'en' ? en : fr),
+    [language],
+  );
+  const formatPrice = (amount: number) =>
+    formatCurrency(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
   const productTag = (tag: string) => {
     if (language === 'fr') return tag;
-    const labels: Record<string, string> = { 'NOUVEAU': 'NEW', 'ESSENTIEL': 'ESSENTIAL', 'BEST-SELLER': 'BESTSELLER' };
+    const labels: Record<string, string> = {
+      NOUVEAU: 'NEW',
+      ESSENTIEL: 'ESSENTIAL',
+      'BEST-SELLER': 'BESTSELLER',
+    };
     return labels[tag] ?? tag;
   };
   const productDescription = (product: Product) => {
@@ -179,11 +187,11 @@ export function App() {
   const categoryLabel = (category: string) => {
     if (language === 'fr') return category;
     const labels: Record<string, string> = {
-      'Vêtements': 'Clothing',
-      'Chaussures': 'Shoes',
-      'Accessoires': 'Accessories',
-      'Maison': 'Home',
-      'Tout': 'All',
+      Vêtements: 'Clothing',
+      Chaussures: 'Shoes',
+      Accessoires: 'Accessories',
+      Maison: 'Home',
+      Tout: 'All',
     };
     return labels[category] ?? category;
   };
@@ -215,10 +223,16 @@ export function App() {
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
     if (paymentState === 'success') {
-      return translate('Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.', 'Payment submitted. The order status will be confirmed after verification by the payment provider.');
+      return translate(
+        'Paiement transmis. Le statut de la commande sera confirmé après vérification du prestataire.',
+        'Payment submitted. The order status will be confirmed after verification by the payment provider.',
+      );
     }
     if (paymentState === 'cancelled') {
-      return translate('Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.', 'Payment cancelled. Your orders remain available in your account so you can try again.');
+      return translate(
+        'Paiement annulé. Vos commandes restent disponibles dans votre compte pour réessayer.',
+        'Payment cancelled. Your orders remain available in your account so you can try again.',
+      );
     }
     return '';
   });
@@ -353,7 +367,10 @@ export function App() {
         setCatalog([]);
         setToastKind('error');
         setNotice(
-          translate('Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.', 'Unable to load the catalogue. Check your connection and refresh the page.'),
+          translate(
+            'Impossible de charger le catalogue. Vérifiez votre connexion puis actualisez la page.',
+            'Unable to load the catalogue. Check your connection and refresh the page.',
+          ),
         );
       });
     // Resolve authentication only from explicit session outcomes. A 5xx/network
@@ -384,12 +401,22 @@ export function App() {
           return;
         }
         setToastKind('error');
-        setNotice(translate('Impossible de vérifier votre session. Réessayez sans vous déconnecter.', 'Unable to verify your session. Please try again without signing out.'));
+        setNotice(
+          translate(
+            'Impossible de vérifier votre session. Réessayez sans vous déconnecter.',
+            'Unable to verify your session. Please try again without signing out.',
+          ),
+        );
       })
       .catch(() => {
         if (!active) return;
         setToastKind('error');
-        setNotice(translate('Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.', 'Unable to verify your session. Check your connection and try again.'));
+        setNotice(
+          translate(
+            'Impossible de vérifier votre session. Vérifiez votre connexion puis réessayez.',
+            'Unable to verify your session. Check your connection and try again.',
+          ),
+        );
       });
     return () => {
       active = false;
@@ -415,13 +442,21 @@ export function App() {
           body: JSON.stringify({ items: snapshot }),
         });
         if (!response.ok)
-          throw new Error(translate('Impossible de synchroniser le panier avec votre compte.', 'Unable to sync your cart with your account.'));
+          throw new Error(
+            translate(
+              'Impossible de synchroniser le panier avec votre compte.',
+              'Unable to sync your cart with your account.',
+            ),
+          );
       })
       .catch(() => {
         if (epoch === authEpoch.current && version === cartSyncVersion.current) {
           setToastKind('error');
           setNotice(
-            translate('Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.', 'Your cart could not be synced. Check your connection and try again.'),
+            translate(
+              'Le panier n’a pas pu être synchronisé. Vérifiez votre connexion puis réessayez.',
+              'Your cart could not be synced. Check your connection and try again.',
+            ),
           );
         }
       });
@@ -451,7 +486,10 @@ export function App() {
         setCartHydrated(false);
         setToastKind('error');
         setNotice(
-          translate('Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.', 'Unable to load your account data. Your changes will not sync until the connection is restored.'),
+          translate(
+            'Impossible de charger les données de votre compte. Vos modifications ne seront pas synchronisées tant que la connexion ne sera pas rétablie.',
+            'Unable to load your account data. Your changes will not sync until the connection is restored.',
+          ),
         );
       });
     return () => {
@@ -464,15 +502,26 @@ export function App() {
       if (!response.ok) {
         setNotice(
           response.status === 401
-            ? translate('Connectez-vous avec un compte vendeur autorisé pour accéder à cet espace.', 'Sign in with an authorized seller account to access this area.')
-            : translate('Accès refusé : cet espace est réservé aux comptes vendeurs autorisés.', 'Access denied: this area is restricted to authorized seller accounts.'),
+            ? translate(
+                'Connectez-vous avec un compte vendeur autorisé pour accéder à cet espace.',
+                'Sign in with an authorized seller account to access this area.',
+              )
+            : translate(
+                'Accès refusé : cet espace est réservé aux comptes vendeurs autorisés.',
+                'Access denied: this area is restricted to authorized seller accounts.',
+              ),
         );
         if (response.status === 401) setView('account');
         return;
       }
       setView('seller');
     } catch {
-      setNotice(translate("Impossible de vérifier vos droits d'accès. Réessayez dans un instant.", "Unable to verify your access permissions. Please try again shortly."));
+      setNotice(
+        translate(
+          "Impossible de vérifier vos droits d'accès. Réessayez dans un instant.",
+          'Unable to verify your access permissions. Please try again shortly.',
+        ),
+      );
     }
   }
   async function openAdmin() {
@@ -481,21 +530,34 @@ export function App() {
       if (!response.ok) {
         setNotice(
           response.status === 401
-            ? translate('Connectez-vous avec un compte administrateur pour accéder à cet espace.', 'Sign in with an administrator account to access this area.')
-            : translate('Accès refusé : cette zone est réservée aux administrateurs.', 'Access denied: this area is restricted to administrators.'),
+            ? translate(
+                'Connectez-vous avec un compte administrateur pour accéder à cet espace.',
+                'Sign in with an administrator account to access this area.',
+              )
+            : translate(
+                'Accès refusé : cette zone est réservée aux administrateurs.',
+                'Access denied: this area is restricted to administrators.',
+              ),
         );
         if (response.status === 401) setView('account');
         return;
       }
       setView('admin');
     } catch {
-      setNotice(translate("Impossible de vérifier vos droits d'administration. Réessayez.", "Unable to verify your administrator permissions. Please try again."));
+      setNotice(
+        translate(
+          "Impossible de vérifier vos droits d'administration. Réessayez.",
+          'Unable to verify your administrator permissions. Please try again.',
+        ),
+      );
     }
   }
 
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
-    setNotice(language === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`);
+    setNotice(
+      language === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`,
+    );
     setCartOpen(true);
   }
   function changeQuantity(id: string, amount: number) {
@@ -529,8 +591,14 @@ export function App() {
       if (!response.ok) {
         throw new Error(
           response.status === 401
-            ? translate('Votre session a expiré. Reconnectez-vous pour modifier vos favoris.', 'Your session has expired. Sign in again to update your favourites.')
-            : translate('Impossible de mettre à jour vos favoris. Réessayez.', 'Unable to update your favourites. Please try again.'),
+            ? translate(
+                'Votre session a expiré. Reconnectez-vous pour modifier vos favoris.',
+                'Your session has expired. Sign in again to update your favourites.',
+              )
+            : translate(
+                'Impossible de mettre à jour vos favoris. Réessayez.',
+                'Unable to update your favourites. Please try again.',
+              ),
         );
       }
       if (epoch !== authEpoch.current) return;
@@ -543,7 +611,12 @@ export function App() {
       if (epoch !== authEpoch.current) return;
       setToastKind('error');
       setNotice(
-        error instanceof Error ? error.message : translate('Impossible de mettre à jour vos favoris.', 'Unable to update your favourites.'),
+        error instanceof Error
+          ? error.message
+          : translate(
+              'Impossible de mettre à jour vos favoris.',
+              'Unable to update your favourites.',
+            ),
       );
     } finally {
       favoriteRequests.current.delete(productId);
@@ -574,7 +647,10 @@ export function App() {
           setCheckoutAddressId('');
           setToastKind('error');
           setNotice(
-            translate('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.', 'Unable to load your saved addresses. You can enter a new address.'),
+            translate(
+              'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+              'Unable to load your saved addresses. You can enter a new address.',
+            ),
           );
         }
         setCheckoutPending(false);
@@ -587,7 +663,12 @@ export function App() {
     checkoutPendingRef.current = true;
     setCheckoutPending(true);
     setView('account');
-    setNotice(translate('Connectez-vous ou créez un compte pour finaliser votre commande.', 'Sign in or create an account to complete your order.'));
+    setNotice(
+      translate(
+        'Connectez-vous ou créez un compte pour finaliser votre commande.',
+        'Sign in or create an account to complete your order.',
+      ),
+    );
   }
   async function completeCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -609,7 +690,12 @@ export function App() {
         }),
       });
       if (!cartResponse.ok)
-        throw new Error(translate('Impossible d’enregistrer le panier. Reconnectez-vous.', 'Unable to save your cart. Please sign in again.'));
+        throw new Error(
+          translate(
+            'Impossible d’enregistrer le panier. Reconnectez-vous.',
+            'Unable to save your cart. Please sign in again.',
+          ),
+        );
       const selectedAddress = checkoutAddresses.find((address) => address.id === checkoutAddressId);
       let addressId = selectedAddress?.id ?? '';
       if (!selectedAddress) {
@@ -633,7 +719,10 @@ export function App() {
           error?: string;
         };
         if (!addressResponse.ok || !addressPayload.address)
-          throw new Error(addressPayload.error ?? translate('Adresse de livraison invalide.', 'Invalid delivery address.'));
+          throw new Error(
+            addressPayload.error ??
+              translate('Adresse de livraison invalide.', 'Invalid delivery address.'),
+          );
         addressId = addressPayload.address.id;
       }
       const orderResponse = await fetch('/api/customer/orders', {
@@ -648,7 +737,10 @@ export function App() {
         error?: string;
       };
       if (!orderResponse.ok || !orderPayload.order)
-        throw new Error(orderPayload.error ?? translate('Impossible d’enregistrer la commande.', 'Unable to save the order.'));
+        throw new Error(
+          orderPayload.error ??
+            translate('Impossible d’enregistrer la commande.', 'Unable to save the order.'),
+        );
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
       checkoutPendingRef.current = false;
@@ -668,7 +760,10 @@ export function App() {
         setNotice(
           error instanceof Error
             ? error.message
-            : translate('Commande enregistrée, mais paiement indisponible.', 'Order saved, but payment is unavailable.'),
+            : translate(
+                'Commande enregistrée, mais paiement indisponible.',
+                'Order saved, but payment is unavailable.',
+              ),
         );
         setCheckoutDone(true);
         setView('checkout');
@@ -677,7 +772,12 @@ export function App() {
       }
     } catch (error) {
       setNotice(
-        error instanceof Error ? error.message : translate('Erreur pendant la validation de la commande.', 'An error occurred while validating the order.'),
+        error instanceof Error
+          ? error.message
+          : translate(
+              'Erreur pendant la validation de la commande.',
+              'An error occurred while validating the order.',
+            ),
       );
       setCheckoutSubmitting(false);
       checkoutSubmitRef.current = false;
@@ -686,7 +786,10 @@ export function App() {
   return (
     <main className="store-app">
       <div className="announcement">
-        {translate('SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE', 'ATELIER SELECTION · ONLINE PAYMENT · RETURNS POLICY IN THE FOOTER')}
+        {translate(
+          'SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE',
+          'ATELIER SELECTION · ONLINE PAYMENT · RETURNS POLICY IN THE FOOTER',
+        )}
       </div>
       <header className="store-header">
         <a
@@ -703,7 +806,10 @@ export function App() {
             atelier<span className="brand-period">.</span>
           </span>
         </a>
-        <nav className="main-nav" aria-label={translate('Navigation principale', 'Main navigation')}>
+        <nav
+          className="main-nav"
+          aria-label={translate('Navigation principale', 'Main navigation')}
+        >
           <button
             type="button"
             className={view === 'shop' && category === 'Tout' ? 'nav-link active' : 'nav-link'}
@@ -731,7 +837,11 @@ export function App() {
           ))}
         </nav>
         <div className="header-actions">
-          <div className="language-switcher" role="group" aria-label={translate('Choisir la langue', 'Choose language')}>
+          <div
+            className="language-switcher"
+            role="group"
+            aria-label={translate('Choisir la langue', 'Choose language')}
+          >
             <button
               className="language-button"
               type="button"
@@ -773,7 +883,10 @@ export function App() {
           role={toastKind === 'error' ? 'alert' : 'status'}
         >
           {notice}
-          <button aria-label={translate('Fermer le message', 'Dismiss message')} onClick={() => setNotice('')}>
+          <button
+            aria-label={translate('Fermer le message', 'Dismiss message')}
+            onClick={() => setNotice('')}
+          >
             ×
           </button>
         </div>
@@ -782,14 +895,22 @@ export function App() {
         <>
           <section className="hero-banner" aria-labelledby="hero-title">
             <div className="hero-copy">
-              <span className="eyebrow">{translate('LA SÉLECTION DE LA SAISON', 'THIS SEASON’S EDIT')}</span>
-              <h1 id="hero-title" aria-label={translate('Le style, en toute simplicité.', 'Effortless style.')}>
+              <span className="eyebrow">
+                {translate('LA SÉLECTION DE LA SAISON', 'THIS SEASON’S EDIT')}
+              </span>
+              <h1
+                id="hero-title"
+                aria-label={translate('Le style, en toute simplicité.', 'Effortless style.')}
+              >
                 {translate('Le style, en', 'Effortless')}
                 <br />
                 <em>{translate('toute simplicité.', 'by design.')}</em>
               </h1>
               <p>
-                {translate('Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui vous ressemble.', 'Thoughtful essentials and easy-to-wear pieces. Discover a collection that feels like you.')}
+                {translate(
+                  'Des essentiels bien pensés, des pièces faciles à vivre. Découvrez une sélection qui vous ressemble.',
+                  'Thoughtful essentials and easy-to-wear pieces. Discover a collection that feels like you.',
+                )}
               </p>
               <button
                 className="dark-button"
@@ -807,11 +928,20 @@ export function App() {
                 </span>
               </div>
             </div>
-            <div className="hero-art" aria-label={translate('Sélection mode de la nouvelle collection', 'Fashion selection from the new collection')}>
+            <div
+              className="hero-art"
+              aria-label={translate(
+                'Sélection mode de la nouvelle collection',
+                'Fashion selection from the new collection',
+              )}
+            >
               <img
                 className="hero-photo"
                 src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=90"
-                alt={translate('Silhouette en tenue contemporaine dans des tons neutres', 'Model wearing a contemporary outfit in neutral tones')}
+                alt={translate(
+                  'Silhouette en tenue contemporaine dans des tons neutres',
+                  'Model wearing a contemporary outfit in neutral tones',
+                )}
                 loading="eager"
                 decoding="async"
               />
@@ -834,11 +964,19 @@ export function App() {
               <div>
                 <span className="eyebrow">{translate('À VOUS DE CHOISIR', 'YOUR EDIT')}</span>
                 <h2>
-                  {translate('Les pièces du moment', 'The latest pieces')}<span className="brand-period">.</span>
+                  {translate('Les pièces du moment', 'The latest pieces')}
+                  <span className="brand-period">.</span>
                 </h2>
-                <p>{translate('Des favoris à adopter sans hésiter.', 'New favourites to make your own.')}</p>
+                <p>
+                  {translate(
+                    'Des favoris à adopter sans hésiter.',
+                    'New favourites to make your own.',
+                  )}
+                </p>
               </div>
-              <span className="product-count">{filteredProducts.length} {translate('articles', 'items')}</span>
+              <span className="product-count">
+                {filteredProducts.length} {translate('articles', 'items')}
+              </span>
             </div>
             <div className="catalogue-toolbar">
               <div className="catalogue-tools">
@@ -857,14 +995,21 @@ export function App() {
                   aria-pressed={favoritesOnly}
                   onClick={() => setFavoritesOnly((current) => !current)}
                 >
-                  <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span> {translate('Favoris', 'Favourites')}
+                  <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span>{' '}
+                  {translate('Favoris', 'Favourites')}
                 </button>
                 <label className="sort-label">
-                  <span className="visually-hidden">{translate('Trier les produits', 'Sort products')}</span>
+                  <span className="visually-hidden">
+                    {translate('Trier les produits', 'Sort products')}
+                  </span>
                   <select value={sort} onChange={(event) => setSort(event.target.value)}>
                     <option value="featured">{translate('À la une', 'Featured')}</option>
-                    <option value="price-up">{translate('Prix croissant', 'Price: low to high')}</option>
-                    <option value="price-down">{translate('Prix décroissant', 'Price: high to low')}</option>
+                    <option value="price-up">
+                      {translate('Prix croissant', 'Price: low to high')}
+                    </option>
+                    <option value="price-down">
+                      {translate('Prix décroissant', 'Price: high to low')}
+                    </option>
                     <option value="name">{translate('Nom A–Z', 'Name A–Z')}</option>
                   </select>
                 </label>
@@ -883,8 +1028,14 @@ export function App() {
                       }
                       aria-label={
                         favorites.includes(product.id)
-                          ? translate(`Retirer ${product.name} des favoris`, `Remove ${product.name} from favourites`)
-                          : translate(`Ajouter ${product.name} aux favoris`, `Add ${product.name} to favourites`)
+                          ? translate(
+                              `Retirer ${product.name} des favoris`,
+                              `Remove ${product.name} from favourites`,
+                            )
+                          : translate(
+                              `Ajouter ${product.name} aux favoris`,
+                              `Add ${product.name} to favourites`,
+                            )
                       }
                       aria-pressed={favorites.includes(product.id)}
                       onClick={() => toggleFavorite(product.id)}
@@ -904,7 +1055,9 @@ export function App() {
                         event.currentTarget.style.display = 'none';
                       }}
                     />
-                    <span className="visual-label">{categoryLabel(product.category).toUpperCase()}</span>
+                    <span className="visual-label">
+                      {categoryLabel(product.category).toUpperCase()}
+                    </span>
                     <button className="quick-add" onClick={() => addToCart(product)}>
                       {translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
                     </button>
@@ -921,7 +1074,9 @@ export function App() {
                   </div>
                   <p className="product-description">{productDescription(product)}</p>
                   {product.sizes && product.sizes.length > 0 && (
-                    <p className="product-variants">{translate('Tailles :', 'Sizes:')} {product.sizes.join(', ')}</p>
+                    <p className="product-variants">
+                      {translate('Tailles :', 'Sizes:')} {product.sizes.join(', ')}
+                    </p>
                   )}
                   {product.dimensions && (
                     <p className="product-variants">
@@ -956,7 +1111,12 @@ export function App() {
               <div className="empty-state">
                 <span>⌕</span>
                 <h3>{translate('Aucun article trouvé', 'No items found')}</h3>
-                <p>{translate('Essayez une autre recherche ou une autre catégorie.', 'Try another search or category.')}</p>
+                <p>
+                  {translate(
+                    'Essayez une autre recherche ou une autre catégorie.',
+                    'Try another search or category.',
+                  )}
+                </p>
                 <button
                   className="outline-button"
                   onClick={() => {
@@ -979,17 +1139,32 @@ export function App() {
             <div>
               <span>↗</span>
               <strong>{translate('Paiement en ligne', 'Online payment')}</strong>
-              <p>{translate('Le paiement est traité via Stripe lorsque le service est configuré.', 'Payments are processed through Stripe once the service is configured.')}</p>
+              <p>
+                {translate(
+                  'Le paiement est traité via Stripe lorsque le service est configuré.',
+                  'Payments are processed through Stripe once the service is configured.',
+                )}
+              </p>
             </div>
             <div>
               <span>↺</span>
               <strong>{translate('Informations de retour', 'Returns information')}</strong>
-              <p>{translate('Consultez les conditions applicables avant toute commande.', 'Review the applicable terms before placing an order.')}</p>
+              <p>
+                {translate(
+                  'Consultez les conditions applicables avant toute commande.',
+                  'Review the applicable terms before placing an order.',
+                )}
+              </p>
             </div>
             <div>
               <span>♡</span>
               <strong>{translate('Informations utiles', 'Useful information')}</strong>
-              <p>{translate('Conditions de vente et confidentialité accessibles en pied de page.', 'Sales terms and privacy information are available in the footer.')}</p>
+              <p>
+                {translate(
+                  'Conditions de vente et confidentialité accessibles en pied de page.',
+                  'Sales terms and privacy information are available in the footer.',
+                )}
+              </p>
             </div>
           </section>
         </>
@@ -1008,26 +1183,45 @@ export function App() {
           </button>
           <span className="eyebrow">{translate('VOTRE ESPACE PERSONNEL', 'YOUR ACCOUNT')}</span>
           <h1 className="workspace-title">
-            {translate('Bonjour, bienvenue', 'Hello, welcome')}<span className="brand-period">.</span>
+            {translate('Bonjour, bienvenue', 'Hello, welcome')}
+            <span className="brand-period">.</span>
           </h1>
           <p className="workspace-intro">
-            {translate('Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.', 'Sign in to view your orders and manage your delivery details.')}
+            {translate(
+              'Connectez-vous pour retrouver vos commandes et gérer vos informations de livraison.',
+              'Sign in to view your orders and manage your delivery details.',
+            )}
           </p>
           <div className="account-benefits">
             <div>
               <span>01</span>
               <strong>{translate('Vos commandes', 'Your orders')}</strong>
-              <p>{translate('Consultez le suivi et l’historique de vos achats.', 'Track your orders and view your purchase history.')}</p>
+              <p>
+                {translate(
+                  'Consultez le suivi et l’historique de vos achats.',
+                  'Track your orders and view your purchase history.',
+                )}
+              </p>
             </div>
             <div>
               <span>02</span>
               <strong>{translate('Vos adresses', 'Your addresses')}</strong>
-              <p>{translate('Ajoutez ou supprimez vos adresses de livraison.', 'Add or remove your delivery addresses.')}</p>
+              <p>
+                {translate(
+                  'Ajoutez ou supprimez vos adresses de livraison.',
+                  'Add or remove your delivery addresses.',
+                )}
+              </p>
             </div>
             <div>
               <span>03</span>
               <strong>{translate('Votre compte', 'Your account')}</strong>
-              <p>{translate('Gérez votre connexion et vos informations personnelles.', 'Manage your sign-in and personal information.')}</p>
+              <p>
+                {translate(
+                  'Gérez votre connexion et vos informations personnelles.',
+                  'Manage your sign-in and personal information.',
+                )}
+              </p>
             </div>
           </div>
           <AuthPanel
@@ -1052,7 +1246,10 @@ export function App() {
                   setCheckoutAddressId('');
                   setToastKind('error');
                   setNotice(
-                    translate('Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.', 'Unable to load your saved addresses. You can enter a new address.'),
+                    translate(
+                      'Impossible de charger vos adresses enregistrées. Vous pouvez saisir une nouvelle adresse.',
+                      'Unable to load your saved addresses. You can enter a new address.',
+                    ),
                   );
                 }
                 setCheckoutPending(false);
@@ -1062,7 +1259,10 @@ export function App() {
           />
           <CustomerAccountData language={language} />
           <p className="fine-print">
-            {translate('Retrouvez vos commandes et vos adresses depuis votre espace client.', 'View your orders and addresses from your customer account.')}
+            {translate(
+              'Retrouvez vos commandes et vos adresses depuis votre espace client.',
+              'View your orders and addresses from your customer account.',
+            )}
           </p>
         </section>
       )}
@@ -1083,10 +1283,14 @@ export function App() {
               <span className="success-icon">✓</span>
               <span className="eyebrow">{translate('COMMANDE ENREGISTRÉE', 'ORDER SAVED')}</span>
               <h1>
-                {translate('Merci pour votre commande', 'Thank you for your order')}<span className="brand-period">.</span>
+                {translate('Merci pour votre commande', 'Thank you for your order')}
+                <span className="brand-period">.</span>
               </h1>
               <p>
-                {translate(`Votre commande est enregistrée pour ${orderEmail}. Aucun paiement n’a été effectué pour le moment. Si le paiement n’a pas pu être préparé, retrouvez cette commande dans votre compte pour réessayer.`, `Your order has been saved for ${orderEmail}. No payment has been made yet. If payment could not be prepared, you can find this order in your account and try again.`)}
+                {translate(
+                  `Votre commande est enregistrée pour ${orderEmail}. Aucun paiement n’a été effectué pour le moment. Si le paiement n’a pas pu être préparé, retrouvez cette commande dans votre compte pour réessayer.`,
+                  `Your order has been saved for ${orderEmail}. No payment has been made yet. If payment could not be prepared, you can find this order in your account and try again.`,
+                )}
               </p>
               <button
                 className="dark-button"
@@ -1102,10 +1306,14 @@ export function App() {
             <>
               <span className="eyebrow">{translate('DERNIÈRE ÉTAPE', 'FINAL STEP')}</span>
               <h1 className="workspace-title">
-                {translate('Finaliser ma commande', 'Complete your order')}<span className="brand-period">.</span>
+                {translate('Finaliser ma commande', 'Complete your order')}
+                <span className="brand-period">.</span>
               </h1>
               <p className="workspace-intro">
-                {translate('Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.', 'Your order will be saved before secure Stripe checkout opens. Shipment only begins after payment is confirmed.')}
+                {translate(
+                  'Votre commande sera enregistrée avant l’ouverture du paiement sécurisé Stripe. L’expédition ne démarre qu’après confirmation du paiement.',
+                  'Your order will be saved before secure Stripe checkout opens. Shipment only begins after payment is confirmed.',
+                )}
               </p>
               <div className="checkout-layout">
                 <form className="checkout-form" onSubmit={completeCheckout}>
@@ -1114,7 +1322,10 @@ export function App() {
                     <label>
                       {translate('Choisir une adresse enregistrée', 'Choose a saved address')}
                       <select
-                        aria-label={translate('Choisir une adresse enregistrée', 'Choose a saved address')}
+                        aria-label={translate(
+                          'Choisir une adresse enregistrée',
+                          'Choose a saved address',
+                        )}
                         value={checkoutAddressId || '__new__'}
                         onChange={(event) =>
                           setCheckoutAddressId(
@@ -1125,11 +1336,15 @@ export function App() {
                         {checkoutAddresses.map((address) => (
                           <option key={address.id} value={address.id}>
                             {address.label}
-                            {address.isDefault ? ` · ${translate('Par défaut', 'Default')}` : ''} — {address.recipient},{' '}
-                            {address.line1}, {address.postalCode} {address.city}
+                            {address.isDefault
+                              ? ` · ${translate('Par défaut', 'Default')}`
+                              : ''} — {address.recipient}, {address.line1}, {address.postalCode}{' '}
+                            {address.city}
                           </option>
                         ))}
-                        <option value="__new__">{translate('Utiliser une nouvelle adresse', 'Use a new address')}</option>
+                        <option value="__new__">
+                          {translate('Utiliser une nouvelle adresse', 'Use a new address')}
+                        </option>
                       </select>
                     </label>
                   )}
@@ -1142,20 +1357,32 @@ export function App() {
                     <>
                       <div className="form-two-col">
                         <label>
-                          {translate('Destinataire (prénom et nom)', 'Recipient (first and last name)')}
+                          {translate(
+                            'Destinataire (prénom et nom)',
+                            'Recipient (first and last name)',
+                          )}
                           <input
                             required
                             name="recipient"
                             autoComplete="name"
-                            placeholder={translate('Prénom et nom du destinataire', 'Recipient full name')}
+                            placeholder={translate(
+                              'Prénom et nom du destinataire',
+                              'Recipient full name',
+                            )}
                           />
                         </label>
                         <label>
-                          {translate('Complément d’adresse (facultatif)', 'Address line 2 (optional)')}
+                          {translate(
+                            'Complément d’adresse (facultatif)',
+                            'Address line 2 (optional)',
+                          )}
                           <input
                             name="line2"
                             autoComplete="address-line2"
-                            placeholder={translate('Appartement, bâtiment…', 'Apartment, building…')}
+                            placeholder={translate(
+                              'Appartement, bâtiment…',
+                              'Apartment, building…',
+                            )}
                           />
                         </label>
                       </div>
@@ -1191,7 +1418,11 @@ export function App() {
                     </>
                   )}
                   <label className="checkbox-line">
-                    <input type="checkbox" required /> {translate('Je confirme que les informations de livraison sont exactes.', 'I confirm that the delivery information is correct.')}
+                    <input type="checkbox" required />{' '}
+                    {translate(
+                      'Je confirme que les informations de livraison sont exactes.',
+                      'I confirm that the delivery information is correct.',
+                    )}
                   </label>
                   <button
                     className="dark-button full-button"
@@ -1200,10 +1431,16 @@ export function App() {
                   >
                     {checkoutSubmitting
                       ? translate('Enregistrement en cours…', 'Saving…')
-                      : translate('Enregistrer la commande et continuer vers le paiement ↗', 'Save order and continue to payment ↗')}
+                      : translate(
+                          'Enregistrer la commande et continuer vers le paiement ↗',
+                          'Save order and continue to payment ↗',
+                        )}
                   </button>
                   <p className="fine-print">
-                    {translate('Le paiement sécurisé sera effectué sur Stripe après validation de cette étape. L’expédition ne démarre qu’après confirmation du paiement.', 'Secure payment will be processed through Stripe after this step. Shipment only begins once payment is confirmed.')}
+                    {translate(
+                      'Le paiement sécurisé sera effectué sur Stripe après validation de cette étape. L’expédition ne démarre qu’après confirmation du paiement.',
+                      'Secure payment will be processed through Stripe after this step. Shipment only begins once payment is confirmed.',
+                    )}
                   </p>
                 </form>
                 <aside className="order-summary">
@@ -1217,13 +1454,20 @@ export function App() {
                         </span>
                         <div>
                           <strong>{product.name}</strong>
-                          <p>{translate('Quantité :', 'Quantity:')} {cart[product.id] ?? 0}</p>
+                          <p>
+                            {translate('Quantité :', 'Quantity:')} {cart[product.id] ?? 0}
+                          </p>
                         </div>
                         <strong>{formatPrice(product.price * (cart[product.id] ?? 0))}</strong>
                       </div>
                     ))}
                   {cartCount === 0 && (
-                    <p>{translate('Votre panier est vide. Retournez au catalogue pour ajouter des articles.', 'Your cart is empty. Return to the catalogue to add items.')}</p>
+                    <p>
+                      {translate(
+                        'Votre panier est vide. Retournez au catalogue pour ajouter des articles.',
+                        'Your cart is empty. Return to the catalogue to add items.',
+                      )}
+                    </p>
                   )}
                   <div className="summary-total">
                     <span>{translate('Sous-total', 'Subtotal')}</span>
@@ -1234,7 +1478,10 @@ export function App() {
                     <strong>{translate('Non configurée', 'Not configured')}</strong>
                   </div>
                   <p className="summary-note">
-                    {translate('Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.', 'Payment in this version applies only to the items shown. No delivery charge is added. The returns policy is available in the footer.')}
+                    {translate(
+                      'Le paiement de cette version porte uniquement sur les articles affichés. Aucun frais de livraison n’est ajouté. Les conditions de retour sont disponibles en pied de page.',
+                      'Payment in this version applies only to the items shown. No delivery charge is added. The returns policy is available in the footer.',
+                    )}
                   </p>
                 </aside>
               </div>
@@ -1248,9 +1495,9 @@ export function App() {
             <label>
               {translate('Période', 'Period')}{' '}
               <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}>
-                <option value="7">{translate("7 jours", "7 days")}</option>
-                <option value="30">{translate("30 jours", "30 days")}</option>
-                <option value="90">{translate("90 jours", "90 days")}</option>
+                <option value="7">{translate('7 jours', '7 days')}</option>
+                <option value="30">{translate('30 jours', '30 days')}</option>
+                <option value="90">{translate('90 jours', '90 days')}</option>
               </select>
             </label>
           </div>
@@ -1265,7 +1512,9 @@ export function App() {
           <AdminWorkspace language={language} />
         </section>
       )}
-      {view === 'legal' && <LegalPage page={legalPage} language={language} onBack={() => setView('shop')} />}
+      {view === 'legal' && (
+        <LegalPage page={legalPage} language={language} onBack={() => setView('shop')} />
+      )}
       {view === 'reset' && (
         <ResetPassword
           language={language}
@@ -1291,8 +1540,19 @@ export function App() {
         </a>
         <p>{translate('Des essentiels pour votre quotidien.', 'Everyday essentials.')}</p>
         <div className="footer-links">
-          <button onClick={() => setView('account')}>{translate('Mon compte', 'My account')}</button>
-          <button onClick={() => setNotice(translate('Le centre d’aide sera bientôt disponible.', 'The help centre will be available soon.'))}>
+          <button onClick={() => setView('account')}>
+            {translate('Mon compte', 'My account')}
+          </button>
+          <button
+            onClick={() =>
+              setNotice(
+                translate(
+                  'Le centre d’aide sera bientôt disponible.',
+                  'The help centre will be available soon.',
+                ),
+              )
+            }
+          >
             {translate('Aide & contact', 'Help & contact')}
           </button>
           <button
@@ -1342,7 +1602,7 @@ export function App() {
           <button
             type="button"
             className="drawer-dismiss"
-            aria-label={translate("Fermer le panier", "Close cart")}
+            aria-label={translate('Fermer le panier', 'Close cart')}
             onClick={() => setCartOpen(false)}
           />
           <aside className="cart-drawer" aria-label={translate('Votre panier', 'Your cart')}>
@@ -1365,7 +1625,12 @@ export function App() {
               <div className="empty-cart">
                 <span>♡</span>
                 <h3>{translate('Votre panier est vide', 'Your cart is empty')}</h3>
-                <p>{translate('Vos prochains coups de cœur sont ici.', 'Your next favourites are waiting here.')}</p>
+                <p>
+                  {translate(
+                    'Vos prochains coups de cœur sont ici.',
+                    'Your next favourites are waiting here.',
+                  )}
+                </p>
                 <button className="dark-button" onClick={() => setCartOpen(false)}>
                   {translate('Continuer mes achats', 'Continue shopping')}
                 </button>
@@ -1385,14 +1650,20 @@ export function App() {
                           <span>{formatPrice(product.price)}</span>
                           <div className="quantity-control">
                             <button
-                              aria-label={translate(`Retirer un ${product.name}`, `Remove one ${product.name}`)}
+                              aria-label={translate(
+                                `Retirer un ${product.name}`,
+                                `Remove one ${product.name}`,
+                              )}
                               onClick={() => changeQuantity(product.id, -1)}
                             >
                               −
                             </button>
                             <span>{cart[product.id] ?? 0}</span>
                             <button
-                              aria-label={translate(`Ajouter un ${product.name}`, `Add one ${product.name}`)}
+                              aria-label={translate(
+                                `Ajouter un ${product.name}`,
+                                `Add one ${product.name}`,
+                              )}
                               onClick={() => changeQuantity(product.id, 1)}
                             >
                               ＋
@@ -1409,7 +1680,10 @@ export function App() {
                     <strong>{formatPrice(cartTotal)}</strong>
                   </div>
                   <p>
-                    {translate('Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.', 'Shipping is not configured: no delivery charge is added to the item total.')}
+                    {translate(
+                      'Livraison non configurée : aucun frais de livraison n’est ajouté au montant des articles.',
+                      'Shipping is not configured: no delivery charge is added to the item total.',
+                    )}
                   </p>
                   <button className="dark-button full-button" onClick={() => void beginCheckout()}>
                     {translate('Passer à la commande', 'Proceed to checkout')} ↗

@@ -40,11 +40,12 @@ describe('ResetPassword', () => {
     );
   });
 
-
   it('renders password reset guidance in English', () => {
     render(<ResetPassword onDone={vi.fn()} language="en" />);
     expect(screen.getByRole('heading', { name: /reset your password/i })).toBeInTheDocument();
-    expect(screen.getByText(/choose a password between 12 and 128 characters/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/choose a password between 12 and 128 characters/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /update password/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /back to shop/i })).toBeInTheDocument();
   });

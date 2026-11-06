@@ -93,10 +93,14 @@ describe('CustomerAccountData', () => {
     expect(screen.queryByText('SHIPPED')).not.toBeInTheDocument();
   });
 
-
   it('localizes the signed-out account prompt in English', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(apiResponse({ error: 'Not authenticated.' }, 401)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(apiResponse({ error: 'Not authenticated.' }, 401)),
+    );
     render(<CustomerAccountData language="en" />);
-    expect(await screen.findByText(/sign in to view your order history and saved addresses/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/sign in to view your order history and saved addresses/i),
+    ).toBeInTheDocument();
   });
 });

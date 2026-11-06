@@ -200,10 +200,14 @@ describe('Fashion storefront', () => {
     expect(screen.getByRole('button', { name: 'Search products' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Shoes' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Terms and conditions' }));
-    expect(screen.getByRole('heading', { name: /terms and conditions of sale/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /terms and conditions of sale/i }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Français' }));
     expect(document.documentElement.lang).toBe('fr');
-    expect(screen.getByRole('heading', { name: /conditions générales de vente/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /conditions générales de vente/i }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /retour à la boutique/i }));
     expect(screen.getByText(/Le style, en/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rechercher un produit' })).toBeInTheDocument();

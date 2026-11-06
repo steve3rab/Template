@@ -27,7 +27,8 @@ const roleResult = z.object({
 
 export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
-  const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
+  const formatMoney = (amount: number, currency = 'EUR') =>
+    formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [dashboard, setDashboard] = useState<z.infer<typeof apiSchemas.adminDashboard> | null>(
     null,
   );
@@ -63,7 +64,10 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       setError(
         cause instanceof Error
           ? cause.message
-          : t('Impossible de charger les données administrateur.', 'Unable to load administrator data.'),
+          : t(
+              'Impossible de charger les données administrateur.',
+              'Unable to load administrator data.',
+            ),
       );
     } finally {
       setLoading(false);
@@ -92,7 +96,10 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         setError(
           cause instanceof Error
             ? cause.message
-            : t('Impossible de charger les données administrateur.', 'Unable to load administrator data.'),
+            : t(
+                'Impossible de charger les données administrateur.',
+                'Unable to load administrator data.',
+              ),
         );
       })
       .finally(() => {
@@ -105,7 +112,12 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
 
   async function retryPendingRefund(transaction: AdminFinancialTransaction) {
     if (!transaction.requestKey) {
-      setError(t('Cette demande de remboursement ne possède pas de clé de reprise.', 'This refund request has no retry key.'));
+      setError(
+        t(
+          'Cette demande de remboursement ne possède pas de clé de reprise.',
+          'This refund request has no retry key.',
+        ),
+      );
       return;
     }
     setLoading(true);
@@ -130,7 +142,9 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       await load();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t('Impossible de reprendre le remboursement.', 'Unable to retry the refund.'),
+        cause instanceof Error
+          ? cause.message
+          : t('Impossible de reprendre le remboursement.', 'Unable to retry the refund.'),
       );
       setLoading(false);
     }
@@ -147,7 +161,12 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       setReconciliation(result);
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t('Impossible de rapprocher les paiements Stripe.', 'Unable to reconcile Stripe payments.'),
+        cause instanceof Error
+          ? cause.message
+          : t(
+              'Impossible de rapprocher les paiements Stripe.',
+              'Unable to reconcile Stripe payments.',
+            ),
       );
     } finally {
       setLoading(false);
@@ -163,7 +182,12 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
     const rawAmount = String(form.get('amountCents') ?? '').trim();
     const amountCents = rawAmount ? Number(rawAmount) : undefined;
     if (amountCents !== undefined && (!Number.isSafeInteger(amountCents) || amountCents < 1)) {
-      setError(t('Le montant du remboursement doit être un nombre entier de centimes positif.', 'The refund amount must be a positive whole number of cents.'));
+      setError(
+        t(
+          'Le montant du remboursement doit être un nombre entier de centimes positif.',
+          'The refund amount must be a positive whole number of cents.',
+        ),
+      );
       return;
     }
     setLoading(true);
@@ -183,7 +207,9 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       if ('pending' in result) {
         setError(result.message);
       } else {
-        setError(`${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatMoney(result.refund.amountCents)}.`);
+        setError(
+          `${t('Remboursement confirmé :', 'Refund confirmed:')} ${formatMoney(result.refund.amountCents)}.`,
+        );
         setRefundRequestKeys((current) => {
           const next = { ...current };
           delete next[order.id];
@@ -197,7 +223,11 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         delete next[order.id];
         return next;
       });
-      setError(cause instanceof Error ? cause.message : t('Impossible de traiter le remboursement.', 'Unable to process the refund.'));
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : t('Impossible de traiter le remboursement.', 'Unable to process the refund.'),
+      );
       setLoading(false);
     }
   }
@@ -212,7 +242,11 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       });
       await load();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('Impossible de modifier ce rôle.', 'Unable to change this role.'));
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : t('Impossible de modifier ce rôle.', 'Unable to change this role.'),
+      );
     }
   }
 
@@ -231,7 +265,12 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
       await load();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : t('Impossible de modifier la visibilité du produit.', 'Unable to change product visibility.'),
+        cause instanceof Error
+          ? cause.message
+          : t(
+              'Impossible de modifier la visibilité du produit.',
+              'Unable to change product visibility.',
+            ),
       );
     }
   }
@@ -242,9 +281,15 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         <div>
           <span className="eyebrow">ATELIER · {t('ADMINISTRATION', 'ADMIN')}</span>
           <h1>
-            {t('Centre de gestion', 'Management centre')}<span className="brand-period">.</span>
+            {t('Centre de gestion', 'Management centre')}
+            <span className="brand-period">.</span>
           </h1>
-          <p>{t('Vue globale de la boutique, des comptes, du catalogue et des commandes.', 'Overview of the store, accounts, catalogue and orders.')}</p>
+          <p>
+            {t(
+              'Vue globale de la boutique, des comptes, du catalogue et des commandes.',
+              'Overview of the store, accounts, catalogue and orders.',
+            )}
+          </p>
         </div>
         <button
           className="outline-button"
@@ -264,17 +309,23 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         <article className="kpi-card">
           <span>{t('Utilisateurs', 'Users')}</span>
           <strong>{dashboard?.users ?? '—'}</strong>
-          <small>{dashboard?.sellers ?? 0} {t('vendeurs', 'sellers')}</small>
+          <small>
+            {dashboard?.sellers ?? 0} {t('vendeurs', 'sellers')}
+          </small>
         </article>
         <article className="kpi-card">
           <span>{t('Catalogue', 'Catalogue')}</span>
           <strong>{dashboard?.products ?? '—'}</strong>
-          <small>{dashboard?.activeProducts ?? 0} {t('produits publiés', 'published products')}</small>
+          <small>
+            {dashboard?.activeProducts ?? 0} {t('produits publiés', 'published products')}
+          </small>
         </article>
         <article className="kpi-card">
           <span>{t('Commandes', 'Orders')}</span>
           <strong>{dashboard?.orders ?? '—'}</strong>
-          <small>{dashboard?.paidOrders ?? 0} {t('paiements confirmés', 'confirmed payments')}</small>
+          <small>
+            {dashboard?.paidOrders ?? 0} {t('paiements confirmés', 'confirmed payments')}
+          </small>
         </article>
         <article className="kpi-card">
           <span>{t('Chiffre d’affaires encaissé', 'Collected revenue')}</span>
@@ -283,7 +334,10 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
         </article>
       </div>
 
-      <nav className="admin-tabs" aria-label={t('Sections administrateur', 'Administrator sections')}>
+      <nav
+        className="admin-tabs"
+        aria-label={t('Sections administrateur', 'Administrator sections')}
+      >
         <button
           type="button"
           className={section === 'users' ? 'active' : ''}
@@ -333,7 +387,9 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                     <strong>{user.email}</strong>
                     <span>
                       {user.publicId} · {t('Créé le', 'Created on')}{' '}
-                      {new Date(user.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')}
+                      {new Date(user.createdAt).toLocaleDateString(
+                        language === 'en' ? 'en-GB' : 'fr-FR',
+                      )}
                     </span>
                   </div>
                   {user.role === 'ADMIN' ? (
@@ -367,8 +423,8 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   <div>
                     <strong>{product.name}</strong>
                     <span>
-                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} · {formatMoney(product.priceCents)}{' '}
-                      · {t('Stock :', 'Stock:')} {product.stock}
+                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} ·{' '}
+                      {formatMoney(product.priceCents)} · {t('Stock :', 'Stock:')} {product.stock}
                     </span>
                   </div>
                   <button
@@ -391,16 +447,38 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 <article className="admin-row" key={order.id}>
                   <div>
                     <strong>
-                      {t('Commande', 'Order')} {order.id.slice(-8)} · {order.customer?.email ?? t('Client', 'Customer')}
+                      {t('Commande', 'Order')} {order.id.slice(-8)} ·{' '}
+                      {order.customer?.email ?? t('Client', 'Customer')}
                     </strong>
                     <span>
                       {order.items
                         .map((item) => `${item.productName} × ${item.quantity}`)
                         .join(', ')}{' '}
-                      · {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')}
+                      ·{' '}
+                      {new Date(order.createdAt).toLocaleDateString(
+                        language === 'en' ? 'en-GB' : 'fr-FR',
+                      )}
                     </span>
                     <span>
-                      {({ PENDING: t('En attente', 'Pending'), PROCESSING: t('En préparation', 'Processing'), SHIPPED: t('Expédiée', 'Shipped'), DELIVERED: t('Livrée', 'Delivered'), CANCELLED: t('Annulée', 'Cancelled') } as Record<string, string>)[order.status] ?? order.status} · {t('Paiement :', 'Payment:')} {({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec', 'Failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}
+                      {(
+                        {
+                          PENDING: t('En attente', 'Pending'),
+                          PROCESSING: t('En préparation', 'Processing'),
+                          SHIPPED: t('Expédiée', 'Shipped'),
+                          DELIVERED: t('Livrée', 'Delivered'),
+                          CANCELLED: t('Annulée', 'Cancelled'),
+                        } as Record<string, string>
+                      )[order.status] ?? order.status}{' '}
+                      · {t('Paiement :', 'Payment:')}{' '}
+                      {(
+                        {
+                          PAID: t('Payé', 'Paid'),
+                          UNPAID: t('À régler', 'Unpaid'),
+                          REFUNDED: t('Remboursé', 'Refunded'),
+                          PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'),
+                          FAILED: t('Échec', 'Failed'),
+                        } as Record<string, string>
+                      )[order.paymentStatus] ?? order.paymentStatus}
                     </span>
                   </div>
                   <div className="admin-order-actions">
@@ -452,18 +530,24 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
               {reconciliation && (
                 <div className="financial-reconciliation" role="status">
                   <strong>
-                    {reconciliation.matched} {t('rapprochées', 'matched')} · {reconciliation.discrepancies} {t('écarts', 'discrepancies')} ·{' '}
+                    {reconciliation.matched} {t('rapprochées', 'matched')} ·{' '}
+                    {reconciliation.discrepancies} {t('écarts', 'discrepancies')} ·{' '}
                     {reconciliation.unverified} {t('non vérifiées', 'unverified')}
                   </strong>
                   <span>
-                    {t('Vérification du', 'Checked on')} {new Date(reconciliation.checkedAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR')} ·{' '}
-                    {reconciliation.checkedOrders} {t('commandes contrôlées', 'orders checked')}
+                    {t('Vérification du', 'Checked on')}{' '}
+                    {new Date(reconciliation.checkedAt).toLocaleString(
+                      language === 'en' ? 'en-GB' : 'fr-FR',
+                    )}{' '}
+                    · {reconciliation.checkedOrders} {t('commandes contrôlées', 'orders checked')}
                   </span>
                   {reconciliation.results
                     .filter((result) => result.state !== 'MATCHED')
                     .map((result) => (
                       <article key={result.orderId}>
-                        <strong>{t('Commande', 'Order')} {result.orderId.slice(-8)}</strong>
+                        <strong>
+                          {t('Commande', 'Order')} {result.orderId.slice(-8)}
+                        </strong>
                         {result.issues.map((issue) => (
                           <span key={issue}>{issue}</span>
                         ))}
@@ -475,8 +559,10 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 <article className="admin-row" key={transaction.id}>
                   <div>
                     <strong>
-                      {transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} · {t('Commande', 'Order')}{' '}
-                      {transaction.order.id.slice(-8)}
+                      {transaction.type === 'REFUND'
+                        ? t('Remboursement', 'Refund')
+                        : t('Paiement', 'Payment')}{' '}
+                      · {t('Commande', 'Order')} {transaction.order.id.slice(-8)}
                     </strong>
                     <span>
                       {transaction.status === 'PENDING'
@@ -486,7 +572,11 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                           : t('Confirmé', 'Confirmed')}{' '}
                       · {transaction.stripeObjectId}
                     </span>
-                    <span>{new Date(transaction.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR')}</span>
+                    <span>
+                      {new Date(transaction.createdAt).toLocaleString(
+                        language === 'en' ? 'en-GB' : 'fr-FR',
+                      )}
+                    </span>
                   </div>
                   <div className="admin-order-actions">
                     <strong>{formatMoney(transaction.amountCents, transaction.currency)}</strong>
@@ -503,7 +593,9 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   </div>
                 </article>
               ))}
-              {financialTransactions.length === 0 && <p>{t('Aucune transaction financière.', 'No financial transactions.')}</p>}
+              {financialTransactions.length === 0 && (
+                <p>{t('Aucune transaction financière.', 'No financial transactions.')}</p>
+              )}
             </>
           )}
         </section>

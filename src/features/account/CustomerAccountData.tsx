@@ -10,7 +10,11 @@ import {
   type SellerOrder as Order,
 } from '../../shared/api/client';
 
-function orderStatusLabel(status: Order['status'], paymentStatus: string, language: Language): string {
+function orderStatusLabel(
+  status: Order['status'],
+  paymentStatus: string,
+  language: Language,
+): string {
   const t = (fr: string, en: string) => translateText(language, fr, en);
   switch (status) {
     case 'PENDING':
@@ -80,7 +84,10 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       if (version !== loadVersion.current) return;
       setLoadFailed(true);
       setMessage(
-        t('Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.', 'Unable to load your orders and addresses. Check your connection and try again.'),
+        t(
+          'Impossible de charger vos commandes et adresses. Vérifiez la connexion puis réessayez.',
+          'Unable to load your orders and addresses. Check your connection and try again.',
+        ),
       );
     }
   }, [t]);
@@ -142,7 +149,11 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       });
       window.location.assign(checkout.checkoutUrl);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t('Impossible de préparer le paiement.', 'Unable to prepare payment.'));
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : t('Impossible de préparer le paiement.', 'Unable to prepare payment.'),
+      );
       setCheckoutPending(false);
     }
   }
@@ -165,7 +176,9 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
         }),
       });
     } catch {
-      setMessage(t('Adresse non enregistrée. Vérifiez les champs.', 'Address not saved. Check the fields.'));
+      setMessage(
+        t('Adresse non enregistrée. Vérifiez les champs.', 'Address not saved. Check the fields.'),
+      );
       return;
     }
     formElement.reset();
@@ -188,7 +201,12 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
     <section className="seller-panel" style={{ marginTop: 24 }}>
       <h2>{t('Mes commandes et adresses', 'My orders and addresses')}</h2>
       {!available && !loadFailed ? (
-        <p>{t('Connectez-vous pour consulter votre historique et vos adresses enregistrées.', 'Sign in to view your order history and saved addresses.')}</p>
+        <p>
+          {t(
+            'Connectez-vous pour consulter votre historique et vos adresses enregistrées.',
+            'Sign in to view your order history and saved addresses.',
+          )}
+        </p>
       ) : loadFailed ? (
         <p role="alert">{message}</p>
       ) : (
@@ -203,7 +221,9 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
               disabled={checkoutPending}
               onClick={() => void payUnpaidOrders()}
             >
-              {checkoutPending ? t('Préparation du paiement…', 'Preparing payment…') : t('Payer mes commandes en attente', 'Pay my outstanding orders')}
+              {checkoutPending
+                ? t('Préparation du paiement…', 'Preparing payment…')
+                : t('Payer mes commandes en attente', 'Pay my outstanding orders')}
             </button>
           )}
           {orders.length === 0 ? (
@@ -212,10 +232,15 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             orders.map((order) => (
               <article className="best-seller-row" key={order.id}>
                 <div className="best-seller-name">
-                  <strong>{t('Commande', 'Order')} {order.id.slice(-8)}</strong>
+                  <strong>
+                    {t('Commande', 'Order')} {order.id.slice(-8)}
+                  </strong>
                   <span>
-                    {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')} ·{' '}
-                    {orderStatusLabel(order.status, order.paymentStatus, language)} · {t('Paiement :', 'Payment:')}{' '}
+                    {new Date(order.createdAt).toLocaleDateString(
+                      language === 'en' ? 'en-GB' : 'fr-FR',
+                    )}{' '}
+                    · {orderStatusLabel(order.status, order.paymentStatus, language)} ·{' '}
+                    {t('Paiement :', 'Payment:')}{' '}
                     {paymentStatusLabel(order.paymentStatus, language)}
                   </span>
                   <span>
@@ -225,12 +250,19 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 <div>
                   <strong>{formatMoney(order.totalCents)}</strong>
                   {order.financialTransactions && order.financialTransactions.length > 0 && (
-                    <div className="financial-history" aria-label={t('Historique financier', 'Financial history')}>
+                    <div
+                      className="financial-history"
+                      aria-label={t('Historique financier', 'Financial history')}
+                    >
                       {order.financialTransactions.map((transaction) => (
                         <span key={transaction.id}>
-                          {transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} ·{' '}
-                          {formatMoney(transaction.amountCents)} ·{' '}
-                          {transaction.status === 'PENDING' ? t('En cours', 'Pending') : t('Confirmé', 'Confirmed')}
+                          {transaction.type === 'REFUND'
+                            ? t('Remboursement', 'Refund')
+                            : t('Paiement', 'Payment')}{' '}
+                          · {formatMoney(transaction.amountCents)} ·{' '}
+                          {transaction.status === 'PENDING'
+                            ? t('En cours', 'Pending')
+                            : t('Confirmé', 'Confirmed')}
                         </span>
                       ))}
                     </div>
@@ -265,7 +297,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             <h3>{t('Ajouter une adresse', 'Add an address')}</h3>
             <label>
               {t('Libellé', 'Label')}
-              <input name="label" defaultValue={t("Domicile", "Home")} required maxLength={60} />
+              <input name="label" defaultValue={t('Domicile', 'Home')} required maxLength={60} />
             </label>
             <label>
               {t('Destinataire', 'Recipient')}

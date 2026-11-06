@@ -13,24 +13,27 @@ describe('SellerWorkspace translations', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('renders seller dashboard, product and order controls in English', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.startsWith('/api/seller/dashboard')) {
-        return apiResponse({
-          periodDays: 30,
-          revenueCents: 0,
-          orders: 0,
-          paidOrders: 0,
-          unitsSold: 0,
-          products: 0,
-          lowStockProducts: 0,
-          currency: 'EUR',
-        });
-      }
-      if (url === '/api/seller/products') return apiResponse({ products: [] });
-      if (url === '/api/seller/orders') return apiResponse({ orders: [] });
-      return apiResponse({ error: 'Not found.' });
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/seller/dashboard')) {
+          return apiResponse({
+            periodDays: 30,
+            revenueCents: 0,
+            orders: 0,
+            paidOrders: 0,
+            unitsSold: 0,
+            products: 0,
+            lowStockProducts: 0,
+            currency: 'EUR',
+          });
+        }
+        if (url === '/api/seller/products') return apiResponse({ products: [] });
+        if (url === '/api/seller/orders') return apiResponse({ orders: [] });
+        return apiResponse({ error: 'Not found.' });
+      }),
+    );
 
     render(<SellerWorkspace range="30" language="en" />);
 

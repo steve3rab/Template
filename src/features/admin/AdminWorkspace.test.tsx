@@ -102,14 +102,27 @@ describe('AdminWorkspace', () => {
     ).toBeInTheDocument();
   });
 
-
   it('renders administrator navigation and sections in English', async () => {
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(jsonResponse({ users: 0, sellers: 0, products: 0, activeProducts: 0, orders: 0, paidOrders: 0, revenueCents: 0 }))
-      .mockResolvedValueOnce(jsonResponse({ users: [] }))
-      .mockResolvedValueOnce(jsonResponse({ products: [] }))
-      .mockResolvedValueOnce(jsonResponse({ orders: [] }))
-      .mockResolvedValueOnce(jsonResponse({ transactions: [] })));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            users: 0,
+            sellers: 0,
+            products: 0,
+            activeProducts: 0,
+            orders: 0,
+            paidOrders: 0,
+            revenueCents: 0,
+          }),
+        )
+        .mockResolvedValueOnce(jsonResponse({ users: [] }))
+        .mockResolvedValueOnce(jsonResponse({ products: [] }))
+        .mockResolvedValueOnce(jsonResponse({ orders: [] }))
+        .mockResolvedValueOnce(jsonResponse({ transactions: [] })),
+    );
     render(<AdminWorkspace language="en" />);
     expect(await screen.findByRole('heading', { name: /management centre/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /users/i })).toBeInTheDocument();

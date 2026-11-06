@@ -14,12 +14,24 @@ import {
   type SellerProduct as Product,
 } from '../../shared/api/client';
 
-export function SellerWorkspace({ range, language = 'fr' }: { range: string; language?: Language }) {
+export function SellerWorkspace({
+  range,
+  language = 'fr',
+}: {
+  range: string;
+  language?: Language;
+}) {
   const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
-  const formatMoney = (amount: number, currency = 'EUR') => formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
+  const formatMoney = (amount: number, currency = 'EUR') =>
+    formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const categoryLabel = (value: string) => {
     if (language === 'fr') return value;
-    const labels: Record<string, string> = { 'Vêtements': 'Clothing', 'Chaussures': 'Shoes', 'Accessoires': 'Accessories', 'Maison': 'Home' };
+    const labels: Record<string, string> = {
+      Vêtements: 'Clothing',
+      Chaussures: 'Shoes',
+      Accessoires: 'Accessories',
+      Maison: 'Home',
+    };
     return labels[value] ?? value;
   };
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -53,8 +65,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         window.dispatchEvent(
           new CustomEvent('template-toast', {
             detail: {
-              message:
-                t('Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.', 'Your session or seller permissions are no longer valid. Please sign in again.'),
+              message: t(
+                'Votre session ou vos droits vendeur ne sont plus valides. Reconnectez-vous.',
+                'Your session or seller permissions are no longer valid. Please sign in again.',
+              ),
               type: 'error',
             },
           }),
@@ -82,7 +96,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         window.dispatchEvent(
           new CustomEvent('template-toast', {
             detail: {
-              message: t('Erreur réseau pendant le chargement du tableau de bord.', 'Network error while loading the dashboard.'),
+              message: t(
+                'Erreur réseau pendant le chargement du tableau de bord.',
+                'Network error while loading the dashboard.',
+              ),
               type: 'error',
             },
           }),
@@ -139,7 +156,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
       window.dispatchEvent(
         new CustomEvent('template-toast', {
           detail: {
-            message: error instanceof Error ? error.message : t('Erreur lors de la création.', 'Error creating the product.'),
+            message:
+              error instanceof Error
+                ? error.message
+                : t('Erreur lors de la création.', 'Error creating the product.'),
             type: 'error',
           },
         }),
@@ -190,7 +210,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
             message:
               error instanceof Error
                 ? error.message
-                : t('Impossible de modifier le statut de cette commande.', 'Unable to update this order status.'),
+                : t(
+                    'Impossible de modifier le statut de cette commande.',
+                    'Unable to update this order status.',
+                  ),
             type: 'error',
           },
         }),
@@ -204,9 +227,15 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         <div>
           <span className="eyebrow">{t('ATELIER · ESPACE VENDEUR', 'ATELIER · SELLER SPACE')}</span>
           <h1>
-            {t('Tableau de bord', 'Dashboard')}<span className="brand-period">.</span>
+            {t('Tableau de bord', 'Dashboard')}
+            <span className="brand-period">.</span>
           </h1>
-          <p>{t('Indicateurs calculés à partir des commandes et produits enregistrés.', 'Metrics calculated from recorded orders and products.')}</p>
+          <p>
+            {t(
+              'Indicateurs calculés à partir des commandes et produits enregistrés.',
+              'Metrics calculated from recorded orders and products.',
+            )}
+          </p>
         </div>
       </div>
       <div className="kpi-grid">
@@ -231,14 +260,24 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         <article className="kpi-card">
           <div className="kpi-label">{t('Catalogue', 'Catalogue')}</div>
           <strong>{dashboard?.products ?? '—'}</strong>
-          <p>{t(`${dashboard?.lowStockProducts ?? 0} produit(s) avec stock inférieur ou égal à 5`, `${dashboard?.lowStockProducts ?? 0} product(s) with stock of 5 or less`)}</p>
+          <p>
+            {t(
+              `${dashboard?.lowStockProducts ?? 0} produit(s) avec stock inférieur ou égal à 5`,
+              `${dashboard?.lowStockProducts ?? 0} product(s) with stock of 5 or less`,
+            )}
+          </p>
         </article>
       </div>
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
           <div>
             <h2>{t('Ajouter un produit', 'Add a product')}</h2>
-            <p>{t('Les prix sont saisis en euros et enregistrés en centimes.', 'Prices are entered in euros and stored in cents.')}</p>
+            <p>
+              {t(
+                'Les prix sont saisis en euros et enregistrés en centimes.',
+                'Prices are entered in euros and stored in cents.',
+              )}
+            </p>
           </div>
         </div>
         <form className="checkout-form" onSubmit={(event) => void createProduct(event)}>
@@ -273,15 +312,26 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                     (file) =>
                       new Promise<string>((resolve, reject) => {
                         if (file.size > 1_200_000) {
-                          reject(new Error(t(`${file.name} dépasse 1,2 Mo.`, `${file.name} exceeds 1.2 MB.`)));
+                          reject(
+                            new Error(
+                              t(`${file.name} dépasse 1,2 Mo.`, `${file.name} exceeds 1.2 MB.`),
+                            ),
+                          );
                           return;
                         }
                         const reader = new FileReader();
                         reader.onload = () =>
                           typeof reader.result === 'string'
                             ? resolve(reader.result)
-                            : reject(new Error(t('Lecture de photo impossible.', 'Unable to read image.')));
-                        reader.onerror = () => reject(new Error(t('Lecture de photo impossible.', 'Unable to read image.')));
+                            : reject(
+                                new Error(
+                                  t('Lecture de photo impossible.', 'Unable to read image.'),
+                                ),
+                              );
+                        reader.onerror = () =>
+                          reject(
+                            new Error(t('Lecture de photo impossible.', 'Unable to read image.')),
+                          );
                         reader.readAsDataURL(file);
                       }),
                   ),
@@ -291,7 +341,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                     window.dispatchEvent(
                       new CustomEvent('template-toast', {
                         detail: {
-                          message: error instanceof Error ? error.message : t('Photo invalide.', 'Invalid image.'),
+                          message:
+                            error instanceof Error
+                              ? error.message
+                              : t('Photo invalide.', 'Invalid image.'),
                           type: 'error',
                         },
                       }),
@@ -299,12 +352,23 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
                   );
               }}
             />
-            <span className="field-hint">{t('PNG, JPEG ou WebP · 1,2 Mo maximum par photo.', 'PNG, JPEG or WebP · 1.2 MB maximum per image.')}</span>
+            <span className="field-hint">
+              {t(
+                'PNG, JPEG ou WebP · 1,2 Mo maximum par photo.',
+                'PNG, JPEG or WebP · 1.2 MB maximum per image.',
+              )}
+            </span>
             {images.length > 0 && (
               <div className="product-image-previews">
                 {images.map((image, index) => (
                   <div className="product-image-preview" key={index}>
-                    <img src={image} alt={t(`Aperçu du produit ${index + 1}`, `Product image preview ${index + 1}`)} />
+                    <img
+                      src={image}
+                      alt={t(
+                        `Aperçu du produit ${index + 1}`,
+                        `Product image preview ${index + 1}`,
+                      )}
+                    />
                     <button
                       type="button"
                       aria-label={t(`Retirer la photo ${index + 1}`, `Remove photo ${index + 1}`)}
@@ -323,10 +387,15 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
             {t('Tailles disponibles', 'Available sizes')}
             <input
               value={sizes}
-              placeholder={t('Ex. XS, S, M, L, XL ou 38, 39, 40', 'E.g. XS, S, M, L, XL or 38, 39, 40')}
+              placeholder={t(
+                'Ex. XS, S, M, L, XL ou 38, 39, 40',
+                'E.g. XS, S, M, L, XL or 38, 39, 40',
+              )}
               onChange={(event) => setSizes(event.target.value)}
             />
-            <span className="field-hint">{t('Séparez les tailles par des virgules.', 'Separate sizes with commas.')}</span>
+            <span className="field-hint">
+              {t('Séparez les tailles par des virgules.', 'Separate sizes with commas.')}
+            </span>
           </label>
           <div className="form-two-col product-dimensions">
             <label>
@@ -417,18 +486,29 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         <div className="panel-heading">
           <div>
             <h2>{t('Mes produits', 'My products')}</h2>
-            <p>{t(`${products.length} produit(s) géré(s) par ce compte`, `${products.length} product(s) managed by this account`)}</p>
+            <p>
+              {t(
+                `${products.length} produit(s) géré(s) par ce compte`,
+                `${products.length} product(s) managed by this account`,
+              )}
+            </p>
           </div>
         </div>
         {products.length === 0 ? (
-          <p>{t('Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.', 'No products yet. Add your first product above.')}</p>
+          <p>
+            {t(
+              'Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.',
+              'No products yet. Add your first product above.',
+            )}
+          </p>
         ) : (
           products.map((product) => (
             <div className="best-seller-row" key={product.id}>
               <div className="best-seller-name">
                 <strong>{product.name}</strong>
                 <span>
-                  {formatMoney(product.priceCents)} · {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
+                  {formatMoney(product.priceCents)} ·{' '}
+                  {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
                 </span>
               </div>
               <label>
@@ -490,23 +570,43 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         <div className="panel-heading">
           <div>
             <h2>{t('Commandes clients', 'Customer orders')}</h2>
-            <p>{t('Suivez la préparation et l’expédition des commandes contenant vos produits.', 'Track the preparation and shipment of orders containing your products.')}</p>
+            <p>
+              {t(
+                'Suivez la préparation et l’expédition des commandes contenant vos produits.',
+                'Track the preparation and shipment of orders containing your products.',
+              )}
+            </p>
           </div>
         </div>
         {orders.length === 0 ? (
-          <p>{t('Aucune commande enregistrée pour le moment.', 'No orders have been recorded yet.')}</p>
+          <p>
+            {t('Aucune commande enregistrée pour le moment.', 'No orders have been recorded yet.')}
+          </p>
         ) : (
           orders.map((order) => (
             <div className="best-seller-row" key={order.id}>
               <div className="best-seller-name">
-                <strong>{t('Commande', 'Order')} {order.id.slice(-8)}</strong>
+                <strong>
+                  {t('Commande', 'Order')} {order.id.slice(-8)}
+                </strong>
                 <span>
                   {order.customer?.email ?? t('Client', 'Customer')} ·{' '}
                   {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}
                 </span>
                 <span>
-                  {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR')} · {t('Paiement :', 'Payment:')}{' '}
-                  {({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec du paiement', 'Payment failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}
+                  {new Date(order.createdAt).toLocaleDateString(
+                    language === 'en' ? 'en-GB' : 'fr-FR',
+                  )}{' '}
+                  · {t('Paiement :', 'Payment:')}{' '}
+                  {(
+                    {
+                      PAID: t('Payé', 'Paid'),
+                      UNPAID: t('À régler', 'Unpaid'),
+                      REFUNDED: t('Remboursé', 'Refunded'),
+                      PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'),
+                      FAILED: t('Échec du paiement', 'Payment failed'),
+                    } as Record<string, string>
+                  )[order.paymentStatus] ?? order.paymentStatus}
                 </span>
               </div>
               <strong>{formatMoney(order.totalCents)}</strong>
@@ -539,7 +639,10 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
         )}
       </section>
       <p className="fine-print">
-        {t('Le paiement en ligne et les webhooks de confirmation ne sont pas encore configurés ; le chiffre d’affaires payé reste à zéro tant qu’aucun paiement n’est confirmé.', 'Online payments and confirmation webhooks are not configured yet; paid revenue remains zero until a payment is confirmed.')}
+        {t(
+          'Le paiement en ligne et les webhooks de confirmation ne sont pas encore configurés ; le chiffre d’affaires payé reste à zéro tant qu’aucun paiement n’est confirmé.',
+          'Online payments and confirmation webhooks are not configured yet; paid revenue remains zero until a payment is confirmed.',
+        )}
       </p>
     </section>
   );
