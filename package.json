@@ -31,6 +31,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:load:smoke": "k6 run tests/load/k6-smoke.js",
+    "test:load:stress": "k6 run tests/load/k6-stress.js",
     "db:generate": "prisma generate --schema server/prisma/schema.prisma && prisma generate --schema server/prisma/schema.postgres.prisma",
     "db:generate:postgres": "prisma generate --schema server/prisma/schema.postgres.prisma",
     "db:check-schema-parity": "node scripts/check-prisma-schema-parity.mjs",
