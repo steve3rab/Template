@@ -10,7 +10,12 @@ const seller = { id: 'seller-1', role: 'SELLER' } as User;
 let app: FastifyInstance;
 
 function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> = {}) {
-  const user = role === 'ADMIN' ? admin : role === 'SELLER' ? seller : ({ id: 'customer-1', role: 'CUSTOMER' } as User);
+  const user =
+    role === 'ADMIN'
+      ? admin
+      : role === 'SELLER'
+        ? seller
+        : ({ id: 'customer-1', role: 'CUSTOMER' } as User);
   const userFindUnique = vi.fn(async () => ({ id: 'target-user' }));
   const userUpdate = vi.fn(async () => ({
     id: 'target-user',
