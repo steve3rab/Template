@@ -344,29 +344,54 @@ export function registerPaymentRoutes(
       return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
     }
 
+    const pendingRefund = await prisma.financialTransaction.findFirst({
+      where: { orderId: order.id, type: 'REFUND', status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
+    });
+    const isRetry = Boolean(pendingRefund);
     const remainingCents = order.totalCents - order.refundedCents;
-    const amountCents = body.data.amountCents ?? remainingCents;
+    const amountCents = pendingRefund?.amountCents ?? body.data.amountCents ?? remainingCents;
     if (
       !Number.isSafeInteger(amountCents) ||
       amountCents < 1 ||
-      amountCents > remainingCents
+      (!isRetry && amountCents > remainingCents)
     ) {
       return reply.code(400).send({ error: 'Refund amount exceeds the remaining refundable amount.' });
     }
 
-    // Reserve the refund amount with compare-and-set before contacting Stripe. Concurrent
-    // requests based on the same refundedCents snapshot cannot over-refund an order.
-    const reservedCents = order.refundedCents + amountCents;
-    const reservation = await prisma.order.updateMany({
-      where: {
-        id: order.id,
-        paymentStatus: order.paymentStatus,
-        refundedCents: order.refundedCents,
-      },
-      data: { refundedCents: { increment: amountCents } },
-    });
-    if (reservation.count !== 1)
-      return reply.code(409).send({ error: 'Order refund state changed. Refresh and retry.' });
+    const reservedCents = order.refundedCents + (isRetry ? 0 : amountCents);
+    const idempotencyKey =
+      pendingRefund?.stripeObjectId ??
+      createHmac('sha256', secretKey)
+        .update(`refund:${order.id}:${order.refundedCents}:${amountCents}`)
+        .digest('hex');
+
+    if (!isRetry) {
+      const reservation = await prisma.$transaction(async (tx) => {
+        const changed = await tx.order.updateMany({
+          where: {
+            id: order.id,
+            paymentStatus: order.paymentStatus,
+            refundedCents: order.refundedCents,
+          },
+          data: { refundedCents: { increment: amountCents } },
+        });
+        if (changed.count !== 1) return false;
+        await tx.financialTransaction.create({
+          data: {
+            orderId: order.id,
+            stripeObjectId: idempotencyKey,
+            type: 'REFUND',
+            status: 'PENDING',
+            amountCents,
+            currency: order.currency,
+          },
+        });
+        return true;
+      });
+      if (!reservation)
+        return reply.code(409).send({ error: 'Order refund state changed. Refresh and retry.' });
+    }
 
     let checkoutResponse: Response;
     try {
@@ -378,27 +403,29 @@ export function registerPaymentRoutes(
         },
       );
     } catch {
-      await prisma.order.updateMany({
-        where: { id: order.id, refundedCents: reservedCents },
-        data: { refundedCents: { decrement: amountCents } },
+      request.log.error({ orderId: order.id }, 'Stripe payment lookup failed; refund intent retained.');
+      return reply.code(202).send({
+        pending: true,
+        message: 'Refund is reserved and will be retried with the same idempotency key.',
       });
-      return reply.code(502).send({ error: 'Unable to verify the Stripe payment. Retry safely.' });
     }
 
     const checkout = stripeRefundSessionSchema.safeParse(
       await checkoutResponse.json().catch(() => null),
     );
     if (!checkoutResponse.ok || !checkout.success || !checkout.data.payment_intent) {
-      await prisma.order.updateMany({
-        where: { id: order.id, refundedCents: reservedCents },
-        data: { refundedCents: { decrement: amountCents } },
-      });
+      if (!isRetry) {
+        await prisma.$transaction(async (tx) => {
+          await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
+          await tx.order.updateMany({
+            where: { id: order.id, refundedCents: reservedCents },
+            data: { refundedCents: { decrement: amountCents } },
+          });
+        });
+      }
       return reply.code(502).send({ error: 'Stripe payment reference could not be verified.' });
     }
 
-    const idempotencyKey = createHmac('sha256', secretKey)
-      .update(`refund:${order.id}:${order.refundedCents}:${amountCents}`)
-      .digest('hex');
     let refundResponse: Response;
     try {
       refundResponse = await fetch('https://api.stripe.com/v1/refunds', {
@@ -416,21 +443,25 @@ export function registerPaymentRoutes(
         signal: AbortSignal.timeout(10000),
       });
     } catch {
-      // The request may have reached Stripe despite a network timeout. Keep the reservation:
-      // the same idempotency key can safely be retried/reconciled without issuing a second refund.
-      request.log.error({ orderId: order.id }, 'Stripe refund outcome is unknown; reservation retained.');
+      // Keep the durable pending intent and repeat the exact Stripe idempotency key on retry.
+      request.log.error({ orderId: order.id }, 'Stripe refund outcome is unknown; refund intent retained.');
       return reply.code(202).send({
         pending: true,
-        message: 'Refund outcome is being reconciled. Do not submit another refund.',
+        message: 'Refund outcome is being reconciled. Retry will reuse the same Stripe request.',
       });
     }
 
     const refund = stripeRefundSchema.safeParse(await refundResponse.json().catch(() => null));
     if (!refundResponse.ok || !refund.success) {
-      await prisma.order.updateMany({
-        where: { id: order.id, refundedCents: reservedCents },
-        data: { refundedCents: { decrement: amountCents } },
-      });
+      if (!isRetry) {
+        await prisma.$transaction(async (tx) => {
+          await tx.financialTransaction.deleteMany({ where: { stripeObjectId: idempotencyKey } });
+          await tx.order.updateMany({
+            where: { id: order.id, refundedCents: reservedCents },
+            data: { refundedCents: { decrement: amountCents } },
+          });
+        });
+      }
       request.log.error({ statusCode: refundResponse.status }, 'Stripe refund request failed.');
       return reply.code(502).send({ error: 'Stripe could not process this refund.' });
     }
@@ -440,24 +471,30 @@ export function registerPaymentRoutes(
     try {
       await prisma.$transaction(async (tx) => {
         const finalized = await tx.order.updateMany({
-          where: { id: order.id, refundedCents: reservedCents, paymentStatus: order.paymentStatus },
+          where: {
+            id: order.id,
+            refundedCents: reservedCents,
+            paymentStatus: order.paymentStatus,
+          },
           data: { paymentStatus: nextPaymentStatus },
         });
         if (finalized.count !== 1) throw new Error('REFUND_FINALIZATION_CONFLICT');
-        await tx.financialTransaction.create({
+        await tx.financialTransaction.update({
+          where: { stripeObjectId: idempotencyKey },
           data: {
-            orderId: order.id,
             stripeObjectId: refund.data.id,
-            type: 'REFUND',
+            status: 'SUCCEEDED',
             amountCents: refund.data.amount,
             currency: refund.data.currency.toUpperCase(),
           },
         });
       });
     } catch (error) {
-      // Keep the reserved amount if Stripe has already refunded it. An operator can
-      // reconcile this Stripe refund ID without risking a duplicate payout.
-      request.log.error({ err: error, orderId: order.id, stripeRefundId: refund.data.id }, 'Refund ledger finalization failed.');
+      // Stripe has already refunded the payment. Keep the pending reservation for safe retry.
+      request.log.error(
+        { err: error, orderId: order.id, stripeRefundId: refund.data.id },
+        'Refund ledger finalization failed.',
+      );
       return reply.code(202).send({
         pending: true,
         refundId: refund.data.id,
