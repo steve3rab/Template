@@ -35,11 +35,12 @@ test.describe('accessibility smoke checks', () => {
     await expect(cartButton).toBeFocused();
     await page.keyboard.press('Enter');
 
-    await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeVisible();
-    const closeButton = page.getByRole('button', { name: 'Fermer le panier' });
+    const drawer = page.getByRole('complementary', { name: 'Votre panier' });
+    await expect(drawer).toBeVisible();
+    const closeButton = drawer.getByRole('button', { name: 'Fermer le panier' });
     await closeButton.focus();
     await expect(closeButton).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeHidden();
+    await expect(drawer).toBeHidden();
   });
 });
