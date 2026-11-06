@@ -132,6 +132,7 @@ model Order {
   seller            User?       @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: SetNull)
   address           Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
   items             OrderItem[]
+  financialTransactions FinancialTransaction[]
 
   @@index([sellerId, createdAt])
   @@index([userId, createdAt])
@@ -151,6 +152,32 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model StripeWebhookEvent {
+  id             String   @id @default(cuid())
+  stripeEventId  String   @unique
+  type           String
+  objectId       String?
+  receivedAt     DateTime @default(now())
+  processedAt    DateTime?
+
+  @@index([type, receivedAt])
+  @@index([processedAt])
+}
+
+model FinancialTransaction {
+  id             String   @id @default(cuid())
+  orderId        String
+  stripeObjectId String   @unique
+  type           String
+  amountCents    Int
+  currency       String
+  createdAt      DateTime @default(now())
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([type, createdAt])
 }
 
 model PasswordResetToken {
