@@ -283,18 +283,29 @@ describe('admin role management', () => {
   it.each(['SELLER', 'CUSTOMER'] as const)(
     'denies %s from every administrator route before database access',
     async (role) => {
-      const { userFindUnique, userUpdate, userCount, productCount, orderCount } = setup(role);
+      const { userFindUnique, userUpdate, userCount, productCount, orderCount } =
+        setup(role);
       await app.ready();
 
       const responses = await Promise.all([
         app.inject({ method: 'GET', url: '/api/admin/me' }),
         app.inject({ method: 'GET', url: '/api/admin/dashboard' }),
         app.inject({ method: 'GET', url: '/api/admin/users' }),
-        app.inject({ method: 'PATCH', url: '/api/admin/products/product-1/visibility', payload: { active: false } }),
-        app.inject({ method: 'POST', url: '/api/admin/users/target-user/role', payload: { role: 'SELLER' } }),
+        app.inject({
+          method: 'PATCH',
+          url: '/api/admin/products/product-1/visibility',
+          payload: { active: false },
+        }),
+        app.inject({
+          method: 'POST',
+          url: '/api/admin/users/target-user/role',
+          payload: { role: 'SELLER' },
+        }),
       ]);
 
-      expect(responses.map((response) => response.statusCode)).toEqual([403, 403, 403, 403, 403]);
+      expect(responses.map((response) => response.statusCode)).toEqual([
+        403, 403, 403, 403, 403,
+      ]);
       expect(userFindUnique).not.toHaveBeenCalled();
       expect(userUpdate).not.toHaveBeenCalled();
       expect(userCount).not.toHaveBeenCalled();
@@ -302,5 +313,4 @@ describe('admin role management', () => {
       expect(orderCount).not.toHaveBeenCalled();
     },
   );
-
 });
