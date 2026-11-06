@@ -334,7 +334,7 @@ export function registerPaymentRoutes(
 
     const params = z.object({ id: z.string().min(1).max(128) }).safeParse(request.params);
     const body = z
-      .object({ amountCents: z.number().int().positive().optional() })
+      .object({ amountCents: z.number().int().positive().optional(), requestKey: z.string().uuid() })
       .strict()
       .safeParse(request.body ?? {});
     if (!params.success || !body.success)
@@ -352,13 +352,29 @@ export function registerPaymentRoutes(
       return reply.code(409).send({ error: 'Only paid orders can be refunded.' });
     }
 
-    const pendingRefund = await prisma.financialTransaction.findFirst({
-      where: { orderId: order.id, type: 'REFUND', status: 'PENDING' },
+    const existingRefund = await prisma.financialTransaction.findFirst({
+      where: { orderId: order.id, type: 'REFUND', requestKey: body.data.requestKey },
       orderBy: { createdAt: 'asc' },
     });
-    const isRetry = Boolean(pendingRefund);
+    if (existingRefund?.status === 'SUCCEEDED') {
+      return reply.send({
+        refund: {
+          id: existingRefund.stripeObjectId,
+          amountCents: existingRefund.amountCents,
+          currency: existingRefund.currency,
+          status: 'succeeded',
+        },
+        refundedCents: order.refundedCents,
+        remainingRefundableCents: order.totalCents - order.refundedCents,
+        paymentStatus: order.paymentStatus,
+      });
+    }
+    if (existingRefund && existingRefund.status !== 'PENDING') {
+      return reply.code(409).send({ error: 'This refund request cannot be retried.' });
+    }
+    const isRetry = Boolean(existingRefund);
     const remainingCents = order.totalCents - order.refundedCents;
-    const amountCents = pendingRefund?.amountCents ?? body.data.amountCents ?? remainingCents;
+    const amountCents = existingRefund?.amountCents ?? body.data.amountCents ?? remainingCents;
     if (
       !Number.isSafeInteger(amountCents) ||
       amountCents < 1 ||
@@ -369,9 +385,9 @@ export function registerPaymentRoutes(
 
     const reservedCents = order.refundedCents + (isRetry ? 0 : amountCents);
     const idempotencyKey =
-      pendingRefund?.stripeObjectId ??
+      existingRefund?.stripeObjectId ??
       createHmac('sha256', secretKey)
-        .update(`refund:${order.id}:${order.refundedCents}:${amountCents}`)
+        .update(`refund:${order.id}:${body.data.requestKey}`)
         .digest('hex');
 
     if (!isRetry) {
@@ -390,6 +406,7 @@ export function registerPaymentRoutes(
             orderId: order.id,
             stripeObjectId: idempotencyKey,
             type: 'REFUND',
+            requestKey: body.data.requestKey,
             status: 'PENDING',
             amountCents,
             currency: order.currency,
