@@ -10,6 +10,7 @@ Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `mai
 - **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright desktop, mobile et tablette, y compris les contrôles d'accessibilité clavier et les attributs alternatifs des images.
 - **`postgres-concurrency`** : démarre PostgreSQL 16, génère le client Prisma dédié, pousse le schéma PostgreSQL et vérifie les réservations de stock et transitions de commande concurrentes.
 - **`docker`** : construction de l'image avec Buildx, sans publication (`push: false`).
+- **`windows-scripts`** : exécute réellement les helpers PowerShell sur Windows, vérifie les outils et la parité Prisma, démarre frontend/API puis vérifie leurs endpoints et arrête l'arbre des processus.
 
 Les jobs `quality` et `e2e` utilisent une base SQLite éphémère ; le job `postgres-concurrency` utilise un service PostgreSQL 16 éphémère. Les secrets de session et identifiants de base sont réservés aux tests et ne doivent jamais être réutilisés en production.
 
