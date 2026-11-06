@@ -343,4 +343,54 @@ describe('Fashion storefront', () => {
     expect(productRequests).toBe(2);
   });
 
+
+  it('rejects whitespace-only checkout addresses before persisting the cart', async () => {
+    const user = userEvent.setup();
+    const requests: { url: string; method: string; body?: string }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const method = (init?.method ?? 'GET').toUpperCase();
+        requests.push({
+          url,
+          method,
+          ...(typeof init?.body === 'string' ? { body: init.body } : {}),
+        });
+        if (url === '/api/products') return apiResponse({ products: catalogue });
+        if (url === '/api/auth/me') return apiResponse({ user: { email: 'client@example.com' } });
+        if (url === '/api/customer/cart' && method === 'GET') {
+          return apiResponse({ items: [{ productId: '1', quantity: 1 }] });
+        }
+        if (url === '/api/customer/favorites') return apiResponse({ favorites: [] });
+        if (url === '/api/customer/addresses') return apiResponse({ addresses: [] });
+        return apiResponse({ error: 'Unexpected request.' }, 500);
+      }),
+    );
+
+    render(<App />);
+    await user.click(await screen.findByRole('button', { name: 'Panier, 1 article(s)' }));
+    await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
+    expect(
+      await screen.findByRole('heading', { name: /finaliser ma commande/i }),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('Prénom et nom du destinataire'), '  ');
+    await user.type(screen.getByPlaceholderText('Numéro et rue'), '   ');
+    await user.type(screen.getByPlaceholderText('75000'), '  ');
+    await user.type(screen.getByPlaceholderText('Paris'), '  ');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
+
+    expect(
+      await screen.findByText(/chaque champ obligatoire doit être correctement renseigné/i),
+    ).toBeInTheDocument();
+    expect(
+      requests.some((request) => request.url === '/api/customer/cart' && request.method === 'PUT'),
+    ).toBe(false);
+    expect(
+      requests.some((request) => request.url === '/api/customer/addresses' && request.method === 'POST'),
+    ).toBe(false);
+  });
+
 });
