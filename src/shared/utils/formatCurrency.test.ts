@@ -17,6 +17,11 @@ describe('currency formatting', () => {
     expect(formatCents(Number.POSITIVE_INFINITY)).toBe('—');
   });
 
+  it('returns a safe placeholder for invalid currency and locale identifiers', () => {
+    expect(formatCurrency(10, 'NOT-A-CURRENCY')).toBe('—');
+    expect(formatCurrency(10, 'EUR', 'not_a_locale')).toBe('—');
+  });
+
   it('supports another currency and locale', () => {
     expect(formatCurrency(10, 'USD', 'en-US')).toContain('$10.00');
   });
