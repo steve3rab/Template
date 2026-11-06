@@ -31,8 +31,9 @@ export function AdminWorkspace() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>([
-  ]);
+  const [financialTransactions, setFinancialTransactions] = useState<AdminFinancialTransaction[]>(
+    [],
+  );
   const [refundRequestKeys, setRefundRequestKeys] = useState<Record<string, string>>({});
   const [reconciliation, setReconciliation] = useState<z.infer<
     typeof apiSchemas.reconciliationResult
