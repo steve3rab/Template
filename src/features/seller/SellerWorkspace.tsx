@@ -88,7 +88,7 @@ export function SellerWorkspace({ range, language = 'fr' }: { range: string; lan
           }),
         ),
       );
-  }, [load]);
+  }, [load, t]);
 
   async function createProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
