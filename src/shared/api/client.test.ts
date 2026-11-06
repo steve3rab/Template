@@ -45,7 +45,10 @@ describe('typed API client', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response('not-json', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        new Response('not-json', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       ),
     );
 
