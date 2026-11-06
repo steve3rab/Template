@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Language } from '../../shared/i18n';
 
 export type LegalPageKind = 'terms' | 'privacy' | 'returns';
 
@@ -97,14 +98,52 @@ const pages: Record<
   },
 };
 
-export function LegalPage({ page, onBack }: { page: LegalPageKind; onBack: () => void }) {
-  const content = pages[page];
+const pagesEn: typeof pages = {
+  terms: {
+    title: 'Terms and Conditions of Sale',
+    intro: 'Template to be completed and reviewed before any real sale. Fields in square brackets are mandatory and must not remain unchanged in production.',
+    sections: [
+      { heading: '1. Seller', body: 'Seller: [company name], [legal form], share capital [amount], registration [RCS/SIREN], registered office [address], EU VAT number [if applicable]. Contact: [email and phone]. Publishing director: [name]. Hosting provider: [name, address and contact details].' },
+      { heading: '2. Scope', body: 'These terms govern sales made to consumers through this website. Essential product characteristics, VAT-inclusive prices, delivery costs, delivery times and any restrictions are presented before the order is confirmed.' },
+      { heading: '3. Orders and prices', body: 'An order becomes final only after the order summary, acceptance of these terms and confirmation. Prices must be displayed in euros, including VAT. The seller must correct obvious errors and inform the customer of any unavailability.' },
+      { heading: '4. Payment and delivery', body: 'Accepted payment methods, the payment provider, delivery times and areas, and delivery charges must be specified here before sales are enabled. A demonstration order is not a sale or payment confirmation.' },
+      { heading: '5. Legal warranties and mediation', body: 'Consumers benefit from applicable statutory warranties, including conformity and hidden-defect warranties. Add the details of the competent consumer mediator and the procedure for referring a dispute before publication.' },
+      { heading: '6. Applicable law', body: 'Mandatory consumer rights remain applicable. The applicable law and dispute-resolution procedures must be specified without depriving consumers of their statutory rights.' },
+    ],
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    intro: 'Transparency notice to be completed according to the processing activities actually carried out, service providers and retention periods.',
+    sections: [
+      { heading: '1. Data controller', body: 'Controller: [company name and address]. Privacy contact: [email]. Data Protection Officer, if appointed: [contact details].' },
+      { heading: '2. Data and purposes', body: 'Account data is used for authentication and account management. Addresses and orders are used to process purchases and deliveries. Security data is used to protect the service. Collect only data necessary for each purpose.' },
+      { heading: '3. Legal bases and recipients', body: 'For each purpose, specify the applicable legal basis (contract, legal obligation, legitimate interest or consent). Identify hosting, payment, email and delivery providers, as well as any transfers outside the EEA.' },
+      { heading: '4. Retention and security', body: 'Define retention periods by category, including orders and accounting records. Technical and organisational measures protect access; no system can guarantee absolute security.' },
+      { heading: '5. Your rights', body: 'Subject to the conditions set out in the GDPR, you may request access, rectification, erasure, restriction, portability or object to certain processing. Contact: [email]. You may also lodge a complaint with the CNIL (French Data Protection Authority).' },
+      { heading: '6. Cookies and trackers', body: 'Describe strictly necessary cookies and all non-essential trackers. Obtain prior consent where required by law, make withdrawal as easy as giving consent, and document cookie lifetimes.' },
+    ],
+  },
+  returns: {
+    title: 'Delivery, Returns and Refunds',
+    intro: 'Policy to be adapted to the products, logistics and applicable legal requirements before real orders are opened.',
+    sections: [
+      { heading: '1. Delivery', body: 'Delivery areas: [areas]. Carrier: [provider]. Estimated delivery times: [times]. Charges: [rates]. Customers receive tracking information when available.' },
+      { heading: '2. Right of withdrawal', body: 'For distance sales to consumers, the statutory withdrawal period is generally 14 days from receipt of the goods, subject to legal exceptions. Provide a standard withdrawal form and clearly explain exceptions applicable to certain products.' },
+      { heading: '3. Return procedure', body: 'Returns contact: [email address or portal]. Explain the steps, return address, expected condition of products and responsibility for return costs. Do not impose conditions that restrict consumers’ statutory rights.' },
+      { heading: '4. Refunds', body: 'Refunds are made within statutory time limits and, in principle, using the original payment method, unless another legally compliant arrangement is agreed. Explain how delivery charges are handled and the procedure for non-conforming goods.' },
+      { heading: '5. Complaints and warranties', body: 'Contact: [details]. Statutory conformity and hidden-defect warranties remain applicable regardless of the commercial returns policy.' },
+    ],
+  },
+};
+
+export function LegalPage({ page, onBack, language = 'fr' }: { page: LegalPageKind; onBack: () => void; language?: Language }) {
+  const content = language === 'en' ? pagesEn[page] : pages[page];
   return (
     <section className="workspace-page legal-page">
       <button className="back-link" onClick={onBack}>
-        ← Retour à la boutique
+        {language === 'en' ? '← Back to shop' : '← Retour à la boutique'}
       </button>
-      <span className="eyebrow">ATELIER · INFORMATIONS</span>
+      <span className="eyebrow">ATELIER · {language === 'en' ? 'INFORMATION' : 'INFORMATIONS'}</span>
       <h1 className="workspace-title">
         {content.title}
         <span className="brand-period">.</span>
@@ -117,9 +156,7 @@ export function LegalPage({ page, onBack }: { page: LegalPageKind; onBack: () =>
         </section>
       ))}
       <p className="fine-print">
-        Ces textes sont des modèles d’information et non un avis juridique. Faites-les vérifier et
-        remplacez tous les champs entre crochets par les informations exactes de l’entreprise et de
-        ses prestataires.
+        {language === 'en' ? 'These texts are information templates, not legal advice. Have them reviewed and replace all bracketed fields with accurate information about the company and its service providers.' : 'Ces textes sont des modèles d’information et non un avis juridique. Faites-les vérifier et remplacez tous les champs entre crochets par les informations exactes de l’entreprise et de ses prestataires.'}
       </p>
     </section>
   );
