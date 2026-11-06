@@ -8,10 +8,14 @@ const schemaPaths = [
 function extractModels(schema, path) {
   const models = [...schema.matchAll(/^model\s+([A-Za-z0-9_]+)\s*\{[\s\S]*?^\}/gm)];
   if (models.length === 0) throw new Error(`No Prisma models found in ${path}`);
-  return new Map(models.map((match) => [match[1], match[0].replace(/\r\n/g, '\n').trim()]));
+  return new Map(
+    models.map((match) => [match[1], match[0].replace(/\r\n/g, '\n').trim()]),
+  );
 }
 
-const [sqliteSchema, postgresSchema] = await Promise.all(schemaPaths.map((path) => readFile(path, 'utf8')));
+const [sqliteSchema, postgresSchema] = await Promise.all(
+  schemaPaths.map((path) => readFile(path, 'utf8')),
+);
 const sqliteModels = extractModels(sqliteSchema, schemaPaths[0]);
 const postgresModels = extractModels(postgresSchema, schemaPaths[1]);
 const names = [...new Set([...sqliteModels.keys(), ...postgresModels.keys()])].sort();
