@@ -8,7 +8,7 @@ describe('LegalPage translations', () => {
     const { rerender } = render(<LegalPage page="terms" language="en" onBack={onBack} />);
     expect(screen.getByRole('heading', { name: /terms and conditions of sale/i })).toBeInTheDocument();
     expect(screen.getByText(/template to be completed and reviewed/i)).toBeInTheDocument();
-    expect(screen.getByText(/applicable consumer rights/i)).toBeInTheDocument();
+    expect(screen.getByText(/mandatory consumer rights/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /back to shop/i }));
     expect(onBack).toHaveBeenCalledOnce();
 
