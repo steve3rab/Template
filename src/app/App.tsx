@@ -1251,11 +1251,11 @@ export function App() {
         <>
           <div className="seller-range-control">
             <label>
-              Période{' '}
+              {translate('Période', 'Period')}{' '}
               <select value={sellerRange} onChange={(event) => setSellerRange(event.target.value)}>
-                <option value="7">7 jours</option>
-                <option value="30">30 jours</option>
-                <option value="90">90 jours</option>
+                <option value="7">{translate("7 jours", "7 days")}</option>
+                <option value="30">{translate("30 jours", "30 days")}</option>
+                <option value="90">{translate("90 jours", "90 days")}</option>
               </select>
             </label>
           </div>
@@ -1273,6 +1273,7 @@ export function App() {
       {view === 'legal' && <LegalPage page={legalPage} language={language} onBack={() => setView('shop')} />}
       {view === 'reset' && (
         <ResetPassword
+          language={language}
           onDone={() => {
             window.history.replaceState({}, '', '/');
             setView('account');
@@ -1346,7 +1347,7 @@ export function App() {
           <button
             type="button"
             className="drawer-dismiss"
-            aria-label="Fermer le panier"
+            aria-label={translate("Fermer le panier", "Close cart")}
             onClick={() => setCartOpen(false)}
           />
           <aside className="cart-drawer" aria-label={translate('Votre panier', 'Your cart')}>
