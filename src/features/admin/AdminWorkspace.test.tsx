@@ -101,4 +101,21 @@ describe('AdminWorkspace', () => {
       await screen.findByText(/1 rapprochées · 0 écarts · 0 non vérifiées/i),
     ).toBeInTheDocument();
   });
+
+
+  it('renders administrator navigation and sections in English', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ users: 0, sellers: 0, products: 0, activeProducts: 0, orders: 0, paidOrders: 0, revenueCents: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ users: [] }))
+      .mockResolvedValueOnce(jsonResponse({ products: [] }))
+      .mockResolvedValueOnce(jsonResponse({ orders: [] }))
+      .mockResolvedValueOnce(jsonResponse({ transactions: [] })));
+    render(<AdminWorkspace language="en" />);
+    expect(await screen.findByRole('heading', { name: /management centre/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /users/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /products/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /orders/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /account management/i })).toBeInTheDocument();
+    expect(screen.getByText(/no users/i)).toBeInTheDocument();
+  });
 });
