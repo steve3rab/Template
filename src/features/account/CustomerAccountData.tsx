@@ -11,7 +11,7 @@ import {
 } from '../../shared/api/client';
 
 function orderStatusLabel(status: Order['status'], paymentStatus: string, language: Language): string {
-  const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
+  const t = (fr: string, en: string) => translateText(language, fr, en);
   switch (status) {
     case 'PENDING':
       if (paymentStatus.toUpperCase() === 'PAID') {
@@ -50,7 +50,7 @@ function paymentStatusLabel(status: string, language: Language): string {
 }
 
 export function CustomerAccountData({ language = 'fr' }: { language?: Language }) {
-  const t = (fr: string, en: string) => translateText(language, fr, en);
+  const t = useCallback((fr: string, en: string) => translateText(language, fr, en), [language]);
   const formatMoney = (amount: number, currency = 'EUR') =>
     formatCents(amount, currency, language === 'en' ? 'en-GB' : 'fr-FR');
   const [addresses, setAddresses] = useState<Address[]>([]);
