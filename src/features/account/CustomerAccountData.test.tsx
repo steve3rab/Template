@@ -45,7 +45,7 @@ describe('CustomerAccountData', () => {
               {
                 id: 'order-shipped-87654321',
                 status: 'SHIPPED',
-                paymentStatus: 'PAID',
+                paymentStatus: 'PARTIALLY_REFUNDED',
                 totalCents: 7400,
                 createdAt: '2026-11-01T12:00:00.000Z',
                 items: [{ id: 'item-2', productName: 'Sneakers Everyday', quantity: 1 }],
