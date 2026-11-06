@@ -7,6 +7,12 @@
 /tmp/
 /logs/
 
+# Generated source/artifact directories
+/generated/
+**/generated/
+/.generated/
+**/.generated/
+
 # Runtime uploads and local storage (not source-controlled)
 /uploads/
 /storage/
@@ -40,4 +46,4 @@ Desktop.ini
 .vscode/
 .idea/
 *.swp
-*.swo
+*.swo/
