@@ -221,7 +221,7 @@ describe('Stripe payment routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1200 },
+      payload: { amountCents: 1200, requestKey: '00000000-0000-4000-8000-000000000001' },
     });
 
     expect(response.statusCode).toBe(200);
@@ -335,7 +335,7 @@ describe('Stripe payment routes', () => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/orders/order-1/refund',
-      payload: { amountCents: 1000 },
+      payload: { amountCents: 1000, requestKey: '00000000-0000-4000-8000-000000000002' },
     });
 
     expect(response.statusCode).toBe(409);
