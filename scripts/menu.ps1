@@ -2,192 +2,184 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'common.ps1')
+Set-Location $script:ProjectRoot
 
-# UTF-8 console + BOM-compatible source for Windows PowerShell 5.1.
 try {
     [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
     [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
     $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-} catch {
-    # Keep the menu usable in hosts that do not expose console encoding controls.
+}
+catch {
+    # Certains terminaux intégrés ne permettent pas de modifier leur encodage.
 }
 
-$projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-Set-Location $projectRoot
+function New-MenuItem {
+    param(
+        [string]$Key,
+        [string]$Label,
+        [ValidateSet('Npm', 'Script')][string]$Kind,
+        [string]$Target,
+        [string[]]$Arguments = @()
+    )
+    [pscustomobject]@{
+        Key = $Key
+        Label = $Label
+        Kind = $Kind
+        Target = $Target
+        Arguments = $Arguments
+    }
+}
 
-function Show-Menu {
+function Show-MenuHeader {
+    param([string]$Title)
     Clear-Host
     Write-Host ''
     Write-Host '============================================================' -ForegroundColor DarkCyan
-    Write-Host '             TEMPLATE - MENU DES COMMANDES' -ForegroundColor Cyan
+    Write-Host '               TEMPLATE | OUTILS DE DEVELOPPEMENT' -ForegroundColor Cyan
     Write-Host '============================================================' -ForegroundColor DarkCyan
-    Write-Host "Projet : $projectRoot" -ForegroundColor DarkGray
-    Write-Host ''
-    Write-Host '  DEMARRAGE' -ForegroundColor Yellow
-    Write-Host '  1.  Installer / preparer le projet (sans lancer de tests)'
-    Write-Host '  2.  Demarrer le frontend et le backend'
-    Write-Host '  3.  Demarrer le frontend uniquement'
-    Write-Host '  4.  Demarrer le backend uniquement'
-    Write-Host ''
-    Write-Host '  QUALITE ET TESTS' -ForegroundColor Yellow
-    Write-Host '  5.  Verifier les types TypeScript'
-    Write-Host '  6.  Verifier ESLint'
-    Write-Host '  7.  Verifier le formatage Prettier'
-    Write-Host '  8.  Lancer les tests unitaires'
-    Write-Host '  9.  Lancer les tests d''integration'
-    Write-Host ' 10.  Lancer les tests E2E (Playwright)'
-    Write-Host ' 11.  Lancer tous les tests Vitest'
-    Write-Host ' 12.  Lancer toutes les verifications (check complet)'
-    Write-Host ''
-    Write-Host '  BUILD ET BASE DE DONNEES' -ForegroundColor Yellow
-    Write-Host ' 13.  Construire le frontend'
-    Write-Host ' 14.  Construire le backend'
-    Write-Host ' 15.  Generer le client Prisma'
-    Write-Host ' 16.  Appliquer les migrations de base de donnees'
-    Write-Host ' 17.  Préparer le projet + créer les comptes de test locaux'
-    Write-Host ''
-    Write-Host '  0.  Quitter' -ForegroundColor DarkGray
+    Write-Host $Title -ForegroundColor Yellow
+    Write-Host "Projet : $script:ProjectRoot" -ForegroundColor DarkGray
+    Write-Host "Node : $((node --version 2>$null)) | npm : $((npm.cmd --version 2>$null))" -ForegroundColor DarkGray
     Write-Host ''
 }
 
-function Invoke-NpmCommand {
-    param(
-        [Parameter(Mandatory = $true)][string[]]$NpmArguments,
-        [Parameter(Mandatory = $true)][string]$Description,
-        [switch]$ConfirmFirst
-    )
-
-    if ($ConfirmFirst) {
-        $answer = Read-Host 'Cette action peut prendre du temps. Continuer ? (O/N)'
-        if ($answer -notin @('O', 'o', 'Oui', 'oui', 'Y', 'y', 'Yes', 'yes')) {
-            Write-Host 'Action annulee.' -ForegroundColor Yellow
-            return
-        }
-    }
-
-    $npmCommand = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
-    if (-not $npmCommand) {
-        Write-Host 'Erreur : npm.cmd est introuvable. Vérifiez l installation de Node.js et le PATH.' -ForegroundColor Red
-        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
-        return
-    }
+function Invoke-MenuAction {
+    param([Parameter(Mandatory = $true)]$Item)
 
     Write-Host ''
-    Write-Host "> $Description" -ForegroundColor Cyan
-    Write-Host ("Commande : npm " + ($NpmArguments -join ' ')) -ForegroundColor DarkGray
-    Write-Host ''
-
-    Push-Location $projectRoot
+    Write-Host ("> " + $Item.Label) -ForegroundColor Cyan
     try {
-        & $npmCommand.Source @NpmArguments
-        $exitCode = $LASTEXITCODE
-        if ($exitCode -ne 0) {
-            Write-Host "Echec : la commande s'est terminee avec le code $exitCode." -ForegroundColor Red
-        } else {
-            Write-Host 'Termine avec succes.' -ForegroundColor Green
+        if ($Item.Kind -eq 'Npm') {
+            $npmArguments = @($Item.Arguments)
+            Invoke-Npm -Arguments $npmArguments -Description $Item.Label
         }
-    }
-    catch {
-        Write-Host "Erreur : $($_.Exception.Message)" -ForegroundColor Red
-    }
-    finally {
-        Pop-Location
-    }
-
-    Write-Host ''
-    [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
-}
-
-function Invoke-SetupAndSeedTestUsers {
-    $setupPath = Join-Path $PSScriptRoot 'setup.ps1'
-    $npmCommand = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
-
-    if (-not $npmCommand) {
-        Write-Host 'Erreur : npm.cmd est introuvable. Vérifiez Node.js et le PATH.' -ForegroundColor Red
-        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
-        return
-    }
-
-    Write-Host ''
-    Write-Host '> Préparation du projet, puis création des comptes de test locaux' -ForegroundColor Cyan
-    Write-Host ''
-
-    try {
-        & $setupPath
+        else {
+            $scriptPath = Join-Path $PSScriptRoot $Item.Target
+            if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
+                throw "Script introuvable : $scriptPath"
+            }
+            $scriptArguments = @($Item.Arguments)
+            & $scriptPath @scriptArguments
+        }
         if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-            throw "Le script de préparation a échoué (code $LASTEXITCODE)."
+            throw "La commande s’est terminée avec le code $LASTEXITCODE."
         }
     }
     catch {
-        Write-Host "Échec de la préparation : $($_.Exception.Message)" -ForegroundColor Red
-        [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
-        return
-    }
-
-    try {
         Write-Host ''
-        Write-Host '> Création / réinitialisation des trois comptes de test' -ForegroundColor Cyan
-        & $npmCommand.Source run db:seed:test-users
-        if ($LASTEXITCODE -ne 0) {
-            throw "Le seed des comptes de test a échoué (code $LASTEXITCODE)."
-        }
-        Write-Host 'Comptes de test prêts. Mot de passe : Local-Test-Password-2026!' -ForegroundColor Green
+        Write-Host "ÉCHEC : $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host 'Les références fichier/ligne éventuelles sont affichées dans la sortie ci-dessus.' -ForegroundColor Yellow
     }
-    catch {
-        Write-Host "Échec du seed : $($_.Exception.Message)" -ForegroundColor Red
-    }
-
     Write-Host ''
-    [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
+    [void](Read-Host 'Entrée pour revenir au menu')
 }
 
-function Invoke-ProjectScript {
+function Invoke-MenuCategory {
     param(
-        [Parameter(Mandatory = $true)][string]$ScriptName,
-        [Parameter(Mandatory = $true)][string]$Description
+        [Parameter(Mandatory = $true)][string]$Title,
+        [Parameter(Mandatory = $true)][object[]]$Items
     )
 
-    $scriptPath = Join-Path $PSScriptRoot $ScriptName
-    Write-Host ''
-    Write-Host "> $Description" -ForegroundColor Cyan
-    try {
-        & $scriptPath
+    while ($true) {
+        Show-MenuHeader -Title $Title
+        foreach ($item in $Items) {
+            Write-Host (" {0,2}. {1}" -f $item.Key, $item.Label)
+        }
+        Write-Host ''
+        Write-Host '  0. Retour au menu principal' -ForegroundColor DarkGray
+        Write-Host ''
+        $choice = (Read-Host 'Votre choix').Trim()
+        if ($choice -eq '0') { return }
+
+        $selected = $Items | Where-Object { $_.Key -eq $choice } | Select-Object -First 1
+        if ($null -eq $selected) {
+            Write-Host 'Choix invalide.' -ForegroundColor Yellow
+            Start-Sleep -Seconds 1
+            continue
+        }
+        Invoke-MenuAction -Item $selected
     }
-    catch {
-        Write-Host "Erreur : $($_.Exception.Message)" -ForegroundColor Red
-    }
-    Write-Host ''
-    [void](Read-Host 'Appuyez sur Entree pour revenir au menu')
 }
+
+$startupItems = @(
+    (New-MenuItem '1' 'Installer / préparer le projet (npm ci, Prisma, migrations)' Script 'setup.ps1'),
+    (New-MenuItem '2' 'Démarrer frontend + backend dans deux fenêtres' Script 'dev-all.ps1'),
+    (New-MenuItem '3' 'Arrêter frontend + backend lancés par le menu' Script 'stop-dev-all.ps1'),
+    (New-MenuItem '4' 'Démarrer le frontend uniquement' Script 'dev.ps1'),
+    (New-MenuItem '5' 'Démarrer le backend uniquement' Script 'backend.ps1'),
+    (New-MenuItem '6' 'Construire puis prévisualiser le frontend' Script 'preview.ps1')
+)
+$qualityItems = @(
+    (New-MenuItem '1' 'Contrôle complet (types, lint, format, couverture, builds)' Script 'check.ps1'),
+    (New-MenuItem '2' 'Vérifier TypeScript' Npm '' @('run', 'typecheck')),
+    (New-MenuItem '3' 'Vérifier ESLint' Npm '' @('run', 'lint')),
+    (New-MenuItem '4' 'Corriger automatiquement ESLint' Npm '' @('run', 'lint:fix')),
+    (New-MenuItem '5' 'Vérifier Prettier' Npm '' @('run', 'format:check')),
+    (New-MenuItem '6' 'Formater les fichiers avec Prettier' Npm '' @('run', 'format')),
+    (New-MenuItem '7' 'Construire le frontend' Npm '' @('run', 'build')),
+    (New-MenuItem '8' 'Construire le backend' Npm '' @('run', 'build:server'))
+)
+$testItems = @(
+    (New-MenuItem '1' 'Tests unitaires frontend' Script 'test.ps1' @('-Mode', 'Unit')),
+    (New-MenuItem '2' 'Tests d’intégration backend' Script 'test.ps1' @('-Mode', 'Integration')),
+    (New-MenuItem '3' 'Tous les tests Vitest' Script 'test.ps1' @('-Mode', 'All')),
+    (New-MenuItem '4' 'Couverture frontend + backend avec seuils' Script 'test.ps1' @('-Mode', 'Coverage')),
+    (New-MenuItem '5' 'Tests E2E Playwright' Script 'test.ps1' @('-Mode', 'E2E')),
+    (New-MenuItem '6' 'Installer Chromium pour Playwright' Npm '' @('exec', '--', 'playwright', 'install', 'chromium')),
+    (New-MenuItem '7' 'Test de charge k6 (smoke, serveur local par défaut)' Script 'test.ps1' @('-Mode', 'LoadSmoke')),
+    (New-MenuItem '8' 'Test de charge k6 (stress, BASE_URL requis)' Script 'test.ps1' @('-Mode', 'LoadStress'))
+)
+$databaseItems = @(
+    (New-MenuItem '1' 'Générer les clients Prisma SQLite + PostgreSQL' Npm '' @('run', 'db:generate')),
+    (New-MenuItem '2' 'Vérifier l’état des migrations SQLite' Npm '' @('run', 'db:status')),
+    (New-MenuItem '3' 'Appliquer les migrations existantes' Npm '' @('run', 'db:deploy')),
+    (New-MenuItem '4' 'Créer une migration en développement' Npm '' @('run', 'db:migrate')),
+    (New-MenuItem '5' 'Vérifier la parité des schémas SQLite/PostgreSQL' Npm '' @('run', 'db:check-schema-parity')),
+    (New-MenuItem '6' 'Créer / réinitialiser les comptes de test (mot de passe demandé)' Script 'seed-test-users.ps1')
+)
+$dockerItems = @(
+    (New-MenuItem '1' 'Construire l’image Docker locale' Script 'docker.ps1' @('-Action', 'Build')),
+    (New-MenuItem '2' 'Démarrer le conteneur en arrière-plan' Script 'docker.ps1' @('-Action', 'Run')),
+    (New-MenuItem '3' 'Afficher l’état du conteneur' Script 'docker.ps1' @('-Action', 'Status')),
+    (New-MenuItem '4' 'Afficher les journaux du conteneur' Script 'docker.ps1' @('-Action', 'Logs')),
+    (New-MenuItem '5' 'Arrêter le conteneur' Script 'docker.ps1' @('-Action', 'Stop'))
+)
+$maintenanceItems = @(
+    (New-MenuItem '1' 'Nettoyer les builds, rapports et résultats de tests' Script 'clean.ps1'),
+    (New-MenuItem '2' 'Supprimer aussi node_modules (confirmation demandée)' Script 'clean.ps1' @('-Dependencies', '-Confirm'))
+)
 
 while ($true) {
-    Show-Menu
-    $choice = Read-Host 'Choisissez une commande (0-17)'
+    Show-MenuHeader -Title 'MENU PRINCIPAL'
+    Write-Host '  DÉMARRAGE' -ForegroundColor Yellow
+    Write-Host '  1. Démarrer, arrêter et prévisualiser'
+    Write-Host '  QUALITÉ ET BUILD' -ForegroundColor Yellow
+    Write-Host '  2. TypeScript, ESLint, Prettier et builds'
+    Write-Host '  TESTS ET CHARGE' -ForegroundColor Yellow
+    Write-Host '  3. Unitaires, intégration, couverture, E2E et k6'
+    Write-Host '  BASE DE DONNÉES' -ForegroundColor Yellow
+    Write-Host '  4. Prisma, migrations, parité et comptes de test'
+    Write-Host '  DOCKER' -ForegroundColor Yellow
+    Write-Host '  5. Build, démarrage, état, journaux et arrêt'
+    Write-Host '  MAINTENANCE' -ForegroundColor Yellow
+    Write-Host '  6. Nettoyage des artefacts'
+    Write-Host ''
+    Write-Host '  0. Quitter' -ForegroundColor DarkGray
+    Write-Host ''
+    $choice = (Read-Host 'Choisissez une rubrique').Trim()
 
     switch ($choice) {
-        '0' { Clear-Host; Write-Host 'A bientot !' -ForegroundColor Cyan; break }
-        '1' { Invoke-ProjectScript -ScriptName 'setup.ps1' -Description 'Preparation du projet (aucun test ne sera lance)' }
-        '2' { Invoke-ProjectScript -ScriptName 'dev-all.ps1' -Description 'Demarrage du frontend et du backend' }
-        '3' { Invoke-ProjectScript -ScriptName 'dev.ps1' -Description 'Demarrage du frontend' }
-        '4' { Invoke-ProjectScript -ScriptName 'backend.ps1' -Description 'Demarrage du backend' }
-        '5' { Invoke-NpmCommand -NpmArguments @('run', 'typecheck') -Description 'Verification TypeScript' }
-        '6' { Invoke-NpmCommand -NpmArguments @('run', 'lint') -Description 'Verification ESLint' }
-        '7' { Invoke-NpmCommand -NpmArguments @('run', 'format:check') -Description 'Verification Prettier' }
-        '8' { Invoke-NpmCommand -NpmArguments @('run', 'test:unit') -Description 'Tests unitaires' -ConfirmFirst }
-        '9' { Invoke-NpmCommand -NpmArguments @('run', 'test:integration') -Description 'Tests d''integration' -ConfirmFirst }
-        '10' { Invoke-NpmCommand -NpmArguments @('run', 'test:e2e') -Description 'Tests E2E Playwright' -ConfirmFirst }
-        '11' { Invoke-NpmCommand -NpmArguments @('run', 'test') -Description 'Tous les tests Vitest' -ConfirmFirst }
-        '12' { Invoke-NpmCommand -NpmArguments @('run', 'check') -Description 'Verification complete : types, lint, format, tests et builds' -ConfirmFirst }
-        '13' { Invoke-NpmCommand -NpmArguments @('run', 'build') -Description 'Build du frontend' }
-        '14' { Invoke-NpmCommand -NpmArguments @('run', 'build:server') -Description 'Build du backend' }
-        '15' { Invoke-NpmCommand -NpmArguments @('run', 'db:generate') -Description 'Generation du client Prisma' }
-        '16' { Invoke-NpmCommand -NpmArguments @('run', 'db:deploy') -Description 'Application des migrations de base de donnees' -ConfirmFirst }
-        '17' { Invoke-SetupAndSeedTestUsers }
+        '1' { Invoke-MenuCategory -Title 'DÉMARRAGE' -Items $startupItems }
+        '2' { Invoke-MenuCategory -Title 'QUALITÉ ET BUILD' -Items $qualityItems }
+        '3' { Invoke-MenuCategory -Title 'TESTS ET CHARGE' -Items $testItems }
+        '4' { Invoke-MenuCategory -Title 'BASE DE DONNÉES' -Items $databaseItems }
+        '5' { Invoke-MenuCategory -Title 'DOCKER' -Items $dockerItems }
+        '6' { Invoke-MenuCategory -Title 'MAINTENANCE' -Items $maintenanceItems }
+        '0' { Clear-Host; Write-Host 'À bientôt !' -ForegroundColor Cyan; return }
         default {
-            Write-Host 'Choix invalide. Entrez un nombre entre 0 et 17.' -ForegroundColor Yellow
-            Start-Sleep -Seconds 2
+            Write-Host 'Choix invalide. Entrez un nombre entre 0 et 6.' -ForegroundColor Yellow
+            Start-Sleep -Seconds 1
         }
     }
-
-    if ($choice -eq '0') { break }
 }
