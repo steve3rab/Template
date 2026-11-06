@@ -49,6 +49,29 @@ describe('CustomerAccountData', () => {
                 totalCents: 7400,
                 createdAt: '2026-11-01T12:00:00.000Z',
                 items: [{ id: 'item-2', productName: 'Sneakers Everyday', quantity: 1 }],
+                refundedCents: 1200,
+                financialTransactions: [
+                  {
+                    id: 'transaction-payment-1',
+                    orderId: 'order-shipped-87654321',
+                    stripeObjectId: 'pi_test_123',
+                    type: 'PAYMENT',
+                    status: 'SUCCEEDED',
+                    amountCents: 7400,
+                    currency: 'EUR',
+                    createdAt: '2026-11-01T12:00:00.000Z',
+                  },
+                  {
+                    id: 'transaction-refund-1',
+                    orderId: 'order-shipped-87654321',
+                    stripeObjectId: 're_test_123',
+                    type: 'REFUND',
+                    status: 'SUCCEEDED',
+                    amountCents: 1200,
+                    currency: 'EUR',
+                    createdAt: '2026-11-02T12:00:00.000Z',
+                  },
+                ],
               },
             ],
           });
@@ -64,6 +87,8 @@ describe('CustomerAccountData', () => {
     expect(screen.getByText(/Expédiée/)).toBeInTheDocument();
     expect(screen.getByText(/Paiement confirmé · préparation à venir/)).toBeInTheDocument();
     expect(screen.getAllByText(/Paiement : Payé/)).toHaveLength(2);
+    expect(screen.getByText(/Partiellement remboursé/)).toBeInTheDocument();
+    expect(screen.getByText(/Remboursement · 12,00/)).toBeInTheDocument();
     expect(screen.queryByText('UNPAID')).not.toBeInTheDocument();
     expect(screen.queryByText('SHIPPED')).not.toBeInTheDocument();
   });
