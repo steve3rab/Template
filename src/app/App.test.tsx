@@ -269,9 +269,6 @@ describe('Fashion storefront', () => {
     expect(screen.queryByPlaceholderText('Numéro et rue')).not.toBeInTheDocument();
     expect(screen.getByText(/aucun frais de livraison n’est ajouté/i)).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox'));
-    const cartWritesBeforeSubmit = requests.filter(
-      (request) => request.url === '/api/customer/cart' && request.method === 'PUT',
-    ).length;
     await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
     expect(
       await screen.findByRole('heading', { name: /merci pour votre commande/i }),
@@ -382,6 +379,9 @@ describe('Fashion storefront', () => {
     await user.type(screen.getByPlaceholderText('75000'), '  ');
     await user.type(screen.getByPlaceholderText('Paris'), '  ');
     await user.click(screen.getByRole('checkbox'));
+    const cartWritesBeforeSubmit = requests.filter(
+      (request) => request.url === '/api/customer/cart' && request.method === 'PUT',
+    ).length;
     await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
 
     expect(
