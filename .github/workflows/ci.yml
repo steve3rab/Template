@@ -108,6 +108,45 @@ jobs:
       - name: Verify concurrent stock reservations against PostgreSQL
         run: npx vitest run server/src/postgres-concurrency.test.ts
 
+  windows-scripts:
+    runs-on: windows-latest
+    env:
+      DATABASE_URL: file:./dev.db
+      APP_ORIGIN: http://127.0.0.1:15173
+      SESSION_SECRET: windows-ci-only-secret-that-is-long-enough
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Pin npm to a stable version
+        shell: pwsh
+        run: npm install --global npm@10.9.4
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - run: npm run db:generate
+      - run: npm run db:deploy
+      - name: Verify PowerShell helpers and Prisma schema checks
+        shell: pwsh
+        run: |
+          . .\scripts\common.ps1
+          Assert-Toolchain
+          Assert-DependenciesInstalled
+          Invoke-Npm -Arguments @('run', 'db:check-schema-parity')
+      - name: Start and stop the full local stack
+        shell: pwsh
+        run: |
+          try {
+            .\scripts\dev-all.ps1 -FrontendPort 15173 -BackendPort 13001
+            $api = Invoke-WebRequest -Uri 'http://127.0.0.1:13001/api/health' -TimeoutSec 10
+            $web = Invoke-WebRequest -Uri 'http://127.0.0.1:15173/' -TimeoutSec 10
+            if ($api.StatusCode -ne 200) { throw "API health check returned $($api.StatusCode)." }
+            if ($web.StatusCode -ne 200) { throw "Frontend check returned $($web.StatusCode)." }
+            Write-Host 'Frontend and API are reachable.'
+          }
+          finally {
+            .\scripts\stop-dev-all.ps1
+          }
+
   docker:
     runs-on: ubuntu-latest
     steps:
