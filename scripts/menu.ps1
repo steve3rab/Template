@@ -113,7 +113,7 @@ function Invoke-MenuCategory {
 
 $startupItems = @(
     (New-MenuItem '1' 'Installer / préparer le projet (npm ci, Prisma, migrations)' Script 'setup.ps1' -ConfirmFirst),
-    (New-MenuItem '2' 'Démarrer frontend + backend dans deux fenêtres' Script 'dev-all.ps1'),
+    (New-MenuItem '2' 'Démarrer frontend + backend dans ce terminal' Script 'dev-all.ps1'),
     (New-MenuItem '3' 'Arrêter frontend + backend lancés par le menu' Script 'stop-dev-all.ps1'),
     (New-MenuItem '4' 'Démarrer le frontend uniquement' Script 'dev.ps1'),
     (New-MenuItem '5' 'Démarrer le backend uniquement' Script 'backend.ps1'),
