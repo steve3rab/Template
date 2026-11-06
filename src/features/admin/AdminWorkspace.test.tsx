@@ -65,7 +65,8 @@ describe('AdminWorkspace', () => {
             },
           ],
         }),
-      );
+      )
+      .mockResolvedValueOnce(jsonResponse({ transactions: [] }));
     vi.stubGlobal('fetch', fetchMock);
 
     render(<AdminWorkspace />);
@@ -82,5 +83,8 @@ describe('AdminWorkspace', () => {
 
     await screen.getByRole('button', { name: /commandes/i }).click();
     await waitFor(() => expect(screen.getByText(/client@example.test/i)).toBeInTheDocument());
+    await screen.getByRole('button', { name: /finances/i }).click();
+    expect(screen.getByRole('heading', { name: /historique financier/i })).toBeInTheDocument();
+    expect(screen.getByText(/aucune transaction financière/i)).toBeInTheDocument();
   });
 });
