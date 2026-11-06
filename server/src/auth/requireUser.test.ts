@@ -23,7 +23,12 @@ describe('requireUser', () => {
     const resolveUser = vi.fn().mockResolvedValue(user);
 
     await expect(
-      requireUser(request, reply as unknown as FastifyReply, prisma, resolveUser),
+      requireUser(
+        request,
+        reply as unknown as FastifyReply,
+        prisma,
+        resolveUser,
+      ),
     ).resolves.toBe(user);
 
     expect(resolveUser).toHaveBeenCalledWith(request, prisma);
@@ -36,7 +41,12 @@ describe('requireUser', () => {
     const resolveUser = vi.fn().mockResolvedValue(null);
 
     await expect(
-      requireUser(request, reply as unknown as FastifyReply, prisma, resolveUser),
+      requireUser(
+        request,
+        reply as unknown as FastifyReply,
+        prisma,
+        resolveUser,
+      ),
     ).resolves.toBeNull();
 
     expect(reply.code).toHaveBeenCalledWith(401);
@@ -58,7 +68,9 @@ describe('requireUser', () => {
     ).resolves.toBeNull();
 
     expect(reply.code).toHaveBeenCalledWith(403);
-    expect(reply.send).toHaveBeenCalledWith({ error: 'Insufficient permissions.' });
+    expect(reply.send).toHaveBeenCalledWith({
+      error: 'Insufficient permissions.',
+    });
   });
 
   it('accepts any one of the explicitly allowed roles', async () => {
