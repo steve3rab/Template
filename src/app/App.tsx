@@ -155,9 +155,7 @@ export function App() {
   const [language, setLanguage] = useState<'fr' | 'en'>(() =>
     window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
   );
-  const languageRef = useRef(language);
-  languageRef.current = language;
-  const translate = (fr: string, en: string) => languageRef.current === 'en' ? en : fr;
+  const translate = (fr: string, en: string) => language === 'en' ? en : fr;
   const formatPrice = (amount: number) => formatCurrency(amount, 'EUR', language === 'en' ? 'en-GB' : 'fr-FR');
   const productTag = (tag: string) => {
     if (language === 'fr') return tag;
@@ -497,7 +495,7 @@ export function App() {
 
   function addToCart(product: Product) {
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
-    setNotice(languageRef.current === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`);
+    setNotice(language === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`);
     setCartOpen(true);
   }
   function changeQuantity(id: string, amount: number) {
