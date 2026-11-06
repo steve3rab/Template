@@ -247,6 +247,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
           ? cause.message
           : t('Impossible de modifier ce rôle.', 'Unable to change this role.'),
       );
+      setLoading(false);
     }
   }
 
@@ -272,6 +273,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
               'Unable to change product visibility.',
             ),
       );
+      setLoading(false);
     }
   }
 
