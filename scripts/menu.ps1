@@ -131,7 +131,7 @@ $qualityItems = @(
 )
 $testItems = @(
     (New-MenuItem '1' 'Tests unitaires frontend' Script 'test.ps1' @('-Mode', 'Unit')),
-    (New-MenuItem '2' 'Tests d’intégration backend' Script 'test.ps1' @('-Mode', 'Integration')),
+    (New-MenuItem '2' 'Tests d-intégration backend' Script 'test.ps1' @('-Mode', 'Integration')),
     (New-MenuItem '3' 'Tous les tests Vitest' Script 'test.ps1' @('-Mode', 'All')),
     (New-MenuItem '4' 'Couverture frontend + backend avec seuils' Script 'test.ps1' @('-Mode', 'Coverage') -ConfirmFirst),
     (New-MenuItem '5' 'Tests E2E Playwright' Script 'test.ps1' @('-Mode', 'E2E') -ConfirmFirst),
@@ -141,16 +141,16 @@ $testItems = @(
 )
 $databaseItems = @(
     (New-MenuItem '1' 'Générer les clients Prisma SQLite + PostgreSQL' Npm '' @('run', 'db:generate')),
-    (New-MenuItem '2' 'Vérifier l’état des migrations SQLite' Npm '' @('run', 'db:status')),
+    (New-MenuItem '2' 'Vérifier l-état des migrations SQLite' Npm '' @('run', 'db:status')),
     (New-MenuItem '3' 'Appliquer les migrations existantes' Npm '' @('run', 'db:deploy') -ConfirmFirst),
     (New-MenuItem '4' 'Créer une migration en développement' Npm '' @('run', 'db:migrate')),
     (New-MenuItem '5' 'Vérifier la parité des schémas SQLite/PostgreSQL' Npm '' @('run', 'db:check-schema-parity')),
     (New-MenuItem '6' 'Créer / réinitialiser les comptes de test (mot de passe demandé)' Script 'seed-test-users.ps1')
 )
 $dockerItems = @(
-    (New-MenuItem '1' 'Construire l’image Docker locale' Script 'docker.ps1' @('-Action', 'Build')),
+    (New-MenuItem '1' 'Construire l-image Docker locale' Script 'docker.ps1' @('-Action', 'Build')),
     (New-MenuItem '2' 'Démarrer le conteneur en arrière-plan' Script 'docker.ps1' @('-Action', 'Run')),
-    (New-MenuItem '3' 'Afficher l’état du conteneur' Script 'docker.ps1' @('-Action', 'Status')),
+    (New-MenuItem '3' 'Afficher l-état du conteneur' Script 'docker.ps1' @('-Action', 'Status')),
     (New-MenuItem '4' 'Afficher les journaux du conteneur' Script 'docker.ps1' @('-Action', 'Logs')),
     (New-MenuItem '5' 'Arrêter le conteneur' Script 'docker.ps1' @('-Action', 'Stop'))
 )
