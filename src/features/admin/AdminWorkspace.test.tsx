@@ -154,7 +154,9 @@ describe('AdminWorkspace', () => {
     expect(screen.getByText(/no users/i)).toBeInTheDocument();
   });
 
-  it('shows a recoverable initial loading error and retries without rendering empty data', async () => {
+  it(
+    'shows a recoverable initial loading error and retries without rendering empty data',
+    async () => {
     let failed = true;
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
