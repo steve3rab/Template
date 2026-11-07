@@ -675,25 +675,32 @@ export function SellerWorkspace({
             {visibleProducts.length} / {products.length}
           </span>
         </div>
-        {products.length === 0 ? (
-          <p>
-            {t(
-              'Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.',
-              'No products yet. Add your first product above.',
-            )}
-          </p>
-        ) : (
-          visibleProducts.map((product) => (
-            <div className="best-seller-row" key={product.id}>
-              <div className="best-seller-name">
-                <strong>{product.name}</strong>
-                <span>
-                  {formatMoney(product.priceCents)} ·{' '}
-                  {product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}
-                </span>
-              </div>
-              <label>
-                {t('Nom', 'Name')}{' '}
+        <DataTable
+          ariaLabel={t('Mes produits', 'My products')}
+          data={visibleProducts}
+          rowKey={(product) => product.id}
+          emptyMessage={products.length === 0
+            ? t('Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.', 'No products yet. Add your first product above.')
+            : t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')}
+          labels={{
+            pageSize: t('Lignes par page', 'Rows per page'),
+            previous: t('Précédent', 'Previous'),
+            next: t('Suivant', 'Next'),
+            page: t('Page', 'Page'),
+            of: t('sur', 'of'),
+            rows: t('lignes', 'rows'),
+          }}
+          columns={[
+            {
+              key: 'product',
+              header: t('Produit', 'Product'),
+              sortValue: (product) => product.name,
+              render: (product) => <strong>{product.name}</strong>,
+            },
+            {
+              key: 'name',
+              header: t('Nom', 'Name'),
+              render: (product) => (
                 <input
                   aria-label={t(`Nom ${product.name}`, `Name ${product.name}`)}
                   defaultValue={product.name}
@@ -704,9 +711,14 @@ export function SellerWorkspace({
                       void updateProduct(product, { name: value });
                   }}
                 />
-              </label>
-              <label>
-                {t('Prix (€)', 'Price (€)')}{' '}
+              ),
+            },
+            {
+              key: 'price',
+              header: t('Prix (€)', 'Price (€)'),
+              sortValue: (product) => product.priceCents,
+              align: 'right',
+              render: (product) => (
                 <input
                   aria-label={t(`Prix ${product.name}`, `Price ${product.name}`)}
                   type="number"
@@ -721,9 +733,14 @@ export function SellerWorkspace({
                       void updateProduct(product, { priceCents: cents });
                   }}
                 />
-              </label>
-              <label>
-                {t('Stock', 'Stock')}{' '}
+              ),
+            },
+            {
+              key: 'stock',
+              header: t('Stock', 'Stock'),
+              sortValue: (product) => product.stock,
+              align: 'right',
+              render: (product) => (
                 <input
                   aria-label={t(`Stock ${product.name}`, `Stock ${product.name}`)}
                   type="number"
@@ -736,21 +753,27 @@ export function SellerWorkspace({
                       void updateProduct(product, { stock: value });
                   }}
                 />
-              </label>
-              <button
-                className="text-action"
-                onClick={() => void updateProduct(product, { active: !product.active })}
-              >
-                {product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}
-              </button>
-            </div>
-          ))
-        )}
-        {products.length > 0 && visibleProducts.length === 0 && (
-          <p className="empty-state" role="status">
-            {t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')}
-          </p>
-        )}
+              ),
+            },
+            {
+              key: 'visibility',
+              header: t('Visibilité', 'Visibility'),
+              sortValue: (product) => (product.active ? 1 : 0),
+              render: (product) => (
+                <div className="data-table__stack">
+                  <span>{product.active ? t('Publié', 'Published') : t('Masqué', 'Hidden')}</span>
+                  <button
+                    className="text-action"
+                    type="button"
+                    onClick={() => void updateProduct(product, { active: !product.active })}
+                  >
+                    {product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}
+                  </button>
+                </div>
+              ),
+            },
+          ]}
+        />
       </section>
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
