@@ -101,6 +101,8 @@ Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
 
 ## Contrôles qualité
 
+La stratégie détaillée de couverture, les tests FR/EN, les contrôles mobiles/accessibilité et les procédures d'exploitation sont regroupés dans [docs/QUALITY_AND_OPERATIONS.md](docs/QUALITY_AND_OPERATIONS.md).
+
 Les tests couvrent les composants et parcours frontend, les routes API (authentification, sessions, autorisations, validation, cookies, origine, limitation de débit, paiements, remboursements et rapprochement Stripe), ainsi que les parcours utilisateur Playwright. Des tests PostgreSQL dédiés vérifient les écritures concurrentes sur les stocks et les transitions de commandes. Les seuils de couverture sont contrôlés séparément pour le frontend et le backend.
 
 ```bash
