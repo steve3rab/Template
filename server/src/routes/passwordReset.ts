@@ -29,6 +29,7 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
       const body = passwordResetRequestSchema.safeParse(request.body);
       if (!body.success) return reply.code(400).send({ error: 'Invalid email.' });
       const user = await prisma.user.findUnique({ where: { email: body.data.email } });
+      let developmentResetUrl: string | undefined;
       if (user) {
         const token = randomBytes(32).toString('base64url');
         const resetToken = await prisma.passwordResetToken.create({
@@ -67,8 +68,19 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
         } else if (webhook) {
           await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
           request.log.error('Password reset webhook credentials are incomplete.');
-        } else if (process.env.NODE_ENV !== 'production') {
-          request.log.info({ resetToken: token }, 'Development-only password reset token');
+        } else if (process.env.NODE_ENV === 'development') {
+          const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+          let localOrigin = false;
+          try {
+            const parsedOrigin = new URL(origin);
+            localOrigin =
+              parsedOrigin.protocol === 'http:' &&
+              ['localhost', '127.0.0.1', '[::1]'].includes(parsedOrigin.hostname);
+          } catch {
+            localOrigin = false;
+          }
+          // Return the token only to an explicitly local development frontend; never log it.
+          if (localOrigin) developmentResetUrl = `${origin}/reset-password?token=${token}`;
         } else {
           request.log.error(
             'PASSWORD_RESET_WEBHOOK_URL is missing; password reset email was not delivered.',
@@ -78,6 +90,7 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
       return reply.send({
         message:
           'Si cette adresse correspond à un compte, un lien de réinitialisation sera envoyé.',
+        ...(developmentResetUrl ? { developmentResetUrl } : {}),
       });
     },
   );
