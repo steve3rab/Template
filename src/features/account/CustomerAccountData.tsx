@@ -388,7 +388,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 key: 'order',
                 header: t('Commande', 'Order'),
                 sortValue: (order) => order.id,
-                render: (order) => <strong>{order.id.slice(-8)}</strong>,
+                render: (order) => <strong>{t('Commande', 'Order')} {order.id.slice(-8)}</strong>,
               },
               {
                 key: 'createdAt',
