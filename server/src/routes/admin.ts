@@ -109,7 +109,10 @@ export function registerAdminRoutes(
     return { orders };
   });
 
-  app.post('/api/admin/users/:id/role', async (request, reply) => {
+  app.post(
+    '/api/admin/users/:id/role',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
     const params = resourceIdParamsSchema.safeParse(request.params);
