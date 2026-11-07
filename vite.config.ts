@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
+    headers: {
+      'Permissions-Policy':
+        'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
+    },
     strictPort: true,
     proxy: {
       '/api': {
@@ -15,6 +19,10 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
+    headers: {
+      'Permissions-Policy':
+        'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
+    },
     strictPort: true,
     proxy: {
       '/api': {
