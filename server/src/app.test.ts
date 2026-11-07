@@ -671,4 +671,29 @@ describe('authentication API', () => {
     expect(response.statusCode).toBe(500);
     expect(response.body).not.toContain('database-secret-detail');
   });
+
+
+  it('sanitizes database failures from protected administrator endpoints', async () => {
+    const registered = await register('admin-error@example.com');
+    const user = [...store.users.values()].find((entry) => entry.email === 'admin-error@example.com');
+    if (!user) throw new Error('Expected a registered administrator test user');
+    user.role = 'ADMIN';
+
+    const userModel = store.prisma.user as unknown as {
+      count: ReturnType<typeof vi.fn>;
+    };
+    userModel.count = vi.fn(async () => {
+      throw new Error('private-database-connection-string');
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/dashboard',
+      headers: { cookie: sessionCookie(registered) },
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toEqual({ error: 'Internal server error.' });
+    expect(response.body).not.toContain('private-database-connection-string');
+  });
 });
