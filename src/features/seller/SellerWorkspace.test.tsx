@@ -88,6 +88,31 @@ describe('SellerWorkspace translations', () => {
     expect(dashboardRequests).toBe(2);
   });
 
+  it('filters the seller catalogue by search and low-stock status', async () => {
+    const products = [
+      { id: 'p-1', name: 'Sac en cuir', description: '', category: 'Accessoires', priceCents: 4500, stock: 2, active: true },
+      { id: 'p-2', name: 'Veste coton', description: '', category: 'Vêtements', priceCents: 7900, stock: 12, active: true },
+      { id: 'p-3', name: 'Ancien sac', description: '', category: 'Accessoires', priceCents: 2500, stock: 0, active: false },
+    ];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/seller/dashboard')) return apiResponse({ periodDays: 30, revenueCents: 0, orders: 0, paidOrders: 0, unitsSold: 0, products: 3, lowStockProducts: 2, currency: 'EUR' });
+      if (url === '/api/seller/products') return apiResponse({ products });
+      if (url === '/api/seller/orders') return apiResponse({ orders: [] });
+      return apiResponse({ error: 'Unexpected request.' }, 500);
+    }));
+    const user = userEvent.setup();
+    render(<SellerWorkspace range="30" language="en" />);
+    expect(await screen.findByText('Sac en cuir')).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: /filter products/i }), 'low-stock');
+    expect(screen.getByText('Sac en cuir')).toBeInTheDocument();
+    expect(screen.getByText('Ancien sac')).toBeInTheDocument();
+    expect(screen.queryByText('Veste coton')).not.toBeInTheDocument();
+    await user.type(screen.getByRole('searchbox', { name: /search products/i }), 'ancien');
+    expect(screen.getByText('Ancien sac')).toBeInTheDocument();
+    expect(screen.queryByText('Sac en cuir')).not.toBeInTheDocument();
+  });
+
   it('rejects whitespace-only product names before calling the API', async () => {
     const toastMessages: string[] = [];
     const onToast = (event: Event) => {
