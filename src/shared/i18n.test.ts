@@ -9,11 +9,11 @@ describe('translation catalog', () => {
   it.each(['fr', 'en'] as const)(
     'has non-empty string values for every %s translation',
     (language) => {
-    for (const [key, value] of Object.entries(translations[language])) {
-      if (typeof value === 'string') {
-        expect(value.trim(), `${language}.${key} must not be empty`).not.toBe('');
+      for (const [key, value] of Object.entries(translations[language])) {
+        if (typeof value === 'string') {
+          expect(value.trim(), `${language}.${key} must not be empty`).not.toBe('');
+        }
       }
-    }
     },
   );
 
