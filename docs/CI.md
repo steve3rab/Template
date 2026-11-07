@@ -7,7 +7,7 @@ Le job qualité commence par analyser la syntaxe de tous les fichiers PowerShell
 Le workflow [CI](../.github/workflows/ci.yml) s'exécute lors d'un push sur `main`, d'une pull request et à la demande (`workflow_dispatch`). Les jobs s'exécutent sur Ubuntu avec Node.js 22.16.0 et npm 10.9.4.
 
 - **`quality`** : installation, génération Prisma, migrations, TypeScript, ESLint, Prettier, couverture frontend, couverture backend, build frontend et build serveur.
-- **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright desktop, mobile et tablette, y compris les contrôles d'accessibilité clavier et les attributs alternatifs des images.
+- **`e2e`** : installation, génération Prisma, migrations, installation de Chromium et tests Playwright desktop, mobile et tablette. La suite `e2e/quality.spec.ts` contrôle le changement FR/EN, la navigation légale, les landmarks, les noms accessibles des boutons, les attributs `alt` et l'utilisation clavier du panier.
 - **`postgres-concurrency`** : démarre PostgreSQL 16, génère le client Prisma dédié, pousse le schéma PostgreSQL et vérifie les réservations de stock et transitions de commande concurrentes.
 - **`docker`** : construction de l'image avec Buildx, sans publication (`push: false`).
 - **`windows-scripts`** : exécute réellement les helpers PowerShell sur Windows, vérifie les outils et la parité Prisma, démarre frontend/API puis vérifie leurs endpoints et arrête l'arbre des processus.
