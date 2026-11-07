@@ -45,6 +45,31 @@ export function registerAddressRoutes(
     return reply.code(201).send({ address });
   });
 
+  app.patch('/api/customer/addresses/:id/default', async (request, reply) => {
+    const user = await requireUser(request, reply, prisma, resolveUser);
+    if (!user) return;
+    const params = resourceIdParamsSchema.safeParse(request.params);
+    if (!params.success) return reply.code(400).send({ error: 'Invalid address id.' });
+
+    const address = await prisma.$transaction(async (tx) => {
+      const ownedAddress = await tx.address.findFirst({
+        where: { id: params.data.id, userId: user.id },
+        select: { id: true },
+      });
+      if (!ownedAddress) return null;
+      await tx.address.updateMany({
+        where: { userId: user.id },
+        data: { isDefault: false },
+      });
+      return tx.address.update({
+        where: { id: ownedAddress.id },
+        data: { isDefault: true },
+      });
+    });
+    if (!address) return reply.code(404).send({ error: 'Address not found.' });
+    return { address };
+  });
+
   app.delete('/api/customer/addresses/:id', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
