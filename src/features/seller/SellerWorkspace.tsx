@@ -679,9 +679,14 @@ export function SellerWorkspace({
           ariaLabel={t('Mes produits', 'My products')}
           data={visibleProducts}
           rowKey={(product) => product.id}
-          emptyMessage={products.length === 0
-            ? t('Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.', 'No products yet. Add your first product above.')
-            : t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')}
+          emptyMessage={
+            products.length === 0
+              ? t(
+                  'Aucun produit pour le moment. Ajoutez votre premier produit ci-dessus.',
+                  'No products yet. Add your first product above.',
+                )
+              : t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')
+          }
           labels={{
             pageSize: t('Lignes par page', 'Rows per page'),
             previous: t('Précédent', 'Previous'),
