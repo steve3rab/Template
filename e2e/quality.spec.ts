@@ -6,7 +6,9 @@ test('French and English storefront labels stay in sync when switching languages
   await page.goto('/');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByRole('heading', { name: 'Le style, en toute simplicité.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Le style, en toute simplicité.' }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Compte client' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Panier, 0 article(s)' })).toBeVisible();
 
