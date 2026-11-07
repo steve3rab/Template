@@ -18,7 +18,7 @@ foreach ($port in @($FrontendPort, $BackendPort)) {
     }
 }
 
-# Origin must match the browser URL exactly. Vite is opened at localhost, not 127.0.0.1.
+# The API origin must exactly match the browser URL used to open Vite.
 $frontendOrigin = "http://localhost:$FrontendPort"
 
 if ($SeedTestUsers) {
@@ -114,5 +114,5 @@ Write-Host ''
 Write-Host 'Les deux serveurs sont démarrés dans le terminal courant, avec des processus séparés.' -ForegroundColor Green
 Write-Host "Frontend : $frontendOrigin  (PID $($frontendProcess.Id))" -ForegroundColor Cyan
 Write-Host "Backend  : http://127.0.0.1:$BackendPort/api/health  (PID $($backendProcess.Id))" -ForegroundColor Cyan
-Write-Host 'Origine API autorisée : identique à l’URL frontend (protection anti-CSRF active).' -ForegroundColor DarkGray
+Write-Host 'Origine API autorisée : identique a l origine frontend (protection anti-CSRF active).' -ForegroundColor DarkGray
 Write-Host 'Arrêt groupé : .\scripts\stop-dev-all.ps1' -ForegroundColor Yellow
