@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient, User } from '@prisma/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { registerCustomerOrderRoutes } from './orders.js';
@@ -76,11 +77,37 @@ afterEach(async () => {
 
 async function startApp(prisma: PrismaClient, resolveUser: () => Promise<User | null>) {
   app = Fastify({ logger: false });
+  await app.register(rateLimit, {
+    global: false,
+    max: 100,
+    timeWindow: '1 minute',
+    keyGenerator: () => 'test-client',
+  });
   registerCustomerOrderRoutes(app, prisma, resolveUser);
   await app.ready();
 }
 
 describe('customer order access control', () => {
+  it('rate-limits repeated customer order creation attempts before database work', async () => {
+    const store = makePrisma();
+    await startApp(store.prisma as unknown as PrismaClient, async () => user);
+
+    const responses = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        app.inject({
+          method: 'POST',
+          url: '/api/customer/orders',
+          payload: { addressId: 'missing-address' },
+        }),
+      ),
+    );
+
+    expect(responses.filter((response) => response.statusCode === 404)).toHaveLength(5);
+    expect(responses.filter((response) => response.statusCode === 429)).toHaveLength(1);
+    expect(store.addressFindFirst).toHaveBeenCalledTimes(5);
+    expect(store.txOrderCreate).not.toHaveBeenCalled();
+  });
+
   it('rejects order history requests without an authenticated user', async () => {
     const store = makePrisma();
     await startApp(store.prisma as unknown as PrismaClient, async () => null);
