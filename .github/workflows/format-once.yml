@@ -1,0 +1,35 @@
+name: One-time format final patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.16.0
+      - run: npm install --global npm@10.9.4
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - name: Format and verify
+        run: |
+          npx prettier --write .
+          npx prettier --check .
+      - name: Commit formatter output
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Format final checkout regression test"
+            git push origin HEAD:main
+          else
+            echo "No formatting changes required."
+          fi
