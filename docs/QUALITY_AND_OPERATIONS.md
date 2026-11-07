@@ -80,7 +80,13 @@ Tests automatiques disponibles :
 
 La vérification automatique ne peut pas garantir la qualité éditoriale de chaque traduction. Une relecture humaine reste nécessaire, en particulier pour les conditions contractuelles et les messages de paiement.
 
-## 5. Démarrage et arrêt en local
+## 5. Confidentialité : aucune géolocalisation
+
+La politique de sécurité interdit les API de géolocalisation du navigateur (`geolocation=()`) et les capteurs de mouvement/orientation. Elle est renvoyée par Fastify, Vite en développement/preview et Nginx en production. Un test API vérifie l'en-tête et un test Playwright vérifie que l'autorisation navigateur de géolocalisation est refusée.
+
+Nginx désactive les journaux d'accès et Fastify désactive les journaux automatiques de requêtes afin de ne pas conserver les IP des visiteurs dans ces journaux applicatifs. Cela ne contrôle pas les journaux du CDN, de l'hébergeur, du pare-feu ou de l'opérateur réseau : leur configuration et leur rétention doivent être vérifiées séparément. Les adresses postales nécessaires à la livraison restent collectées uniquement dans le cadre des commandes.
+
+## 6. Démarrage et arrêt en local
 
 Prérequis : Node.js 22.16 ou supérieur, npm 10.9 ou supérieur. Depuis la racine :
 
@@ -98,7 +104,7 @@ Le frontend est servi sur `http://localhost:5173`, l'API sur `http://localhost:3
 
 Si Prisma ne peut pas remplacer son moteur natif sous Windows, arrêter les processus Node.js du dépôt avant de relancer `setup.ps1`. Ne pas supprimer la base locale sans sauvegarde si elle contient des données utiles.
 
-## 6. Vérifications avant livraison
+## 7. Vérifications avant livraison
 
 Exécuter dans cet ordre et corriger chaque erreur avant de poursuivre :
 
@@ -118,7 +124,7 @@ npm run test:e2e
 
 La commande `npm run check` regroupe le typage, ESLint, Prettier, les couvertures frontend/backend et les builds ; les tests Playwright restent une étape séparée. Sur GitHub, vérifier tous les jobs du commit concerné, et pas seulement le badge global. Un commit sans statut ou sans exécution de workflow n'est pas une validation CI.
 
-## 7. Exploitation et diagnostic
+## 8. Exploitation et diagnostic
 
 | Symptôme               | Contrôles à effectuer                                                                                                                 |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -131,7 +137,7 @@ La commande `npm run check` regroupe le typage, ESLint, Prettier, les couverture
 | Erreur 429             | Vérifier la fréquence d'appel et les limites configurées ; le stockage rate-limit mémoire n'est pas partagé entre plusieurs instances |
 | Paiement en attente    | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable  |
 
-## 8. Sauvegarde et retour arrière
+## 9. Sauvegarde et retour arrière
 
 Avant toute migration de production :
 
@@ -143,6 +149,6 @@ Avant toute migration de production :
 
 SQLite est adapté à une instance unique avec stockage persistant. Pour plusieurs instances ou des écritures concurrentes soutenues, utiliser PostgreSQL et vérifier le comportement sur une base de préproduction. Ne jamais effectuer de test de charge sur la production sans autorisation et plan de test.
 
-## 9. Limites connues
+## 10. Limites connues
 
 Les tests automatiques ne remplacent pas un audit de sécurité, une revue éditoriale bilingue, un test complet des prestataires externes ou une validation de capacité en production. Les scénarios k6 doivent être exécutés explicitement contre une préproduction isolée. Les tests clavier automatisés ne remplacent pas les essais avec lecteur d'écran.
