@@ -109,7 +109,7 @@ export function DataTable<T>({
 
   return (
     <div className="data-table-component">
-      <div className="data-table__viewport" role="region" aria-label={ariaLabel} tabIndex={0}>
+      <div className="data-table__viewport" role="region" aria-label={ariaLabel}>
         <table className="data-table" aria-label={ariaLabel}>
           <thead>
             <tr>
