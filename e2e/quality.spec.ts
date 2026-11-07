@@ -71,6 +71,20 @@ test('password reset page follows the selected language', async ({ page }) => {
   await expect(page.getByLabel('New password')).toBeVisible();
 });
 
+
+test('browser geolocation and device sensors are denied by security policy', async ({ page }) => {
+  const response = await page.goto('/');
+  expect(response).not.toBeNull();
+  expect(response?.headers()['permissions-policy']).toContain('geolocation=()');
+  expect(response?.headers()['permissions-policy']).toContain('accelerometer=()');
+
+  const geolocationPermission = await page.evaluate(async () => {
+    const permission = await navigator.permissions.query({ name: 'geolocation' });
+    return permission.state;
+  });
+  expect(geolocationPermission).toBe('denied');
+});
+
 test('storefront exposes semantic landmarks and accessible control names', async ({ page }) => {
   await page.goto('/');
 
