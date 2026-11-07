@@ -82,4 +82,61 @@ describe('DataTable', () => {
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
   });
+
+  it('keeps empty values last in both sort directions and preserves stable ties', () => {
+    const sortableRows = [
+      { id: 'a', name: 'Alpha', amount: 10 },
+      { id: 'b', name: 'Beta', amount: null },
+      { id: 'c', name: 'Gamma', amount: 10 },
+      { id: 'd', name: 'Delta', amount: 5 },
+    ];
+    const sortableColumns: DataTableColumn<(typeof sortableRows)[number]>[] = [
+      { key: 'name', header: 'Name', render: (row) => row.name },
+      {
+        key: 'amount',
+        header: 'Amount',
+        render: (row) => row.amount ?? '—',
+        sortValue: (row) => row.amount,
+      },
+    ];
+
+    render(
+      <DataTable
+        ariaLabel="Nullable records"
+        columns={sortableColumns}
+        data={sortableRows}
+        rowKey={(row) => row.id}
+        emptyMessage="No records."
+      />,
+    );
+
+    const table = screen.getByRole('table', { name: 'Nullable records' });
+    const getVisibleNames = () =>
+      within(table)
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.textContent);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amount' }));
+    expect(getVisibleNames()).toEqual(['Delta5', 'Alpha10', 'Gamma10', 'Beta—']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amount' }));
+    expect(getVisibleNames()).toEqual(['Alpha10', 'Gamma10', 'Delta5', 'Beta—']);
+  });
+
+  it('does not expose sorting controls for columns without a sort value', () => {
+    render(
+      <DataTable
+        ariaLabel="Records"
+        columns={[{ key: 'name', header: 'Name', render: (row: RecordRow) => row.name }]}
+        data={rows.slice(0, 2)}
+        rowKey={(row) => row.id}
+        emptyMessage="No records."
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Name' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Name' })).not.toHaveAttribute('aria-sort');
+  });
+
 });
