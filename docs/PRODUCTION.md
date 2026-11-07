@@ -13,6 +13,18 @@
 - L’image Docker actuelle sert le frontend via Nginx non privilégié. Elle ne lance pas l’API Fastify ni la base de données : déployez l’API comme service séparé, configurez le proxy /api vers ce service, et gardez l’API inaccessible directement depuis Internet.
 - Configurez les sauvegardes chiffrées, les alertes, la rétention des journaux, les limites réseau et les mises à jour de dépendances.
 
+## Confidentialité et interdiction de géolocalisation
+
+L'application n'utilise pas la géolocalisation de l'appareil et interdit les API navigateur correspondantes :
+
+- L'en-tête `Permissions-Policy` refuse `geolocation`, caméra, microphone et capteurs de mouvement/orientation.
+- Les réponses Fastify et les serveurs Vite (développement/preview) envoient cette politique.
+- Nginx applique la même politique et désactive les journaux d'accès qui conserveraient les adresses IP et les URL des visiteurs.
+- Fastify désactive les journaux automatiques de requêtes et les erreurs serveur sont journalisées sans sérialiseur réseau de requête.
+- La politique CSP de Nginx limite les connexions réseau du navigateur à l'origine de l'application.
+
+Cette protection bloque la géolocalisation par GPS/Wi-Fi/cellulaire exposée via le navigateur et évite la conservation des IP dans les journaux d'accès de cette configuration Nginx. Elle ne peut pas empêcher le fournisseur d'hébergement, le CDN, le pare-feu ou l'opérateur réseau de traiter une adresse IP pour acheminer les connexions. Configurez également ces services pour désactiver ou anonymiser les journaux IP et leur rétention. Les adresses postales saisies volontairement pour la livraison restent nécessaires au commerce et ne sont pas une géolocalisation GPS.
+
 ## Comptes de test
 
 Le seed `npm run db:seed:test-users` et l'option 17 du menu PowerShell sont exclusivement réservés au développement local. Le script bloque les marqueurs d'environnement production, préproduction et staging et exige une origine `APP_ORIGIN` locale. N'exécutez jamais ce seed contre une base de préproduction ou de production : il crée/réinitialise des comptes privilégiés avec un mot de passe de démonstration connu et révoque leurs sessions existantes.
