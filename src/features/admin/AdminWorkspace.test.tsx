@@ -157,74 +157,75 @@ describe('AdminWorkspace', () => {
   it(
     'shows a recoverable initial loading error and retries without rendering empty data',
     async () => {
-    let failed = true;
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (failed) return jsonResponse({ error: 'Temporary failure.' }, 503);
-      if (url.endsWith('/dashboard')) {
-        return jsonResponse({
-          users: 0,
-          sellers: 0,
-          products: 0,
-          activeProducts: 0,
-          orders: 0,
-          paidOrders: 0,
-          revenueCents: 0,
-        });
-      }
-      if (url.endsWith('/users')) return jsonResponse({ users: [] });
-      if (url.endsWith('/products')) return jsonResponse({ products: [] });
-      if (url.endsWith('/orders')) return jsonResponse({ orders: [] });
-      return jsonResponse({ transactions: [] });
+      let failed = true;
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (failed) return jsonResponse({ error: 'Temporary failure.' }, 503);
+        if (url.endsWith('/dashboard')) {
+          return jsonResponse({
+            users: 0,
+            sellers: 0,
+            products: 0,
+            activeProducts: 0,
+            orders: 0,
+            paidOrders: 0,
+            revenueCents: 0,
+          });
+        }
+        if (url.endsWith('/users')) return jsonResponse({ users: [] });
+        if (url.endsWith('/products')) return jsonResponse({ products: [] });
+        if (url.endsWith('/orders')) return jsonResponse({ orders: [] });
+        return jsonResponse({ transactions: [] });
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      render(<AdminWorkspace language="en" />);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/temporary failure/i);
+      expect(screen.queryByText(/no users/i)).not.toBeInTheDocument();
+
+      failed = false;
+      await screen.getByRole('button', { name: /try again/i }).click();
+
+      expect(await screen.findByRole('heading', { name: /account management/i })).toBeInTheDocument();
+      expect(screen.getByText(/no users/i)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(10);
     });
-    vi.stubGlobal('fetch', fetchMock);
 
-    render(<AdminWorkspace language="en" />);
+    it('recovers from a rejected network request without showing false empty states', async () => {
+      let failed = true;
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (failed) throw new TypeError('Network unavailable.');
+        if (url.endsWith('/dashboard')) {
+          return jsonResponse({
+            users: 0,
+            sellers: 0,
+            products: 0,
+            activeProducts: 0,
+            orders: 0,
+            paidOrders: 0,
+            revenueCents: 0,
+          });
+        }
+        if (url.endsWith('/users')) return jsonResponse({ users: [] });
+        if (url.endsWith('/products')) return jsonResponse({ products: [] });
+        if (url.endsWith('/orders')) return jsonResponse({ orders: [] });
+        return jsonResponse({ transactions: [] });
+      });
+      vi.stubGlobal('fetch', fetchMock);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/temporary failure/i);
-    expect(screen.queryByText(/no users/i)).not.toBeInTheDocument();
+      render(<AdminWorkspace language="en" />);
 
-    failed = false;
-    await screen.getByRole('button', { name: /try again/i }).click();
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByText(/no users/i)).not.toBeInTheDocument();
 
-    expect(await screen.findByRole('heading', { name: /account management/i })).toBeInTheDocument();
-    expect(screen.getByText(/no users/i)).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(10);
-  });
+      failed = false;
+      await screen.getByRole('button', { name: /try again/i }).click();
 
-  it('recovers from a rejected network request without showing false empty states', async () => {
-    let failed = true;
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (failed) throw new TypeError('Network unavailable.');
-      if (url.endsWith('/dashboard')) {
-        return jsonResponse({
-          users: 0,
-          sellers: 0,
-          products: 0,
-          activeProducts: 0,
-          orders: 0,
-          paidOrders: 0,
-          revenueCents: 0,
-        });
-      }
-      if (url.endsWith('/users')) return jsonResponse({ users: [] });
-      if (url.endsWith('/products')) return jsonResponse({ products: [] });
-      if (url.endsWith('/orders')) return jsonResponse({ orders: [] });
-      return jsonResponse({ transactions: [] });
-    });
-    vi.stubGlobal('fetch', fetchMock);
-
-    render(<AdminWorkspace language="en" />);
-
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(screen.queryByText(/no users/i)).not.toBeInTheDocument();
-
-    failed = false;
-    await screen.getByRole('button', { name: /try again/i }).click();
-
-    expect(await screen.findByRole('heading', { name: /account management/i })).toBeInTheDocument();
-    expect(screen.getByText(/no users/i)).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(10);
-  });
+      expect(await screen.findByRole('heading', { name: /account management/i })).toBeInTheDocument();
+      expect(screen.getByText(/no users/i)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(10);
+    },
+  );
 });
