@@ -74,7 +74,16 @@ export function DataTable<T>({
     return data
       .map((row, index) => ({ row, index }))
       .sort((left, right) => {
-        const compared = compareValues(column.sortValue?.(left.row), column.sortValue?.(right.row));
+        const leftValue = column.sortValue?.(left.row);
+        const rightValue = column.sortValue?.(right.row);
+
+        // Keep missing values at the end regardless of sort direction.
+        if (leftValue == null || rightValue == null) {
+          if (leftValue == null && rightValue == null) return left.index - right.index;
+          return leftValue == null ? 1 : -1;
+        }
+
+        const compared = compareValues(leftValue, rightValue);
         return (sort.direction === 'asc' ? compared : -compared) || left.index - right.index;
       })
       .map(({ row }) => row);
