@@ -198,37 +198,38 @@ describe('SellerWorkspace translations', () => {
   it(
     'recovers from a network rejection without displaying a misleading empty catalogue',
     async () => {
-    let dashboardRequests = 0;
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.startsWith('/api/seller/dashboard')) {
-        dashboardRequests += 1;
-        if (dashboardRequests === 1) throw new TypeError('Network unavailable.');
-        return apiResponse({
-          periodDays: 30,
-          revenueCents: 0,
-          orders: 0,
-          paidOrders: 0,
-          unitsSold: 0,
-          products: 0,
-          lowStockProducts: 0,
-          currency: 'EUR',
-        });
-      }
-      if (url === '/api/seller/products') return apiResponse({ products: [] });
-      if (url === '/api/seller/orders') return apiResponse({ orders: [] });
-      return apiResponse({ error: 'Not found.' }, 404);
-    });
-    vi.stubGlobal('fetch', fetchMock);
+      let dashboardRequests = 0;
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.startsWith('/api/seller/dashboard')) {
+          dashboardRequests += 1;
+          if (dashboardRequests === 1) throw new TypeError('Network unavailable.');
+          return apiResponse({
+            periodDays: 30,
+            revenueCents: 0,
+            orders: 0,
+            paidOrders: 0,
+            unitsSold: 0,
+            products: 0,
+            lowStockProducts: 0,
+            currency: 'EUR',
+          });
+        }
+        if (url === '/api/seller/products') return apiResponse({ products: [] });
+        if (url === '/api/seller/orders') return apiResponse({ orders: [] });
+        return apiResponse({ error: 'Not found.' }, 404);
+      });
+      vi.stubGlobal('fetch', fetchMock);
 
-    const user = userEvent.setup();
-    render(<SellerWorkspace range="30" language="en" />);
+      const user = userEvent.setup();
+      render(<SellerWorkspace range="30" language="en" />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/unable to load seller data/i);
-    expect(screen.queryByText(/no products yet/i)).not.toBeInTheDocument();
+      expect(await screen.findByRole('alert')).toHaveTextContent(/unable to load seller data/i);
+      expect(screen.queryByText(/no products yet/i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /try again/i }));
-    expect(await screen.findByText(/no products yet/i)).toBeInTheDocument();
-    expect(dashboardRequests).toBe(2);
-  });
+      await user.click(screen.getByRole('button', { name: /try again/i }));
+      expect(await screen.findByText(/no products yet/i)).toBeInTheDocument();
+      expect(dashboardRequests).toBe(2);
+    },
+  );
 });
