@@ -12,6 +12,8 @@
 - Exécutez npm run db:generate puis npm run db:deploy comme étape de déploiement contrôlée, avec sauvegarde préalable et procédure de rollback.
 - L’image Docker actuelle sert le frontend via Nginx non privilégié. Elle ne lance pas l’API Fastify ni la base de données : déployez l’API comme service séparé, configurez le proxy /api vers ce service, et gardez l’API inaccessible directement depuis Internet.
 - Configurez les sauvegardes chiffrées, les alertes, la rétention des journaux, les limites réseau et les mises à jour de dépendances.
+- Configurez un Redis compatible Upstash REST avec `RATE_LIMIT_REDIS_REST_URL` (URL HTTPS) et `RATE_LIMIT_REDIS_REST_TOKEN`. Le démarrage de l'API en production échoue si ces paramètres manquent. Le rate limiting utilise alors le compteur atomique Redis partagé entre instances et un identifiant client HMAC dérivé de `SESSION_SECRET`, sans stocker l'adresse IP brute comme clé.
+- Le frontend Nginx applique une CSP same-origin stricte : polices, images, scripts et connexions externes sont bloqués. Hébergez les images et polices sur votre propre origine avant déploiement ; les URL Unsplash/Google Fonts distantes ne fonctionneront plus.
 
 ## Confidentialité et interdiction de géolocalisation
 
