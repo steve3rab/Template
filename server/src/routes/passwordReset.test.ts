@@ -121,6 +121,42 @@ describe('password reset routes', () => {
     expect(resetCreate).not.toHaveBeenCalled();
   });
 
+  it('returns a development reset link only to a loopback frontend and never logs the token', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');
+    const { resetCreate } = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().developmentResetUrl).toMatch(
+      /^http:\/\/localhost:5173\/reset-password\?token=[A-Za-z0-9_-]{43}$/,
+    );
+    expect(resetCreate).toHaveBeenCalledOnce();
+  });
+
+  it('does not expose development reset links to non-loopback origins', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('APP_ORIGIN', 'https://preview.example.test');
+    const { resetCreate } = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/password-reset/request',
+      payload: { email: user.email },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().developmentResetUrl).toBeUndefined();
+    expect(resetCreate).toHaveBeenCalledOnce();
+  });
+
   it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_URL', 'https://mailer.example.test/reset');
     vi.stubEnv('PASSWORD_RESET_WEBHOOK_TOKEN', 'test-webhook-token');
