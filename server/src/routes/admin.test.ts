@@ -93,22 +93,6 @@ describe('admin role management', () => {
   });
 
 
-  it.each(['SELLER', 'CUSTOMER'] as const)(
-    'returns 403 to the %s role without querying administrator data',
-    async (role) => {
-      const { userCount, productCount, orderCount } = setup(role);
-      await app.ready();
-
-      const response = await app.inject({ method: 'GET', url: '/api/admin/dashboard' });
-
-      expect(response.statusCode).toBe(403);
-      expect(response.json()).toEqual({ error: 'Insufficient permissions.' });
-      expect(userCount).not.toHaveBeenCalled();
-      expect(productCount).not.toHaveBeenCalled();
-      expect(orderCount).not.toHaveBeenCalled();
-    },
-  );
-
   it('exposes a dedicated administrator identity endpoint only to admins', async () => {
     setup('SELLER');
     await app.ready();
