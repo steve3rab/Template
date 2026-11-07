@@ -45,6 +45,27 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
   const [section, setSection] = useState<Section>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [productSearch, setProductSearch] = useState('');
+  const [productVisibilityFilter, setProductVisibilityFilter] = useState('all');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+
+  const visibleUsers = users.filter((user) =>
+    `${user.email} ${user.publicId}`.toLocaleLowerCase().includes(userSearch.trim().toLocaleLowerCase()) &&
+    (userRoleFilter === 'all' || user.role === userRoleFilter),
+  );
+  const visibleProducts = products.filter((product) =>
+    `${product.name} ${product.seller?.email ?? ''} ${product.category}`.toLocaleLowerCase().includes(productSearch.trim().toLocaleLowerCase()) &&
+    (productVisibilityFilter === 'all' ||
+      (productVisibilityFilter === 'active' && product.active) ||
+      (productVisibilityFilter === 'hidden' && !product.active)),
+  );
+  const visibleOrders = orders.filter((order) =>
+    `${order.id} ${order.customer?.email ?? ''} ${order.items.map((item) => item.productName).join(' ')}`.toLocaleLowerCase().includes(orderSearch.trim().toLocaleLowerCase()) &&
+    (orderStatusFilter === 'all' || order.status === orderStatusFilter),
+  );
 
   const load = useCallback(
     async (showProgress = true) => {
@@ -374,7 +395,18 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
           {section === 'users' && (
             <>
               <h2>{t('Gestion des comptes', 'Account management')}</h2>
-              {users.map((user) => (
+              <div className="workspace-filters">
+                <label>{t('Rechercher un compte', 'Search accounts')}
+                  <input type="search" aria-label={t('Rechercher un compte', 'Search accounts')} value={userSearch} onChange={(event) => setUserSearch(event.target.value)} placeholder={t('E-mail ou identifiant', 'Email or ID')} />
+                </label>
+                <label>{t('Rôle', 'Role')}
+                  <select aria-label={t('Filtrer les rôles', 'Filter roles')} value={userRoleFilter} onChange={(event) => setUserRoleFilter(event.target.value)}>
+                    <option value="all">{t('Tous', 'All')}</option><option value="CUSTOMER">{t('Clients', 'Customers')}</option><option value="SELLER">{t('Vendeurs', 'Sellers')}</option><option value="ADMIN">{t('Administrateurs', 'Administrators')}</option>
+                  </select>
+                </label>
+                <span className="field-hint">{visibleUsers.length} / {users.length}</span>
+              </div>
+              {visibleUsers.map((user) => (
                 <article className="admin-row" key={user.id}>
                   <div>
                     <strong>{user.email}</strong>
@@ -405,13 +437,25 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 </article>
               ))}
               {users.length === 0 && <p>{t('Aucun utilisateur.', 'No users.')}</p>}
+              {users.length > 0 && visibleUsers.length === 0 && <p className="empty-state" role="status">{t('Aucun compte ne correspond à ces filtres.', 'No accounts match these filters.')}</p>}
             </>
           )}
 
           {section === 'products' && (
             <>
               <h2>{t('Modération du catalogue', 'Catalogue moderation')}</h2>
-              {products.map((product) => (
+              <div className="workspace-filters">
+                <label>{t('Rechercher un produit', 'Search products')}
+                  <input type="search" aria-label={t('Rechercher un produit', 'Search products')} value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder={t('Nom, vendeur ou catégorie', 'Name, seller or category')} />
+                </label>
+                <label>{t('Visibilité', 'Visibility')}
+                  <select aria-label={t('Filtrer la visibilité', 'Filter visibility')} value={productVisibilityFilter} onChange={(event) => setProductVisibilityFilter(event.target.value)}>
+                    <option value="all">{t('Toutes', 'All')}</option><option value="active">{t('Publiés', 'Published')}</option><option value="hidden">{t('Masqués', 'Hidden')}</option>
+                  </select>
+                </label>
+                <span className="field-hint">{visibleProducts.length} / {products.length}</span>
+              </div>
+              {visibleProducts.map((product) => (
                 <article className="admin-row" key={product.id}>
                   <div>
                     <strong>{product.name}</strong>
@@ -430,13 +474,25 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 </article>
               ))}
               {products.length === 0 && <p>{t('Aucun produit.', 'No products.')}</p>}
+              {products.length > 0 && visibleProducts.length === 0 && <p className="empty-state" role="status">{t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')}</p>}
             </>
           )}
 
           {section === 'orders' && (
             <>
               <h2>{t('Suivi des commandes', 'Order tracking')}</h2>
-              {orders.map((order) => (
+              <div className="workspace-filters">
+                <label>{t('Rechercher une commande', 'Search orders')}
+                  <input type="search" aria-label={t('Rechercher une commande', 'Search orders')} value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder={t('N° commande, client ou produit', 'Order, customer or product')} />
+                </label>
+                <label>{t('Statut', 'Status')}
+                  <select aria-label={t('Filtrer les commandes', 'Filter orders')} value={orderStatusFilter} onChange={(event) => setOrderStatusFilter(event.target.value)}>
+                    <option value="all">{t('Tous les statuts', 'All statuses')}</option><option value="PENDING">{t('En attente', 'Pending')}</option><option value="PROCESSING">{t('En préparation', 'Processing')}</option><option value="SHIPPED">{t('Expédiées', 'Shipped')}</option><option value="DELIVERED">{t('Livrées', 'Delivered')}</option><option value="CANCELLED">{t('Annulées', 'Cancelled')}</option>
+                  </select>
+                </label>
+                <span className="field-hint">{visibleOrders.length} / {orders.length}</span>
+              </div>
+              {visibleOrders.map((order) => (
                 <article className="admin-row" key={order.id}>
                   <div>
                     <strong>
@@ -506,6 +562,7 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                 </article>
               ))}
               {orders.length === 0 && <p>{t('Aucune commande.', 'No orders.')}</p>}
+              {orders.length > 0 && visibleOrders.length === 0 && <p className="empty-state" role="status">{t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}</p>}
             </>
           )}
 
