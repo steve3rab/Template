@@ -84,7 +84,7 @@ La vérification automatique ne peut pas garantir la qualité éditoriale de cha
 
 La politique de sécurité interdit les API de géolocalisation du navigateur (`geolocation=()`) et les capteurs de mouvement/orientation. Elle est renvoyée par Fastify, Vite en développement/preview et Nginx en production. Un test API vérifie l'en-tête et un test Playwright vérifie que l'autorisation navigateur de géolocalisation est refusée.
 
-Nginx désactive les journaux d'accès et Fastify désactive les journaux automatiques de requêtes afin de ne pas conserver les IP des visiteurs dans ces journaux applicatifs. Cela ne contrôle pas les journaux du CDN, de l'hébergeur, du pare-feu ou de l'opérateur réseau : leur configuration et leur rétention doivent être vérifiées séparément. Les adresses postales nécessaires à la livraison restent collectées uniquement dans le cadre des commandes.
+Nginx désactive les journaux d'accès et Fastify désactive les journaux automatiques de requêtes afin de ne pas conserver les IP des visiteurs dans ces journaux applicatifs. La CSP Nginx bloque les ressources tierces côté navigateur ; les polices et images nécessaires doivent être hébergées sur la même origine. Cela ne contrôle pas les journaux du CDN, de l'hébergeur, du pare-feu ou de l'opérateur réseau : leur configuration et leur rétention doivent être vérifiées séparément. Les adresses postales nécessaires à la livraison restent collectées uniquement dans le cadre des commandes.
 
 ## 6. Démarrage et arrêt en local
 
@@ -134,7 +134,8 @@ La commande `npm run check` regroupe le typage, ESLint, Prettier, les couverture
 | Migration en attente   | Sauvegarder la base, examiner la migration, puis exécuter `npm run db:deploy`                                                         |
 | Session refusée        | Vérifier le cookie, HTTPS/SameSite, `APP_ORIGIN` et `SESSION_SECRET` sans jamais journaliser les secrets                              |
 | Erreur 403             | Vérifier le rôle et la propriété de la ressource côté serveur ; ne pas contourner le contrôle dans l'interface                        |
-| Erreur 429             | Vérifier la fréquence d'appel et les limites configurées ; le stockage rate-limit mémoire n'est pas partagé entre plusieurs instances |
+| Erreur 429             | Vérifier la fréquence d'appel et les limites configurées ; en production, contrôler aussi la disponibilité Redis REST et ses identifiants |
+| Rate limit indisponible | Vérifier RATE_LIMIT_REDIS_REST_URL, RATE_LIMIT_REDIS_REST_TOKEN et la connectivité HTTPS vers Redis ; l'API échoue volontairement en mode fermé si Redis ne répond pas |
 | Paiement en attente    | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable  |
 
 ## 9. Sauvegarde et retour arrière
