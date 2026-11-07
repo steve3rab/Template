@@ -19,7 +19,10 @@ export function registerFavoriteRoutes(
     return { favorites };
   });
 
-  app.post('/api/customer/favorites/:productId', async (request, reply) => {
+  app.post(
+    '/api/customer/favorites/:productId',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const params = productIdParamsSchema.safeParse(request.params);
@@ -34,9 +37,13 @@ export function registerFavoriteRoutes(
       update: {},
     });
     return reply.code(201).send({ favorite });
-  });
+    },
+  );
 
-  app.delete('/api/customer/favorites/:productId', async (request, reply) => {
+  app.delete(
+    '/api/customer/favorites/:productId',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const params = productIdParamsSchema.safeParse(request.params);
@@ -45,5 +52,6 @@ export function registerFavoriteRoutes(
       where: { userId: user.id, productId: params.data.productId },
     });
     return reply.code(204).send();
-  });
+    },
+  );
 }
