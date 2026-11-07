@@ -1,4 +1,5 @@
 import type { FastifyRateLimitOptions, FastifyRateLimitStore } from '@fastify/rate-limit';
+import type { RouteOptions } from 'fastify';
 
 type CounterResult = { current: number; ttl: number };
 type CounterCallback = (error: Error | null, result?: CounterResult) => void;
@@ -37,8 +38,11 @@ export class UpstashRateLimitStore implements FastifyRateLimitStore {
     );
   }
 
-  child(routeOptions: FastifyRateLimitOptions): UpstashRateLimitStore {
-    return new UpstashRateLimitStore({ ...this.options, ...routeOptions });
+  child(routeOptions: RouteOptions & { path: string; prefix: string }): UpstashRateLimitStore {
+    return new UpstashRateLimitStore({
+      ...this.options,
+      ...routeOptions,
+    } as FastifyRateLimitOptions);
   }
 
   private async increment(key: string, suppliedTimeWindow?: number): Promise<CounterResult> {
