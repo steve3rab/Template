@@ -487,7 +487,10 @@ export function registerPaymentRoutes(
     return { transactions };
   });
 
-  app.post('/api/admin/orders/:id/refund', async (request, reply) => {
+  app.post(
+    '/api/admin/orders/:id/refund',
+    { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } },
+    async (request, reply) => {
     const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
     if (!admin) return;
 
