@@ -205,6 +205,18 @@ afterEach(async () => {
 });
 
 describe('application security configuration', () => {
+  it('requires shared Redis rate limiting in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.SESSION_SECRET = 'production-session-secret-with-more-than-32-characters';
+    delete process.env.RATE_LIMIT_REDIS_REST_URL;
+    delete process.env.RATE_LIMIT_REDIS_REST_TOKEN;
+
+    await expect(createApp(store.prisma, argon2TestDouble as never)).rejects.toThrow(
+      /RATE_LIMIT_REDIS_REST_URL and RATE_LIMIT_REDIS_REST_TOKEN are required/,
+    );
+    process.env.NODE_ENV = 'test';
+  });
+
   it.each(['', 'short'])(
     'rejects a missing or weak production session secret: %s',
     async (secret) => {
