@@ -33,6 +33,7 @@ Commandes :
 npm run test:coverage
 npm run test:coverage:server
 npm run test:integration
+npm run db:seed:test-users
 npm run test:e2e
 ```
 
@@ -75,7 +76,7 @@ Pour chaque nouvelle page ou fonctionnalité :
 Tests automatiques disponibles :
 
 - `src/shared/i18n.test.ts` vérifie la parité des clés et l'absence de chaînes vides dans le catalogue.
-- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique et le compte client, la navigation légale, les landmarks, les noms de boutons et un parcours clavier mobile.
+- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique, le compte client, l'espace vendeur, l'administration et la navigation légale, ainsi que les zones sémantiques, les noms de boutons et un parcours clavier mobile. Les tests vendeur/administrateur nécessitent les comptes locaux créés par `npm run db:seed:test-users`.
 
 La vérification automatique ne peut pas garantir la qualité éditoriale de chaque traduction. Une relecture humaine reste nécessaire, en particulier pour les conditions contractuelles et les messages de paiement.
 
