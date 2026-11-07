@@ -329,7 +329,7 @@ describe('authentication API', () => {
     expect(response.headers['permissions-policy']).toBe(
       'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
     );
-    expect(response.headers['content-security-policy']).toContain("img-src 'self' data: https:");
+    expect(response.headers['content-security-policy']).toContain("img-src 'self' data: blob:");
   });
 
   it('rejects malformed JSON with a sanitized client error', async () => {

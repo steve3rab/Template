@@ -92,15 +92,16 @@ describe('customer order access control', () => {
     const store = makePrisma();
     await startApp(store.prisma as unknown as PrismaClient, async () => user);
 
-    const responses = await Promise.all(
-      Array.from({ length: 6 }, () =>
-        app.inject({
+    const responses = [];
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      responses.push(
+        await app.inject({
           method: 'POST',
           url: '/api/customer/orders',
           payload: { addressId: 'missing-address' },
         }),
-      ),
-    );
+      );
+    }
 
     expect(responses.filter((response) => response.statusCode === 404)).toHaveLength(5);
     expect(responses.filter((response) => response.statusCode === 429)).toHaveLength(1);
