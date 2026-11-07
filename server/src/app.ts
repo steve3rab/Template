@@ -1,4 +1,4 @@
-import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import argon2 from 'argon2';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -21,6 +21,7 @@ import { registerCommerceRoutes } from './commerce.js';
 import { registerPaymentRoutes } from './routes/payments.js';
 import { hashToken } from './auth/tokenHash.js';
 import { isPrismaUniqueConstraintError } from './utils/prismaErrors.js';
+import { UpstashRateLimitStore } from './security/upstashRateLimitStore.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -92,6 +93,24 @@ export async function createApp(
     (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)
   ) {
     throw new Error('SESSION_SECRET must be configured with at least 32 characters in production.');
+  }
+  if (process.env.NODE_ENV === 'production') {
+    const rateLimitUrl = process.env.RATE_LIMIT_REDIS_REST_URL;
+    const rateLimitToken = process.env.RATE_LIMIT_REDIS_REST_TOKEN;
+    if (!rateLimitUrl || !rateLimitToken) {
+      throw new Error(
+        'RATE_LIMIT_REDIS_REST_URL and RATE_LIMIT_REDIS_REST_TOKEN are required in production.',
+      );
+    }
+    let parsedRateLimitUrl: URL;
+    try {
+      parsedRateLimitUrl = new URL(rateLimitUrl);
+    } catch {
+      throw new Error('RATE_LIMIT_REDIS_REST_URL must be an absolute HTTPS URL.');
+    }
+    if (parsedRateLimitUrl.protocol !== 'https:') {
+      throw new Error('RATE_LIMIT_REDIS_REST_URL must use HTTPS.');
+    }
   }
   if (process.env.NODE_ENV === 'production') {
     if (!process.env.PASSWORD_RESET_WEBHOOK_URL || !process.env.PASSWORD_RESET_WEBHOOK_TOKEN) {
@@ -197,10 +216,25 @@ export async function createApp(
   // Keep production throttling intact, but prevent unrelated test requests from exhausting
   // the global bucket before registration/checkout flows are exercised.
   const e2eRateLimitOverride = process.env.NODE_ENV === 'test' && process.env.E2E_TEST === 'true';
+  const useSharedRateLimitStore =
+    process.env.NODE_ENV === 'production' ||
+    Boolean(process.env.RATE_LIMIT_REDIS_REST_URL && process.env.RATE_LIMIT_REDIS_REST_TOKEN);
   await app.register(rateLimit, {
     global: true,
     max: e2eRateLimitOverride ? 1000 : 120,
     timeWindow: '1 minute',
+    ...(useSharedRateLimitStore
+      ? {
+          store: UpstashRateLimitStore,
+          keyGenerator: (request) =>
+            createHmac('sha256', process.env.SESSION_SECRET ?? 'local-rate-limit-key')
+              .update(request.ip)
+              .digest('hex'),
+        }
+      : {}),
+    // Fail closed if the shared store is unavailable; silently falling back to per-instance
+    // memory would make production limits inconsistent and bypassable across replicas.
+    skipOnError: false,
   });
 
   app.addHook('onRequest', async (request, reply) => {
