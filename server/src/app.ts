@@ -202,7 +202,10 @@ export async function createApp(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        connectSrc: ["'self'"],
         baseUri: ["'self'"],
         frameAncestors: ["'none'"],
         formAction: ["'self'"],
