@@ -1,7 +1,20 @@
+@font-face {
+  font-family: 'Atelier UI';
+  src: local('Avenir Next'), local('Segoe UI'), local('Arial');
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  font-family: 'Atelier UI', 'Avenir Next', 'Segoe UI', Arial, sans-serif;
+  --font-display: 'Iowan Old Style', 'Baskerville', 'Palatino Linotype', Georgia, serif;
+}
 :root {
   font-family:
-    'DM Sans',
-    Inter,
+    'Atelier UI',
+    'Avenir Next',
+    'Segoe UI',
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -108,7 +121,7 @@ button:disabled {
   background: #dce0ca;
   color: #3a412e;
   border-radius: 50%;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 600;
   letter-spacing: -0.08em;
@@ -233,7 +246,7 @@ button:disabled {
 }
 .hero-copy h1 em {
   color: #89916c;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display);
   font-weight: 500;
 }
 .hero-copy > p {

@@ -1,0 +1,9 @@
+-- Keep the demo catalogue fully self-hosted: no third-party image hosts are required.
+UPDATE "Product" SET "imageUrl" = '/images/seed/veste-studio.svg', "imageUrls" = '["/images/seed/veste-studio.svg"]' WHERE "id" = '1';
+UPDATE "Product" SET "imageUrl" = '/images/seed/sneakers-everyday.svg', "imageUrls" = '["/images/seed/sneakers-everyday.svg"]' WHERE "id" = '2';
+UPDATE "Product" SET "imageUrl" = '/images/seed/sac-epure.svg', "imageUrls" = '["/images/seed/sac-epure.svg"]' WHERE "id" = '3';
+UPDATE "Product" SET "imageUrl" = '/images/seed/pull-essentiel.svg', "imageUrls" = '["/images/seed/pull-essentiel.svg"]' WHERE "id" = '4';
+UPDATE "Product" SET "imageUrl" = '/images/seed/lunettes-soleil.svg', "imageUrls" = '["/images/seed/lunettes-soleil.svg"]' WHERE "id" = '5';
+UPDATE "Product" SET "imageUrl" = '/images/seed/baskets-city.svg', "imageUrls" = '["/images/seed/baskets-city.svg"]' WHERE "id" = '6';
+UPDATE "Product" SET "imageUrl" = '/images/seed/chemise-relax.svg', "imageUrls" = '["/images/seed/chemise-relax.svg"]' WHERE "id" = '7';
+UPDATE "Product" SET "imageUrl" = '/images/seed/casquette-club.svg', "imageUrls" = '["/images/seed/casquette-club.svg"]' WHERE "id" = '8';

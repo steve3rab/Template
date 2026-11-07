@@ -10,19 +10,6 @@ import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas, type CustomerAddress } from '../shared/api/client';
 import { PRODUCT_CATEGORIES } from '../shared/categories';
 
-function imageForCategory(category: string): string {
-  switch (category) {
-    case 'Chaussures':
-      return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85';
-    case 'Accessoires':
-      return 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85';
-    case 'Maison':
-      return 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85';
-    default:
-      return 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85';
-  }
-}
-
 function isCart(value: unknown): value is Record<string, number> {
   return (
     typeof value === 'object' &&
@@ -64,7 +51,7 @@ const products: Product[] = [
     color: 'sand',
     icon: '🧥',
     image:
-      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/veste-studio.svg',
     tag: 'BEST-SELLER',
     description: 'Une coupe structurée, facile à porter du matin au soir.',
   },
@@ -76,7 +63,7 @@ const products: Product[] = [
     color: 'mint',
     icon: '👟',
     image:
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/sneakers-everyday.svg',
     tag: 'NOUVEAU',
     description: 'Le confort au quotidien, avec une silhouette minimaliste.',
   },
@@ -88,7 +75,7 @@ const products: Product[] = [
     color: 'rose',
     icon: '👜',
     image:
-      'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/sac-epure.svg',
     description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
   },
   {
@@ -99,7 +86,7 @@ const products: Product[] = [
     color: 'lavender',
     icon: '🧶',
     image:
-      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/pull-essentiel.svg',
     description: 'Une maille douce et une coupe décontractée.',
   },
   {
@@ -111,7 +98,7 @@ const products: Product[] = [
     color: 'blue',
     icon: '🕶️',
     image:
-      'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/lunettes-soleil.svg',
     tag: '-22 %',
     description: 'Une touche graphique pour les journées ensoleillées.',
   },
@@ -123,7 +110,7 @@ const products: Product[] = [
     color: 'peach',
     icon: '👞',
     image:
-      'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/baskets-city.svg',
     description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
   },
   {
@@ -134,7 +121,7 @@ const products: Product[] = [
     color: 'blue',
     icon: '👔',
     image:
-      'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/chemise-relax.svg',
     description: 'Une chemise légère pensée pour les superpositions.',
   },
   {
@@ -145,7 +132,7 @@ const products: Product[] = [
     color: 'sand',
     icon: '🧢',
     image:
-      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=900&q=85',
+      '/images/seed/casquette-club.svg',
     tag: 'ESSENTIEL',
     description: 'La finition simple qui change un look.',
   },
@@ -354,9 +341,9 @@ export function App() {
                     : [];
                   return Array.isArray(storedImages) && typeof storedImages[0] === 'string'
                     ? storedImages[0]
-                    : (item.imageUrl ?? fallback?.image ?? imageForCategory(item.category));
+                    : (item.imageUrl ?? fallback?.image ?? '/images/seed/veste-studio.svg');
                 } catch {
-                  return item.imageUrl ?? fallback?.image ?? imageForCategory(item.category);
+                  return item.imageUrl ?? fallback?.image ?? '/images/seed/veste-studio.svg';
                 }
               })(),
               ...(item.sizes
