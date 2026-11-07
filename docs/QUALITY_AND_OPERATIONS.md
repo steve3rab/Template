@@ -69,14 +69,14 @@ Pour chaque nouvelle page ou fonctionnalité :
 1. Ajouter les textes français et anglais au même changement.
 2. Ne pas afficher de clé technique, de texte de débogage ou de libellé de base de données.
 3. Vérifier les boutons, champs, placeholders, validations, toasts, états vides, erreurs API, confirmations et contenus légaux.
-4. Vérifier le changement de langue sur une page déjà ouverte.
+4. Vérifier le changement de langue sur une page déjà ouverte, notamment le panier, la commande/checkout et les formulaires.
 5. Vérifier que `document.documentElement.lang` vaut `fr` ou `en` selon la langue active.
 6. Vérifier que la langue choisie reste cohérente après navigation et rechargement.
 
 Tests automatiques disponibles :
 
 - `src/shared/i18n.test.ts` vérifie la parité des clés et l'absence de chaînes vides dans le catalogue.
-- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique, le compte client, l'espace vendeur, l'administration et la navigation légale, ainsi que les zones sémantiques, les noms de boutons et un parcours clavier mobile. Les tests vendeur/administrateur nécessitent les comptes locaux créés par `npm run db:seed:test-users`.
+- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique, le compte client, l'espace vendeur, l'administration, la page de réinitialisation du mot de passe et la navigation légale, ainsi que les zones sémantiques, les noms de boutons et un parcours clavier mobile. Les tests vendeur/administrateur nécessitent les comptes locaux créés par `npm run db:seed:test-users`.
 
 La vérification automatique ne peut pas garantir la qualité éditoriale de chaque traduction. Une relecture humaine reste nécessaire, en particulier pour les conditions contractuelles et les messages de paiement.
 
