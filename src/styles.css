@@ -3948,3 +3948,17 @@ button {
     padding-inline: 7px;
   }
 }
+
+
+.data-table td input,
+.data-table td select {
+  width: 100%;
+  min-width: 82px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid #deded3;
+  border-radius: 0;
+  background: #fff;
+  color: #34372e;
+  font: inherit;
+}
