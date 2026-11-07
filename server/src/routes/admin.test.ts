@@ -9,13 +9,15 @@ const admin = { id: 'admin-1', role: 'ADMIN' } as User;
 const seller = { id: 'seller-1', role: 'SELLER' } as User;
 let app: FastifyInstance;
 
-function setup(role: User['role'] = 'ADMIN', overrides: Record<string, unknown> = {}) {
+function setup(role: User['role'] | null = 'ADMIN', overrides: Record<string, unknown> = {}) {
   const user =
-    role === 'ADMIN'
-      ? admin
-      : role === 'SELLER'
-        ? seller
-        : ({ id: 'customer-1', role: 'CUSTOMER' } as User);
+    role === null
+      ? null
+      : role === 'ADMIN'
+        ? admin
+        : role === 'SELLER'
+          ? seller
+          : ({ id: 'customer-1', role: 'CUSTOMER' } as User);
   const userFindUnique = vi.fn(async () => ({ id: 'target-user' }));
   const userUpdate = vi.fn(async () => ({
     id: 'target-user',
@@ -77,6 +79,19 @@ afterEach(async () => {
 });
 
 describe('admin role management', () => {
+  it('returns 401 to anonymous requests and never queries administrator data', async () => {
+    const { userCount, productCount, orderCount, userFindMany } = setup(null);
+    await app.ready();
+
+    const response = await app.inject({ method: 'GET', url: '/api/admin/dashboard' });
+
+    expect(response.statusCode).toBe(401);
+    expect(userCount).not.toHaveBeenCalled();
+    expect(productCount).not.toHaveBeenCalled();
+    expect(orderCount).not.toHaveBeenCalled();
+    expect(userFindMany).not.toHaveBeenCalled();
+  });
+
   it('exposes a dedicated administrator identity endpoint only to admins', async () => {
     setup('SELLER');
     await app.ready();
