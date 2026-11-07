@@ -3728,3 +3728,42 @@ button {
     max-width: 100%;
   }
 }
+
+
+.workspace-filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+.workspace-filters label {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 180px);
+  color: #626657;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.workspace-filters input,
+.workspace-filters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #deded3;
+  border-radius: 0;
+  background: #fff;
+  color: #30352a;
+  font: inherit;
+}
+.workspace-filters .field-hint { padding: 0 0 10px; white-space: nowrap; }
+.address-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 600px) {
+  .workspace-filters { align-items: stretch; }
+  .workspace-filters label { flex-basis: 100%; }
+  .workspace-filters .field-hint { padding: 0; }
+  .address-actions { justify-content: flex-start; }
+}
