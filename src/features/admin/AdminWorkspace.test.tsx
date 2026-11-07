@@ -87,18 +87,26 @@ describe('AdminWorkspace', () => {
     expect(screen.getByRole('button', { name: /produits/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /commandes/i })).toBeInTheDocument();
     expect(screen.getByText('seller@example.test')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), { target: { value: 'missing@example.test' } });
+    fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), {
+      target: { value: 'missing@example.test' },
+    });
     expect(screen.queryByText('seller@example.test')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/no accounts match these filters/i);
-    fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), { target: { value: '' } });
+    fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), {
+      target: { value: '' },
+    });
     expect(screen.getByText('seller@example.test')).toBeInTheDocument();
 
     await screen.getByRole('button', { name: /produits/i }).click();
     await waitFor(() => expect(screen.getByText('Sac')).toBeInTheDocument());
-    fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), { target: { value: 'inexistant' } });
+    fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), {
+      target: { value: 'inexistant' },
+    });
     expect(screen.queryByText('Sac')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/no products match these filters/i);
-    fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), { target: { value: '' } });
+    fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), {
+      target: { value: '' },
+    });
     expect(screen.getByText('Sac')).toBeInTheDocument();
 
     await screen.getByRole('button', { name: /commandes/i }).click();

@@ -3729,7 +3729,6 @@ button {
   }
 }
 
-
 .workspace-filters {
   display: flex;
   align-items: end;
@@ -3759,11 +3758,27 @@ button {
   color: #30352a;
   font: inherit;
 }
-.workspace-filters .field-hint { padding: 0 0 10px; white-space: nowrap; }
-.address-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.workspace-filters .field-hint {
+  padding: 0 0 10px;
+  white-space: nowrap;
+}
+.address-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 @media (max-width: 600px) {
-  .workspace-filters { align-items: stretch; }
-  .workspace-filters label { flex-basis: 100%; }
-  .workspace-filters .field-hint { padding: 0; }
-  .address-actions { justify-content: flex-start; }
+  .workspace-filters {
+    align-items: stretch;
+  }
+  .workspace-filters label {
+    flex-basis: 100%;
+  }
+  .workspace-filters .field-hint {
+    padding: 0;
+  }
+  .address-actions {
+    justify-content: flex-start;
+  }
 }

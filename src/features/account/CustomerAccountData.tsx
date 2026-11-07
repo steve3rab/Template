@@ -69,9 +69,12 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   const [addressActionId, setAddressActionId] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
-  const visibleOrders = orders.filter((order) =>
-    `${order.id} ${order.items.map((item) => item.productName).join(' ')}`.toLocaleLowerCase().includes(orderSearch.trim().toLocaleLowerCase()) &&
-    (orderStatusFilter === 'all' || order.status === orderStatusFilter),
+  const visibleOrders = orders.filter(
+    (order) =>
+      `${order.id} ${order.items.map((item) => item.productName).join(' ')}`
+        .toLocaleLowerCase()
+        .includes(orderSearch.trim().toLocaleLowerCase()) &&
+      (orderStatusFilter === 'all' || order.status === orderStatusFilter),
   );
   const loadVersion = useRef(0);
 
@@ -261,11 +264,20 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
     setAddressActionId(id);
     setMessage('');
     try {
-      await apiRequest(`/api/customer/addresses/${encodeURIComponent(id)}/default`, apiSchemas.addressCreated, { method: 'PATCH' });
+      await apiRequest(
+        `/api/customer/addresses/${encodeURIComponent(id)}/default`,
+        apiSchemas.addressCreated,
+        { method: 'PATCH' },
+      );
       await load();
       setMessage(t('Adresse principale mise à jour.', 'Default address updated.'));
     } catch {
-      setMessage(t('Impossible de définir cette adresse par défaut.', 'Unable to set this address as default.'));
+      setMessage(
+        t(
+          'Impossible de définir cette adresse par défaut.',
+          'Unable to set this address as default.',
+        ),
+      );
     } finally {
       setAddressActionId('');
     }
@@ -320,15 +332,34 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
           )}
           {orders.length > 0 && (
             <div className="workspace-filters">
-              <label>{t('Rechercher une commande', 'Search orders')}
-                <input type="search" aria-label={t('Rechercher une commande', 'Search orders')} value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder={t('N° commande ou produit', 'Order number or product')} />
+              <label>
+                {t('Rechercher une commande', 'Search orders')}
+                <input
+                  type="search"
+                  aria-label={t('Rechercher une commande', 'Search orders')}
+                  value={orderSearch}
+                  onChange={(event) => setOrderSearch(event.target.value)}
+                  placeholder={t('N° commande ou produit', 'Order number or product')}
+                />
               </label>
-              <label>{t('Statut', 'Status')}
-                <select aria-label={t('Filtrer les commandes', 'Filter orders')} value={orderStatusFilter} onChange={(event) => setOrderStatusFilter(event.target.value)}>
-                  <option value="all">{t('Tous les statuts', 'All statuses')}</option><option value="PENDING">{t('En attente', 'Pending')}</option><option value="PROCESSING">{t('En préparation', 'Processing')}</option><option value="SHIPPED">{t('Expédiées', 'Shipped')}</option><option value="DELIVERED">{t('Livrées', 'Delivered')}</option><option value="CANCELLED">{t('Annulées', 'Cancelled')}</option>
+              <label>
+                {t('Statut', 'Status')}
+                <select
+                  aria-label={t('Filtrer les commandes', 'Filter orders')}
+                  value={orderStatusFilter}
+                  onChange={(event) => setOrderStatusFilter(event.target.value)}
+                >
+                  <option value="all">{t('Tous les statuts', 'All statuses')}</option>
+                  <option value="PENDING">{t('En attente', 'Pending')}</option>
+                  <option value="PROCESSING">{t('En préparation', 'Processing')}</option>
+                  <option value="SHIPPED">{t('Expédiées', 'Shipped')}</option>
+                  <option value="DELIVERED">{t('Livrées', 'Delivered')}</option>
+                  <option value="CANCELLED">{t('Annulées', 'Cancelled')}</option>
                 </select>
               </label>
-              <span className="field-hint">{visibleOrders.length} / {orders.length}</span>
+              <span className="field-hint">
+                {visibleOrders.length} / {orders.length}
+              </span>
             </div>
           )}
           {orders.length === 0 ? (
@@ -376,7 +407,11 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
               </article>
             ))
           )}
-          {orders.length > 0 && visibleOrders.length === 0 && <p className="empty-state" role="status">{t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}</p>}
+          {orders.length > 0 && visibleOrders.length === 0 && (
+            <p className="empty-state" role="status">
+              {t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}
+            </p>
+          )}
           <h3 style={{ marginTop: 24 }}>{t('Adresses enregistrées', 'Saved addresses')}</h3>
           {addresses.length === 0 ? (
             <p className="empty-state" role="status">
@@ -400,12 +435,26 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 </div>
                 <div className="address-actions">
                   {!address.isDefault && (
-                    <button className="text-action" type="button" onClick={() => void setDefaultAddress(address.id)} disabled={Boolean(addressActionId)}>
-                      {addressActionId === address.id ? t('Mise à jour…', 'Updating…') : t('Définir par défaut', 'Set as default')}
+                    <button
+                      className="text-action"
+                      type="button"
+                      onClick={() => void setDefaultAddress(address.id)}
+                      disabled={Boolean(addressActionId)}
+                    >
+                      {addressActionId === address.id
+                        ? t('Mise à jour…', 'Updating…')
+                        : t('Définir par défaut', 'Set as default')}
                     </button>
                   )}
-                  <button className="text-action" type="button" onClick={() => void removeAddress(address.id)} disabled={Boolean(addressActionId)}>
-                    {addressActionId === address.id ? t('En cours…', 'Working…') : t('Supprimer', 'Delete')}
+                  <button
+                    className="text-action"
+                    type="button"
+                    onClick={() => void removeAddress(address.id)}
+                    disabled={Boolean(addressActionId)}
+                  >
+                    {addressActionId === address.id
+                      ? t('En cours…', 'Working…')
+                      : t('Supprimer', 'Delete')}
                   </button>
                 </div>
               </article>
