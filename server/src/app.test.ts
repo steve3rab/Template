@@ -313,6 +313,7 @@ describe('authentication API', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ status: 'ok' });
     expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.headers['referrer-policy']).toBe('no-referrer');
     expect(response.headers['permissions-policy']).toBe(
       'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
     );
