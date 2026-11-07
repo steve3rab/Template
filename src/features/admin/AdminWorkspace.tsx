@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { formatCents } from '../../shared/utils/formatCurrency';
 import { apiRequest, apiSchemas } from '../../shared/api/client';
 import { translateText, type Language } from '../../shared/i18n';
+import { DataTable } from '../../shared/components/DataTable';
 
 type AdminUser = {
   id: string;
@@ -432,45 +433,11 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   {visibleUsers.length} / {users.length}
                 </span>
               </div>
-              {visibleUsers.map((user) => (
-                <article className="admin-row" key={user.id}>
-                  <div>
-                    <strong>{user.email}</strong>
-                    <span>
-                      {user.publicId} · {t('Créé le', 'Created on')}{' '}
-                      {new Date(user.createdAt).toLocaleDateString(
-                        language === 'en' ? 'en-GB' : 'fr-FR',
-                      )}
-                    </span>
-                  </div>
-                  {user.role === 'ADMIN' ? (
-                    <strong className="admin-role">{t('Administrateur', 'Administrator')}</strong>
-                  ) : (
-                    <select
-                      aria-label={t(`Rôle de ${user.email}`, `Role for ${user.email}`)}
-                      value={user.role}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        if (value === 'CUSTOMER' || value === 'SELLER') {
-                          void updateRole(user, value);
-                        }
-                      }}
-                    >
-                      <option value="CUSTOMER">{t('Client', 'Customer')}</option>
-                      <option value="SELLER">{t('Vendeur', 'Seller')}</option>
-                    </select>
-                  )}
-                </article>
-              ))}
-              {users.length === 0 && <p>{t('Aucun utilisateur.', 'No users.')}</p>}
-              {users.length > 0 && visibleUsers.length === 0 && (
-                <p className="empty-state" role="status">
-                  {t(
-                    'Aucun compte ne correspond à ces filtres.',
-                    'No accounts match these filters.',
-                  )}
-                </p>
-              )}
+              <DataTable ariaLabel={t('Comptes utilisateurs', 'User accounts')} data={visibleUsers} rowKey={(user) => user.id} emptyMessage={users.length === 0 ? t('Aucun utilisateur.', 'No users.') : t('Aucun compte ne correspond à ces filtres.', 'No accounts match these filters.')} labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }} columns={[
+                { key: 'email', header: t('Compte', 'Account'), sortValue: (user) => user.email, render: (user) => <div className="data-table__stack"><strong>{user.email}</strong><span>{user.publicId}</span></div> },
+                { key: 'createdAt', header: t('Date de création', 'Created'), sortValue: (user) => user.createdAt, render: (user) => new Date(user.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR') },
+                { key: 'role', header: t('Rôle', 'Role'), sortValue: (user) => user.role, render: (user) => user.role === 'ADMIN' ? <strong className="admin-role">{t('Administrateur', 'Administrator')}</strong> : <select aria-label={t(`Rôle de ${user.email}`, `Role for ${user.email}`)} value={user.role} onChange={(event) => { const value = event.target.value; if (value === 'CUSTOMER' || value === 'SELLER') void updateRole(user, value); }}><option value="CUSTOMER">{t('Client', 'Customer')}</option><option value="SELLER">{t('Vendeur', 'Seller')}</option></select> },
+              ]} />
             </>
           )}
 
@@ -504,33 +471,13 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   {visibleProducts.length} / {products.length}
                 </span>
               </div>
-              {visibleProducts.map((product) => (
-                <article className="admin-row" key={product.id}>
-                  <div>
-                    <strong>{product.name}</strong>
-                    <span>
-                      {product.seller?.email ?? t('Sans vendeur', 'No seller')} ·{' '}
-                      {formatMoney(product.priceCents)} · {t('Stock :', 'Stock:')} {product.stock}
-                    </span>
-                  </div>
-                  <button
-                    className="text-action"
-                    type="button"
-                    onClick={() => void toggleProduct(product)}
-                  >
-                    {product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}
-                  </button>
-                </article>
-              ))}
-              {products.length === 0 && <p>{t('Aucun produit.', 'No products.')}</p>}
-              {products.length > 0 && visibleProducts.length === 0 && (
-                <p className="empty-state" role="status">
-                  {t(
-                    'Aucun produit ne correspond à ces filtres.',
-                    'No products match these filters.',
-                  )}
-                </p>
-              )}
+              <DataTable ariaLabel={t('Modération des produits', 'Product moderation')} data={visibleProducts} rowKey={(product) => product.id} emptyMessage={products.length === 0 ? t('Aucun produit.', 'No products.') : t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')} labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }} columns={[
+                { key: 'name', header: t('Produit', 'Product'), sortValue: (product) => product.name, render: (product) => <strong>{product.name}</strong> },
+                { key: 'seller', header: t('Vendeur', 'Seller'), sortValue: (product) => product.seller?.email ?? '', render: (product) => product.seller?.email ?? t('Sans vendeur', 'No seller') },
+                { key: 'price', header: t('Prix', 'Price'), sortValue: (product) => product.priceCents, align: 'right', render: (product) => formatMoney(product.priceCents) },
+                { key: 'stock', header: t('Stock', 'Stock'), sortValue: (product) => product.stock, align: 'right', render: (product) => product.stock },
+                { key: 'visibility', header: t('Visibilité', 'Visibility'), sortValue: (product) => product.active ? 1 : 0, render: (product) => <button className="text-action" type="button" onClick={() => void toggleProduct(product)}>{product.active ? t('Masquer', 'Hide') : t('Publier', 'Publish')}</button> },
+              ]} />
             </>
           )}
 
@@ -567,84 +514,14 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                   {visibleOrders.length} / {orders.length}
                 </span>
               </div>
-              {visibleOrders.map((order) => (
-                <article className="admin-row" key={order.id}>
-                  <div>
-                    <strong>
-                      {t('Commande', 'Order')} {order.id.slice(-8)} ·{' '}
-                      {order.customer?.email ?? t('Client', 'Customer')}
-                    </strong>
-                    <span>
-                      {order.items
-                        .map((item) => `${item.productName} × ${item.quantity}`)
-                        .join(', ')}{' '}
-                      ·{' '}
-                      {new Date(order.createdAt).toLocaleDateString(
-                        language === 'en' ? 'en-GB' : 'fr-FR',
-                      )}
-                    </span>
-                    <span>
-                      {(
-                        {
-                          PENDING: t('En attente', 'Pending'),
-                          PROCESSING: t('En préparation', 'Processing'),
-                          SHIPPED: t('Expédiée', 'Shipped'),
-                          DELIVERED: t('Livrée', 'Delivered'),
-                          CANCELLED: t('Annulée', 'Cancelled'),
-                        } as Record<string, string>
-                      )[order.status] ?? order.status}{' '}
-                      · {t('Paiement :', 'Payment:')}{' '}
-                      {(
-                        {
-                          PAID: t('Payé', 'Paid'),
-                          UNPAID: t('À régler', 'Unpaid'),
-                          REFUNDED: t('Remboursé', 'Refunded'),
-                          PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'),
-                          FAILED: t('Échec', 'Failed'),
-                        } as Record<string, string>
-                      )[order.paymentStatus] ?? order.paymentStatus}
-                    </span>
-                  </div>
-                  <div className="admin-order-actions">
-                    <strong>{formatMoney(order.totalCents)}</strong>
-                    {['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
-                      <form
-                        key={`${order.id}:${refundRequestKeys[order.id] ?? 'new'}`}
-                        onSubmit={(event) => void refundOrder(order, event)}
-                      >
-                        <input
-                          type="hidden"
-                          name="requestKey"
-                          defaultValue={refundRequestKeys[order.id] ?? ''}
-                        />
-                        <label>
-                          {t('Montant en centimes (facultatif)', 'Amount in cents (optional)')}
-                          <input
-                            name="amountCents"
-                            type="number"
-                            min="1"
-                            max={Math.max(0, order.totalCents - (order.refundedCents ?? 0))}
-                            step="1"
-                            placeholder={t('Solde complet', 'Full balance')}
-                          />
-                        </label>
-                        <button className="text-action" type="submit" disabled={loading}>
-                          {t('Rembourser', 'Refund')}
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </article>
-              ))}
-              {orders.length === 0 && <p>{t('Aucune commande.', 'No orders.')}</p>}
-              {orders.length > 0 && visibleOrders.length === 0 && (
-                <p className="empty-state" role="status">
-                  {t(
-                    'Aucune commande ne correspond à ces filtres.',
-                    'No orders match these filters.',
-                  )}
-                </p>
-              )}
+              <DataTable ariaLabel={t('Suivi des commandes', 'Order tracking')} data={visibleOrders} rowKey={(order) => order.id} emptyMessage={orders.length === 0 ? t('Aucune commande.', 'No orders.') : t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')} labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }} columns={[
+                { key: 'order', header: t('Commande', 'Order'), sortValue: (order) => order.id, render: (order) => <strong>{order.id.slice(-8)}</strong> },
+                { key: 'customer', header: t('Client', 'Customer'), sortValue: (order) => order.customer?.email ?? '', render: (order) => order.customer?.email ?? t('Client', 'Customer') },
+                { key: 'items', header: t('Articles', 'Items'), render: (order) => order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ') },
+                { key: 'createdAt', header: t('Date', 'Date'), sortValue: (order) => order.createdAt, render: (order) => new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR') },
+                { key: 'status', header: t('Statut', 'Status'), sortValue: (order) => order.status, render: (order) => <div className="data-table__stack"><span>{({ PENDING: t('En attente', 'Pending'), PROCESSING: t('En préparation', 'Processing'), SHIPPED: t('Expédiée', 'Shipped'), DELIVERED: t('Livrée', 'Delivered'), CANCELLED: t('Annulée', 'Cancelled') } as Record<string, string>)[order.status] ?? order.status}</span><small>{({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec', 'Failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus}</small></div> },
+                { key: 'total', header: t('Total', 'Total'), sortValue: (order) => order.totalCents, align: 'right', render: (order) => <div className="data-table__stack"><strong>{formatMoney(order.totalCents)}</strong>{['PAID', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && <form key={`${order.id}:${refundRequestKeys[order.id] ?? 'new'}`} onSubmit={(event) => void refundOrder(order, event)}><input type="hidden" name="requestKey" defaultValue={refundRequestKeys[order.id] ?? ''} /><label>{t('Montant en centimes (facultatif)', 'Amount in cents (optional)')}<input name="amountCents" type="number" min="1" max={Math.max(0, order.totalCents - (order.refundedCents ?? 0))} step="1" placeholder={t('Solde complet', 'Full balance')} /></label><button className="text-action" type="submit" disabled={loading}>{t('Rembourser', 'Refund')}</button></form>}</div> },
+              ]} />
             </>
           )}
 
@@ -687,47 +564,12 @@ export function AdminWorkspace({ language = 'fr' }: { language?: Language }) {
                     ))}
                 </div>
               )}
-              {financialTransactions.map((transaction) => (
-                <article className="admin-row" key={transaction.id}>
-                  <div>
-                    <strong>
-                      {transaction.type === 'REFUND'
-                        ? t('Remboursement', 'Refund')
-                        : t('Paiement', 'Payment')}{' '}
-                      · {t('Commande', 'Order')} {transaction.order.id.slice(-8)}
-                    </strong>
-                    <span>
-                      {transaction.status === 'PENDING'
-                        ? t('En attente de confirmation', 'Awaiting confirmation')
-                        : transaction.status === 'FAILED'
-                          ? t('Échec', 'Failed')
-                          : t('Confirmé', 'Confirmed')}{' '}
-                      · {transaction.stripeObjectId}
-                    </span>
-                    <span>
-                      {new Date(transaction.createdAt).toLocaleString(
-                        language === 'en' ? 'en-GB' : 'fr-FR',
-                      )}
-                    </span>
-                  </div>
-                  <div className="admin-order-actions">
-                    <strong>{formatMoney(transaction.amountCents, transaction.currency)}</strong>
-                    {transaction.type === 'REFUND' && transaction.status === 'PENDING' && (
-                      <button
-                        className="text-action"
-                        type="button"
-                        onClick={() => void retryPendingRefund(transaction)}
-                        disabled={loading}
-                      >
-                        {t('Reprendre', 'Retry')}
-                      </button>
-                    )}
-                  </div>
-                </article>
-              ))}
-              {financialTransactions.length === 0 && (
-                <p>{t('Aucune transaction financière.', 'No financial transactions.')}</p>
-              )}
+              <DataTable ariaLabel={t('Transactions financières', 'Financial transactions')} data={financialTransactions} rowKey={(transaction) => transaction.id} emptyMessage={t('Aucune transaction financière.', 'No financial transactions.')} labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }} columns={[
+                { key: 'type', header: t('Opération', 'Transaction'), sortValue: (transaction) => transaction.type, render: (transaction) => <div className="data-table__stack"><strong>{transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')}</strong><span>{t('Commande', 'Order')} {transaction.order.id.slice(-8)}</span></div> },
+                { key: 'status', header: t('Statut / Référence', 'Status / Reference'), sortValue: (transaction) => transaction.status, render: (transaction) => <div className="data-table__stack"><span>{transaction.status === 'PENDING' ? t('En attente de confirmation', 'Awaiting confirmation') : transaction.status === 'FAILED' ? t('Échec', 'Failed') : t('Confirmé', 'Confirmed')}</span><small>{transaction.stripeObjectId}</small></div> },
+                { key: 'createdAt', header: t('Date', 'Date'), sortValue: (transaction) => transaction.createdAt, render: (transaction) => new Date(transaction.createdAt).toLocaleString(language === 'en' ? 'en-GB' : 'fr-FR') },
+                { key: 'amount', header: t('Montant', 'Amount'), sortValue: (transaction) => transaction.amountCents, align: 'right', render: (transaction) => <div className="data-table__stack"><strong>{formatMoney(transaction.amountCents, transaction.currency)}</strong>{transaction.type === 'REFUND' && transaction.status === 'PENDING' && <button className="text-action" type="button" onClick={() => void retryPendingRefund(transaction)} disabled={loading}>{t('Reprendre', 'Retry')}</button>}</div> },
+              ]} />
             </>
           )}
         </section>
