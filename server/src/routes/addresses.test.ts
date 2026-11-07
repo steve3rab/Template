@@ -135,6 +135,45 @@ describe('customer address routes', () => {
     });
   });
 
+  it('sets an address owned by the current customer as default', async () => {
+    const { addressFindFirst, addressUpdateMany, addressUpdate } = setup();
+    addressFindFirst.mockResolvedValueOnce({ id: 'address-2' } as never);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/customer/addresses/address-2/default',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(addressFindFirst).toHaveBeenCalledWith({
+      where: { id: 'address-2', userId: customer.id },
+      select: { id: true },
+    });
+    expect(addressUpdateMany).toHaveBeenCalledWith({
+      where: { userId: customer.id },
+      data: { isDefault: false },
+    });
+    expect(addressUpdate).toHaveBeenCalledWith({
+      where: { id: 'address-2' },
+      data: { isDefault: true },
+    });
+  });
+
+  it('does not change the default when the address belongs to another customer', async () => {
+    const { addressUpdateMany, addressUpdate } = setup();
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/customer/addresses/foreign-address/default',
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(addressUpdateMany).not.toHaveBeenCalled();
+    expect(addressUpdate).not.toHaveBeenCalled();
+  });
+
   it('does not delete an address owned by another customer', async () => {
     const { addressFindFirst, addressDelete } = setup();
     await app.ready();
