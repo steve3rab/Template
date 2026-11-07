@@ -4,8 +4,10 @@ import type { RouteOptions } from 'fastify';
 type CounterResult = { current: number; ttl: number };
 type CounterCallback = (error: Error | null, result?: CounterResult) => void;
 
-type RouteAwareOptions = FastifyRateLimitOptions & {
-  routeInfo?: { method?: string; url?: string; path?: string };
+type RouteAwareOptions = {
+  timeWindow?: number;
+  nameSpace?: string;
+  routeInfo?: RouteOptions & { path?: string };
 };
 
 const INCREMENT_SCRIPT = [
@@ -22,7 +24,7 @@ export class UpstashRateLimitStore implements FastifyRateLimitStore {
   private readonly options: RouteAwareOptions;
 
   constructor(options: FastifyRateLimitOptions) {
-    this.options = options as RouteAwareOptions;
+    this.options = options as unknown as RouteAwareOptions;
   }
 
   incr(
