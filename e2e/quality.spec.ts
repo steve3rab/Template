@@ -105,7 +105,6 @@ test('mobile layout remains readable and the cart can be operated by keyboard', 
   await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeHidden();
 });
 
-
 test('seller workspace is available and translated in French and English', async ({ page }) => {
   await signInAs(page, 'test.seller@example.com');
   await expect(page.getByRole('button', { name: 'Espace vendeur' })).toBeVisible();
