@@ -20,7 +20,10 @@ export function registerAddressRoutes(
     };
   });
 
-  app.post('/api/customer/addresses', async (request, reply) => {
+  app.post(
+    '/api/customer/addresses',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const body = addressInputSchema.safeParse(request.body);
@@ -43,9 +46,13 @@ export function registerAddressRoutes(
       });
     });
     return reply.code(201).send({ address });
-  });
+    },
+  );
 
-  app.patch('/api/customer/addresses/:id/default', async (request, reply) => {
+  app.patch(
+    '/api/customer/addresses/:id/default',
+    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const params = resourceIdParamsSchema.safeParse(request.params);
@@ -68,9 +75,13 @@ export function registerAddressRoutes(
     });
     if (!address) return reply.code(404).send({ error: 'Address not found.' });
     return { address };
-  });
+    },
+  );
 
-  app.delete('/api/customer/addresses/:id', async (request, reply) => {
+  app.delete(
+    '/api/customer/addresses/:id',
+    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const params = resourceIdParamsSchema.safeParse(request.params);
@@ -97,5 +108,6 @@ export function registerAddressRoutes(
     });
     if (!deleted) return reply.code(404).send({ error: 'Address not found.' });
     return reply.code(204).send();
-  });
+    },
+  );
 }
