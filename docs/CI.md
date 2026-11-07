@@ -49,7 +49,7 @@ Le seed charge d'abord `server/.env`, puis le fichier `.env` à la racine en rep
 
 ## Accessibilité et tests de charge
 
-Les tests Playwright incluent des contrôles de fumée pour le changement de langue FR/EN, les zones sémantiques, le titre principal, les noms accessibles des boutons, les attributs `alt` des images et l'ouverture/fermeture clavier du panier. Ils ne remplacent pas un audit WCAG complet avec lecteur d'écran et outils spécialisés. Le catalogue de traduction est également contrôlé par `src/shared/i18n.test.ts`. Le scénario bilingue couvre la boutique, le compte client, l'espace vendeur, l'administration et la navigation légale. Pour lancer localement ces tests de rôle, exécuter d'abord `npm run db:seed:test-users` sur une base locale ; le mot de passe de test de repli est réservé au développement.
+Les tests Playwright incluent des contrôles de fumée pour le changement de langue FR/EN, les zones sémantiques, le titre principal, les noms accessibles des boutons, les attributs `alt` des images et l'ouverture/fermeture clavier du panier. Ils ne remplacent pas un audit WCAG complet avec lecteur d'écran et outils spécialisés. Le catalogue de traduction est également contrôlé par `src/shared/i18n.test.ts`. Le scénario bilingue couvre la boutique, le compte client, l'espace vendeur, l'administration, la réinitialisation du mot de passe et la navigation légale. Le parcours checkout doit également être relu en français et en anglais lors des évolutions de paiement. Pour lancer localement ces tests de rôle, exécuter d'abord `npm run db:seed:test-users` sur une base locale ; le mot de passe de test de repli est réservé au développement.
 
 Deux profils k6 sont disponibles, mais ne sont pas exécutés automatiquement dans la CI :
 
