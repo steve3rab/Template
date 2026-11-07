@@ -20,9 +20,16 @@ test('French and English storefront labels stay in sync when switching languages
   await expect(page.getByRole('button', { name: 'Cart, 0 item(s)' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
 
+  await page.getByRole('button', { name: 'Customer account' }).click();
+  await expect(page.getByRole('heading', { name: 'Your account' })).toBeVisible();
+
   await page.getByRole('button', { name: 'Français' }).click();
+  await expect(page.getByRole('heading', { name: 'Votre compte' })).toBeVisible();
+  await page.getByRole('button', { name: 'Collection', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(page.getByRole('heading', { name: 'Le style, en toute simplicité.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Le style, en toute simplicité.' }),
+  ).toBeVisible();
 });
 
 test('legal pages retain the selected language and expose a way back', async ({ page }) => {
