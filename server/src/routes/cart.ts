@@ -32,7 +32,7 @@ export function registerCartRoutes(
           const product = await tx.product.findFirst({
             where: { id: item.productId, active: true },
           });
-          if (!product) throw new Error('Product unavailable.');
+          if (!product || product.stock < item.quantity) throw new Error('Product unavailable.');
           await tx.cartItem.create({
             data: { userId: user.id, productId: product.id, quantity: item.quantity },
           });

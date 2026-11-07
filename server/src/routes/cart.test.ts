@@ -10,7 +10,7 @@ let app: FastifyInstance;
 
 function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const txCartDeleteMany = vi.fn(async () => ({ count: 0 }));
-  const txProductFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({
+  const txProductFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean; stock: number } | null> => ({
     id: 'product-1',
     active: true,
   }));
@@ -24,7 +24,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
       findMany: vi.fn(async () => []),
     },
     product: {
-      findFirst: vi.fn(async (): Promise<{ id: string; active: boolean } | null> => ({
+      findFirst: vi.fn(async (): Promise<{ id: string; active: boolean; stock: number } | null> => ({
         id: 'product-1',
         active: true,
       })),
@@ -110,6 +110,21 @@ describe('customer cart routes', () => {
     expect(txCartDeleteMany).toHaveBeenCalledWith({
       where: { userId: customer.id },
     });
+    expect(txCartCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects quantities above current stock without replacing the saved cart', async () => {
+    const { txProductFindFirst, txCartDeleteMany, txCartCreate } = setup();
+    txProductFindFirst.mockResolvedValueOnce({ id: 'product-1', active: true, stock: 1 });
+    await app.ready();
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/api/customer/cart',
+      payload: { items: [{ productId: 'product-1', quantity: 2 }] },
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: 'One or more products are unavailable.' });
+    expect(txCartDeleteMany).toHaveBeenCalledWith({ where: { userId: customer.id } });
     expect(txCartCreate).not.toHaveBeenCalled();
   });
 

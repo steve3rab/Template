@@ -124,9 +124,24 @@ export const cartInputSchema = z
     'Duplicate product ids are not allowed.',
   );
 
-export const productQuerySchema = z.object({
-  category: z.string().trim().max(60).optional(),
-});
+export const productQuerySchema = z
+  .object({
+    category: z.string().trim().min(1).max(60).optional(),
+    search: z.string().trim().max(120).optional(),
+    minPriceCents: z.coerce.number().int().min(0).max(100_000_000).optional(),
+    maxPriceCents: z.coerce.number().int().min(0).max(100_000_000).optional(),
+    inStock: z.enum(['true', 'false']).optional().transform((value) => value === 'true'),
+    sort: z.enum(['newest', 'price-asc', 'price-desc', 'name-asc']).default('newest'),
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(100),
+  })
+  .refine(
+    (value) =>
+      value.minPriceCents === undefined ||
+      value.maxPriceCents === undefined ||
+      value.minPriceCents <= value.maxPriceCents,
+    'Minimum price must not exceed maximum price.',
+  );
 
 export const resourceIdParamsSchema = z.object({
   id: z.string().trim().min(1).max(128),

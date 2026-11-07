@@ -9,9 +9,10 @@ let app: FastifyInstance;
 
 function setup() {
   const findMany = vi.fn(async () => []);
+  const count = vi.fn(async () => 0);
   app = Fastify({ logger: false });
-  registerCatalogRoutes(app, { product: { findMany } } as unknown as PrismaClient);
-  return { findMany };
+  registerCatalogRoutes(app, { product: { findMany, count } } as unknown as PrismaClient);
+  return { findMany, count };
 }
 
 afterEach(async () => {
@@ -19,47 +20,69 @@ afterEach(async () => {
 });
 
 describe('public product catalog', () => {
-  it('returns active products ordered by creation date', async () => {
-    const { findMany } = setup();
+  it('returns active products with stable default ordering and pagination metadata', async () => {
+    const { findMany, count } = setup();
     await app.ready();
-
     const response = await app.inject({ method: 'GET', url: '/api/products' });
-
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ products: [] });
-    expect(findMany).toHaveBeenCalledWith({
-      where: { active: true },
-      orderBy: { createdAt: 'desc' },
+    expect(response.json()).toEqual({
+      products: [],
+      pagination: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
     });
+    expect(findMany).toHaveBeenCalledWith({
+      where: { active: true }, orderBy: { createdAt: 'desc' }, skip: 0, take: 100,
+    });
+    expect(count).toHaveBeenCalledWith({ where: { active: true } });
   });
 
-  it('filters active products by a valid category', async () => {
-    const { findMany } = setup();
+  it('combines text, category, stock, price, sorting and pagination filters', async () => {
+    const { findMany, count } = setup();
     await app.ready();
-
     const response = await app.inject({
       method: 'GET',
-      url: '/api/products?category=Accessoires',
+      url: '/api/products?category=Accessoires&search=sac&inStock=true&minPriceCents=1000&maxPriceCents=9000&sort=price-asc&page=2&pageSize=12',
     });
-
     expect(response.statusCode).toBe(200);
+    const where = {
+      active: true,
+      category: 'Accessoires',
+      OR: [
+        { name: { contains: 'sac' } },
+        { description: { contains: 'sac' } },
+        { category: { contains: 'sac' } },
+      ],
+      stock: { gt: 0 },
+      priceCents: { gte: 1000, lte: 9000 },
+    };
     expect(findMany).toHaveBeenCalledWith({
-      where: { active: true, category: 'Accessoires' },
-      orderBy: { createdAt: 'desc' },
+      where, orderBy: { priceCents: 'asc' }, skip: 12, take: 12,
     });
+    expect(count).toHaveBeenCalledWith({ where });
   });
 
-  it('returns a validation error and avoids database access for invalid filters', async () => {
+  it('supports descending price and alphabetical sorting', async () => {
     const { findMany } = setup();
     await app.ready();
+    await app.inject({ method: 'GET', url: '/api/products?sort=price-desc' });
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { priceCents: 'desc' } }));
+    await app.inject({ method: 'GET', url: '/api/products?sort=name-asc' });
+    expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ orderBy: { name: 'asc' } }));
+  });
 
-    const response = await app.inject({
-      method: 'GET',
-      url: `/api/products?category=${'x'.repeat(61)}`,
-    });
-
+  it.each([
+    'category=' + 'x'.repeat(61),
+    'page=0',
+    'pageSize=101',
+    'sort=invalid',
+    'minPriceCents=9000&maxPriceCents=1000',
+    'inStock=yes',
+  ])('rejects invalid filters (%s) without querying the database', async (query) => {
+    const { findMany, count } = setup();
+    await app.ready();
+    const response = await app.inject({ method: 'GET', url: '/api/products?' + query });
     expect(response.statusCode).toBe(400);
     expect(response.json().error).toBe('Invalid product filters.');
     expect(findMany).not.toHaveBeenCalled();
+    expect(count).not.toHaveBeenCalled();
   });
 });
