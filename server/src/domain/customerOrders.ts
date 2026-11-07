@@ -5,7 +5,7 @@ type ShippingAddress = Pick<
   'id' | 'recipient' | 'line1' | 'line2' | 'postalCode' | 'city' | 'country'
 >;
 
-export type CustomerOrderCreationErrorCode = 'EMPTY_CART' | 'INSUFFICIENT_STOCK';
+export type CustomerOrderCreationErrorCode = 'EMPTY_CART' | 'CART_CHANGED' | 'INSUFFICIENT_STOCK';
 
 export class CustomerOrderCreationError extends Error {
   constructor(readonly code: CustomerOrderCreationErrorCode) {
@@ -27,6 +27,14 @@ export async function createCustomerOrdersFromCart(
   return prisma.$transaction(async (tx) => {
     const cart = await tx.cartItem.findMany({ where: { userId } });
     if (!cart.length) throw new CustomerOrderCreationError('EMPTY_CART');
+
+    // Claim the exact cart snapshot before creating orders. Concurrent checkout
+    // requests cannot both consume the same persisted cart; any later failure
+    // rolls this delete back with the surrounding transaction.
+    const claimedCart = await tx.cartItem.deleteMany({ where: { userId } });
+    if (claimedCart.count !== cart.length) {
+      throw new CustomerOrderCreationError('CART_CHANGED');
+    }
 
     const groups = new Map<
       string,
@@ -93,7 +101,6 @@ export async function createCustomerOrdersFromCart(
       }
     }
 
-    await tx.cartItem.deleteMany({ where: { userId } });
     return created;
   });
 }

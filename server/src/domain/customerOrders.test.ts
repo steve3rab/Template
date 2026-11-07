@@ -21,7 +21,7 @@ function setup(options: SetupOptions = {}) {
   const cartItemFindMany = vi.fn(async () => {
     return options.cart ?? [{ productId: 'product-1', quantity: 2 }];
   });
-  const cartItemDeleteMany = vi.fn(async () => ({ count: 1 }));
+  const cartItemDeleteMany = vi.fn(async () => ({ count: options.cart?.length ?? 1 }));
   const productFindFirst = vi.fn(async () => ({
     id: 'product-1',
     name: 'Chemise',
@@ -114,10 +114,23 @@ describe('createCustomerOrdersFromCart', () => {
 
     expect(store.orderCreate).not.toHaveBeenCalled();
     expect(store.productUpdateMany).not.toHaveBeenCalled();
-    expect(store.cartItemDeleteMany).not.toHaveBeenCalled();
+    expect(store.cartItemDeleteMany).toHaveBeenCalledWith({ where: { userId: 'customer-1' } });
   });
 
-  it('does not clear the cart when a conditional stock reservation loses a race', async () => {
+  it('claims the cart snapshot only once when another checkout has already consumed it', async () => {
+    const store = setup();
+    store.cartItemDeleteMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      createCustomerOrdersFromCart(store.prisma, 'customer-1', address),
+    ).rejects.toMatchObject({ code: 'CART_CHANGED' });
+
+    expect(store.productFindFirst).not.toHaveBeenCalled();
+    expect(store.orderCreate).not.toHaveBeenCalled();
+    expect(store.productUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('rolls back the cart claim when a conditional stock reservation loses a race', async () => {
     const store = setup();
     store.productUpdateMany.mockResolvedValueOnce({ count: 0 });
 
@@ -126,6 +139,6 @@ describe('createCustomerOrdersFromCart', () => {
     ).rejects.toMatchObject({ code: 'INSUFFICIENT_STOCK' });
 
     expect(store.productUpdateMany).toHaveBeenCalledTimes(1);
-    expect(store.cartItemDeleteMany).not.toHaveBeenCalled();
+    expect(store.cartItemDeleteMany).toHaveBeenCalledWith({ where: { userId: 'customer-1' } });
   });
 });

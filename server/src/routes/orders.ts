@@ -35,6 +35,9 @@ export function registerCustomerOrderRoutes(
         if (error.code === 'EMPTY_CART') {
           return reply.code(400).send({ error: 'Cart is empty.' });
         }
+        if (error.code === 'CART_CHANGED') {
+          return reply.code(409).send({ error: 'Cart changed while checkout was being prepared. Refresh and retry.' });
+        }
         return reply.code(409).send({ error: 'Insufficient stock for one or more products.' });
       }
       throw error;

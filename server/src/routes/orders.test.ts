@@ -167,7 +167,27 @@ describe('customer order access control', () => {
     });
     expect(store.txOrderCreate).not.toHaveBeenCalled();
     expect(store.txProductUpdateMany).not.toHaveBeenCalled();
-    expect(store.txCartDeleteMany).not.toHaveBeenCalled();
+    expect(store.txCartDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
+  });
+
+  it('rejects a duplicate checkout when another request has already claimed the cart', async () => {
+    const store = makePrisma();
+    store.txCartFindMany.mockResolvedValueOnce([{ productId: 'product-1', quantity: 2 }]);
+    store.txCartDeleteMany.mockResolvedValueOnce({ count: 0 });
+    await startApp(store.prisma as unknown as PrismaClient, async () => user);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/customer/orders',
+      payload: { addressId: address.id },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'Cart changed while checkout was being prepared. Refresh and retry.',
+    });
+    expect(store.txOrderCreate).not.toHaveBeenCalled();
+    expect(store.txProductUpdateMany).not.toHaveBeenCalled();
   });
 
   it('rejects a checkout when stock is consumed by a concurrent transaction', async () => {
@@ -207,6 +227,7 @@ describe('customer order access control', () => {
       { productId: 'product-1', quantity: 2 },
       { productId: 'product-2', quantity: 1 },
     ]);
+    store.txCartDeleteMany.mockResolvedValueOnce({ count: 2 });
     store.txProductFindFirst
       .mockResolvedValueOnce({
         id: 'product-1',

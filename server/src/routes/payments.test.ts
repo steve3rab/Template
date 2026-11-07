@@ -776,6 +776,67 @@ describe('Stripe payment routes', () => {
     ).toBe(false);
   });
 
+  it('reuses an existing open Stripe Checkout Session instead of creating a duplicate', async () => {
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    const prisma = setup();
+    vi.mocked(prisma.order.findMany).mockResolvedValueOnce([
+      { ...order, paymentReference: 'cs_existing' },
+    ] as never);
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: 'cs_existing',
+          url: 'https://checkout.stripe.com/c/pay/cs_existing',
+          status: 'open',
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/customer/checkout',
+      payload: { orderIds: ['order-1'] },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_existing',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/cs_existing');
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('refuses to reuse an expired Stripe Checkout Session', async () => {
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    const prisma = setup();
+    vi.mocked(prisma.order.findMany).mockResolvedValueOnce([
+      { ...order, paymentReference: 'cs_expired' },
+    ] as never);
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({ id: 'cs_expired', url: null, status: 'expired' }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/customer/checkout',
+      payload: { orderIds: ['order-1'] },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toMatch(/session de paiement a expiré/i);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
+  });
+
   it('does not create a payment session when Stripe is not configured', async () => {
     vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');
     const prisma = setup();
