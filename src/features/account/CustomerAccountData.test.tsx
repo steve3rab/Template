@@ -85,7 +85,8 @@ describe('CustomerAccountData', () => {
 
     expect(await screen.findByText(/En attente de paiement/)).toBeInTheDocument();
     expect(screen.getByText(/Paiement : À régler/)).toBeInTheDocument();
-    expect(screen.getByText(/01\/11\/2026\s*·\s*Expédiée/)).toBeInTheDocument();
+    expect(screen.getAllByText('01/11/2026')).toHaveLength(3);
+    expect(screen.getByText('Expédiée')).toBeInTheDocument();
     expect(screen.getByText(/Paiement confirmé · préparation à venir/)).toBeInTheDocument();
     expect(screen.getAllByText(/Paiement : Payé/)).toHaveLength(1);
     expect(screen.getByText(/Partiellement remboursé/)).toBeInTheDocument();
