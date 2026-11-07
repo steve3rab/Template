@@ -1,4 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const TEST_PASSWORD = 'Local-Test-Password-2026!';
+
+async function signInAs(page: Page, email: string) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Compte client' }).click();
+  await expect(page.getByRole('heading', { name: /bonjour, bienvenue/i })).toBeVisible();
+  await page.getByRole('button', { name: /déjà inscrit/i }).click();
+  await page.getByLabel('Adresse e-mail').fill(email);
+  await page.getByLabel('Mot de passe').fill(TEST_PASSWORD);
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+}
 
 test('French and English storefront labels stay in sync when switching languages', async ({
   page,
@@ -91,4 +103,31 @@ test('mobile layout remains readable and the cart can be operated by keyboard', 
   await page.locator('.close-drawer').focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeHidden();
+});
+
+
+test('seller workspace is available and translated in French and English', async ({ page }) => {
+  await signInAs(page, 'test.seller@example.com');
+  await expect(page.getByRole('button', { name: 'Espace vendeur' })).toBeVisible();
+  await page.getByRole('button', { name: 'Espace vendeur' }).click();
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await page.getByRole('button', { name: 'Français' }).click();
+  await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible();
+});
+
+test('administrator workspace is available and translated in French and English', async ({
+  page,
+}) => {
+  await signInAs(page, 'test.admin@example.com');
+  await expect(page.getByRole('button', { name: 'Administration' })).toBeVisible();
+  await page.getByRole('button', { name: 'Administration' }).click();
+  await expect(page.getByRole('heading', { name: 'Centre de gestion' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'Management centre' })).toBeVisible();
+  await page.getByRole('button', { name: 'Français' }).click();
+  await expect(page.getByRole('heading', { name: 'Centre de gestion' })).toBeVisible();
 });
