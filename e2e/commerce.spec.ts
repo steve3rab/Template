@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 test('customer can register and persist a real unpaid order', async ({ page }) => {
+  page.on('response', async (response) => {
+    const url = new URL(response.url());
+    if (/^\/api\/customer\/(cart|addresses|orders|checkout)$/.test(url.pathname)) {
+      const body = await response.text().catch(() => '');
+      console.log(
+        `Checkout trace: ${response.request().method()} ${url.pathname} -> ${response.status()} ${body.slice(0, 300)}`,
+      );
+    }
+  });
   await page.goto('/');
   await page
     .getByRole('button', { name: /ajouter au panier/i })
