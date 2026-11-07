@@ -33,6 +33,11 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByRole('button', { name: 'Vérifier mon adresse e-mail' }).click();
 
   await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'Complete your order' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Delivery information' })).toBeVisible();
+  await page.getByRole('button', { name: 'Français' }).click();
+  await expect(page.getByRole('heading', { name: /finaliser ma commande/i })).toBeVisible();
   await expect(page.getByLabel('Adresse e-mail du compte')).toHaveValue(email);
   await page.getByLabel(/destinataire/i).fill('Test Client');
   await page.getByLabel('Adresse', { exact: true }).fill('10 rue du Test');
