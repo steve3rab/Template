@@ -66,6 +66,13 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   const [message, setMessage] = useState('');
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [addressPending, setAddressPending] = useState(false);
+  const [addressActionId, setAddressActionId] = useState('');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const visibleOrders = orders.filter((order) =>
+    `${order.id} ${order.items.map((item) => item.productName).join(' ')}`.toLocaleLowerCase().includes(orderSearch.trim().toLocaleLowerCase()) &&
+    (orderStatusFilter === 'all' || order.status === orderStatusFilter),
+  );
   const loadVersion = useRef(0);
 
   const load = useCallback(async () => {
@@ -235,6 +242,8 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
   }
 
   async function removeAddress(id: string) {
+    if (addressActionId) return;
+    setAddressActionId(id);
     try {
       await apiRequestVoid(`/api/customer/addresses/${encodeURIComponent(id)}`, {
         method: 'DELETE',
@@ -242,6 +251,23 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
       await load();
     } catch {
       setMessage(t('Impossible de supprimer cette adresse.', 'Unable to delete this address.'));
+    } finally {
+      setAddressActionId('');
+    }
+  }
+
+  async function setDefaultAddress(id: string) {
+    if (addressActionId) return;
+    setAddressActionId(id);
+    setMessage('');
+    try {
+      await apiRequest(`/api/customer/addresses/${encodeURIComponent(id)}/default`, apiSchemas.addressCreated, { method: 'PATCH' });
+      await load();
+      setMessage(t('Adresse principale mise à jour.', 'Default address updated.'));
+    } catch {
+      setMessage(t('Impossible de définir cette adresse par défaut.', 'Unable to set this address as default.'));
+    } finally {
+      setAddressActionId('');
     }
   }
 
@@ -292,10 +318,23 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                 : t('Payer mes commandes en attente', 'Pay my outstanding orders')}
             </button>
           )}
+          {orders.length > 0 && (
+            <div className="workspace-filters">
+              <label>{t('Rechercher une commande', 'Search orders')}
+                <input type="search" aria-label={t('Rechercher une commande', 'Search orders')} value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder={t('N° commande ou produit', 'Order number or product')} />
+              </label>
+              <label>{t('Statut', 'Status')}
+                <select aria-label={t('Filtrer les commandes', 'Filter orders')} value={orderStatusFilter} onChange={(event) => setOrderStatusFilter(event.target.value)}>
+                  <option value="all">{t('Tous les statuts', 'All statuses')}</option><option value="PENDING">{t('En attente', 'Pending')}</option><option value="PROCESSING">{t('En préparation', 'Processing')}</option><option value="SHIPPED">{t('Expédiées', 'Shipped')}</option><option value="DELIVERED">{t('Livrées', 'Delivered')}</option><option value="CANCELLED">{t('Annulées', 'Cancelled')}</option>
+                </select>
+              </label>
+              <span className="field-hint">{visibleOrders.length} / {orders.length}</span>
+            </div>
+          )}
           {orders.length === 0 ? (
             <p>{t('Vous n’avez pas encore de commande.', 'You have no orders yet.')}</p>
           ) : (
-            orders.map((order) => (
+            visibleOrders.map((order) => (
               <article className="best-seller-row" key={order.id}>
                 <div className="best-seller-name">
                   <strong>
@@ -337,6 +376,7 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
               </article>
             ))
           )}
+          {orders.length > 0 && visibleOrders.length === 0 && <p className="empty-state" role="status">{t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}</p>}
           <h3 style={{ marginTop: 24 }}>{t('Adresses enregistrées', 'Saved addresses')}</h3>
           {addresses.length === 0 ? (
             <p className="empty-state" role="status">
@@ -358,9 +398,16 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
                     {address.country}
                   </span>
                 </div>
-                <button className="text-action" onClick={() => void removeAddress(address.id)}>
-                  {t('Supprimer', 'Delete')}
-                </button>
+                <div className="address-actions">
+                  {!address.isDefault && (
+                    <button className="text-action" type="button" onClick={() => void setDefaultAddress(address.id)} disabled={Boolean(addressActionId)}>
+                      {addressActionId === address.id ? t('Mise à jour…', 'Updating…') : t('Définir par défaut', 'Set as default')}
+                    </button>
+                  )}
+                  <button className="text-action" type="button" onClick={() => void removeAddress(address.id)} disabled={Boolean(addressActionId)}>
+                    {addressActionId === address.id ? t('En cours…', 'Working…') : t('Supprimer', 'Delete')}
+                  </button>
+                </div>
               </article>
             ))
           )}
