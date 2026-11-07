@@ -3700,7 +3700,6 @@ button {
   }
 }
 
-
 /* Keep the expanded catalogue filter toolbar usable on narrow touch screens. */
 @media (max-width: 760px) {
   .catalogue-tools {

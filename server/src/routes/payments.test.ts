@@ -782,15 +782,16 @@ describe('Stripe payment routes', () => {
     vi.mocked(prisma.order.findMany).mockResolvedValueOnce([
       { ...order, paymentReference: 'cs_existing' },
     ] as never);
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          id: 'cs_existing',
-          url: 'https://checkout.stripe.com/c/pay/cs_existing',
-          status: 'open',
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'cs_existing',
+            url: 'https://checkout.stripe.com/c/pay/cs_existing',
+            status: 'open',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
     );
     vi.stubGlobal('fetch', fetchMock);
     await app.ready();
@@ -816,11 +817,12 @@ describe('Stripe payment routes', () => {
     vi.mocked(prisma.order.findMany).mockResolvedValueOnce([
       { ...order, paymentReference: 'cs_expired' },
     ] as never);
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({ id: 'cs_expired', url: null, status: 'expired' }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      ),
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: 'cs_expired', url: null, status: 'expired' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
     );
     vi.stubGlobal('fetch', fetchMock);
     await app.ready();
