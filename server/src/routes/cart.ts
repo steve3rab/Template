@@ -19,7 +19,10 @@ export function registerCartRoutes(
     return { items };
   });
 
-  app.put('/api/customer/cart', async (request, reply) => {
+  app.put(
+    '/api/customer/cart',
+    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
     const body = cartInputSchema.safeParse(request.body);
@@ -48,5 +51,6 @@ export function registerCartRoutes(
       include: { product: true },
     });
     return { items };
-  });
+    },
+  );
 }
