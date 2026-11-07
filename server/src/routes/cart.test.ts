@@ -13,6 +13,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
   const txProductFindFirst = vi.fn(async (): Promise<{ id: string; active: boolean; stock: number } | null> => ({
     id: 'product-1',
     active: true,
+    stock: 5,
   }));
   const txCartCreate = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...data }));
   const transaction = {
@@ -27,6 +28,7 @@ function setup(resolveUser: () => Promise<User | null> = async () => customer) {
       findFirst: vi.fn(async (): Promise<{ id: string; active: boolean; stock: number } | null> => ({
         id: 'product-1',
         active: true,
+        stock: 5,
       })),
     },
     $transaction: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) =>

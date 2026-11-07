@@ -52,6 +52,7 @@ type Product = {
   description: string;
   sizes?: string[];
   dimensions?: string;
+  stock?: number;
 };
 const products: Product[] = [
   {
@@ -204,6 +205,8 @@ export function App() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [catalogPage, setCatalogPage] = useState(1);
   const [cart, setCart] = useState<Record<string, number>>(() =>
     readStoredJson('atelier-cart', {}, isCart),
   );
@@ -280,6 +283,7 @@ export function App() {
       (product) =>
         (category === 'Tout' || product.category === category) &&
         (!favoritesOnly || favorites.includes(product.id)) &&
+        (!inStockOnly || product.stock === undefined || product.stock > 0) &&
         `${product.name} ${product.category} ${product.description}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -288,7 +292,14 @@ export function App() {
     if (sort === 'price-down') result.sort((a, b) => b.price - a.price);
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
-  }, [catalog, category, favorites, favoritesOnly, query, sort]);
+  }, [catalog, category, favorites, favoritesOnly, inStockOnly, query, sort]);
+  const catalogPageSize = 12;
+  const catalogPageCount = Math.max(1, Math.ceil(filteredProducts.length / catalogPageSize));
+  const safeCatalogPage = Math.min(catalogPage, catalogPageCount);
+  const visibleProducts = filteredProducts.slice(
+    (safeCatalogPage - 1) * catalogPageSize,
+    safeCatalogPage * catalogPageSize,
+  );
   const cartCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   const cartTotal = catalog.reduce(
     (sum, product) => sum + product.price * (cart[product.id] ?? 0),
@@ -333,6 +344,7 @@ export function App() {
               description: item.description,
               category: item.category,
               price: item.priceCents / 100,
+              stock: item.stock,
               color: fallback?.color ?? 'sand',
               icon: fallback?.icon ?? '🛍️',
               image: (() => {
@@ -578,6 +590,12 @@ export function App() {
   }
 
   function addToCart(product: Product) {
+    const currentQuantity = cart[product.id] ?? 0;
+    if (product.stock !== undefined && (product.stock <= 0 || currentQuantity >= product.stock)) {
+      setToastKind('error');
+      setNotice(translate('La quantité disponible pour ce produit est atteinte.', 'The available stock for this product has been reached.'));
+      return;
+    }
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
     setNotice(
       language === 'en' ? `${product.name} added to cart` : `${product.name} ajouté au panier`,
@@ -585,6 +603,12 @@ export function App() {
     setCartOpen(true);
   }
   function changeQuantity(id: string, amount: number) {
+    const product = catalog.find((item) => item.id === id);
+    if (amount > 0 && product?.stock !== undefined && (cart[id] ?? 0) >= product.stock) {
+      setToastKind('error');
+      setNotice(translate('Stock disponible insuffisant.', 'Not enough stock available.'));
+      return;
+    }
     setCart((current) => {
       const next = { ...current, [id]: (current[id] ?? 0) + amount };
       if ((next[id] ?? 0) <= 0) delete next[id];
@@ -1058,6 +1082,14 @@ export function App() {
                   <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span>{' '}
                   {translate('Favoris', 'Favourites')}
                 </button>
+                <label className="favorite-filter">
+                  <input
+                    type="checkbox"
+                    checked={inStockOnly}
+                    onChange={(event) => setInStockOnly(event.target.checked)}
+                  />
+                  {translate('En stock uniquement', 'In stock only')}
+                </label>
                 <label className="sort-label">
                   <span className="visually-hidden">
                     {translate('Trier les produits', 'Sort products')}
@@ -1099,7 +1131,7 @@ export function App() {
               </div>
             )}
             <div className="product-grid" aria-busy={catalogLoading}>
-              {filteredProducts.map((product, index) => (
+              {visibleProducts.map((product, index) => (
                 <article className="product-card" key={product.id}>
                   <div className={`product-visual ${product.color}`}>
                     {product.tag && <span className="product-tag">{productTag(product.tag)}</span>}
@@ -1141,8 +1173,8 @@ export function App() {
                     <span className="visual-label">
                       {categoryLabel(product.category).toUpperCase()}
                     </span>
-                    <button className="quick-add" onClick={() => addToCart(product)}>
-                      {translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
+                    <button className="quick-add" onClick={() => addToCart(product)} disabled={product.stock === 0 || (product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock)}>
+                      {product.stock === 0 ? translate('Épuisé', 'Out of stock') : product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock ? translate('Stock atteint', 'Stock limit reached') : translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
                     </button>
                   </div>
                   <div className="product-meta">
@@ -1156,6 +1188,9 @@ export function App() {
                     </div>
                   </div>
                   <p className="product-description">{productDescription(product)}</p>
+                  {product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
+                    <p className="product-variants" role="status">{translate(`Plus que ${product.stock} en stock`, `Only ${product.stock} left in stock`)}</p>
+                  )}
                   {product.sizes && product.sizes.length > 0 && (
                     <p className="product-variants">
                       {translate('Tailles :', 'Sizes:')} {product.sizes.join(', ')}
@@ -1190,6 +1225,13 @@ export function App() {
                 </article>
               ))}
             </div>
+            {filteredProducts.length > catalogPageSize && (
+              <nav className="catalogue-pagination" aria-label={translate('Pagination du catalogue', 'Catalogue pagination')}>
+                <button type="button" className="outline-button" disabled={safeCatalogPage <= 1} onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}>{translate('Précédent', 'Previous')}</button>
+                <span aria-live="polite">{translate(`Page ${safeCatalogPage} sur ${catalogPageCount}`, `Page ${safeCatalogPage} of ${catalogPageCount}`)}</span>
+                <button type="button" className="outline-button" disabled={safeCatalogPage >= catalogPageCount} onClick={() => setCatalogPage((page) => Math.min(catalogPageCount, page + 1))}>{translate('Suivant', 'Next')}</button>
+              </nav>
+            )}
             {!catalogLoading && !catalogFailed && filteredProducts.length === 0 && (
               <div className="empty-state">
                 <span>⌕</span>
