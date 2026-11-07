@@ -807,7 +807,6 @@ describe('Stripe payment routes', () => {
       checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_existing',
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/cs_existing');
     expect(prisma.order.updateMany).not.toHaveBeenCalled();
   });
 

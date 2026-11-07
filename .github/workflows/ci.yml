@@ -78,6 +78,16 @@ jobs:
         run: npm run db:seed:test-users
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Upload Playwright diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-test-diagnostics
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 7
   postgres-concurrency:
     runs-on: ubuntu-latest
     services:
