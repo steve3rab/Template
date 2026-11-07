@@ -91,7 +91,9 @@ describe('AdminWorkspace', () => {
       target: { value: 'missing@example.test' },
     });
     expect(screen.queryByText('seller@example.test')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/aucun compte ne correspond à ces filtres/i);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /aucun compte ne correspond à ces filtres/i,
+    );
     fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), {
       target: { value: '' },
     });
@@ -103,7 +105,9 @@ describe('AdminWorkspace', () => {
       target: { value: 'inexistant' },
     });
     expect(screen.queryByText('Sac')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/aucun produit ne correspond à ces filtres/i);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /aucun produit ne correspond à ces filtres/i,
+    );
     fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), {
       target: { value: '' },
     });
