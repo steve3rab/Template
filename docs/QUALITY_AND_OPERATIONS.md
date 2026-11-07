@@ -6,15 +6,15 @@ Ce document décrit les contrôles à exécuter avant livraison, les vérificati
 
 Une modification fonctionnelle doit être accompagnée du niveau de test adapté :
 
-| Changement | Vérification attendue |
-| --- | --- |
-| Fonction utilitaire, validation ou traduction | Test unitaire Vitest |
-| Composant ou interaction React | Test React Testing Library |
-| Route API, session ou permission | Test API : anonyme, rôle interdit, rôle autorisé et propriétaire distinct |
-| Parcours client, vendeur ou administrateur | Test Playwright sur le parcours concerné |
-| Mise en page responsive | Playwright desktop, mobile et tablette |
-| Schéma ou transaction | Migration vérifiée et test d'intégration ; PostgreSQL pour les courses concurrentes |
-| Texte visible ou navigation | Contrôle FR et EN, attribut `html[lang]` et noms accessibles |
+| Changement                                    | Vérification attendue                                                               |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Fonction utilitaire, validation ou traduction | Test unitaire Vitest                                                                |
+| Composant ou interaction React                | Test React Testing Library                                                          |
+| Route API, session ou permission              | Test API : anonyme, rôle interdit, rôle autorisé et propriétaire distinct           |
+| Parcours client, vendeur ou administrateur    | Test Playwright sur le parcours concerné                                            |
+| Mise en page responsive                       | Playwright desktop, mobile et tablette                                              |
+| Schéma ou transaction                         | Migration vérifiée et test d'intégration ; PostgreSQL pour les courses concurrentes |
+| Texte visible ou navigation                   | Contrôle FR et EN, attribut `html[lang]` et noms accessibles                        |
 
 Toute correction de régression doit ajouter un test qui reproduit le défaut. Les tests doivent vérifier le comportement visible et les réponses serveur, pas seulement les détails internes de l'implémentation.
 
@@ -120,16 +120,16 @@ La commande `npm run check` regroupe le typage, ESLint, Prettier, les couverture
 
 ## 7. Exploitation et diagnostic
 
-| Symptôme | Contrôles à effectuer |
-| --- | --- |
-| Frontend inaccessible | Vérifier le port frontend, le processus Vite et les logs du terminal |
-| API indisponible | Appeler `/api/health`, vérifier le port backend, les variables d'environnement et les logs Fastify |
-| Erreur de connexion DB | Vérifier `DATABASE_URL`, l'existence du volume/fichier et `npm run db:status` |
-| Migration en attente | Sauvegarder la base, examiner la migration, puis exécuter `npm run db:deploy` |
-| Session refusée | Vérifier le cookie, HTTPS/SameSite, `APP_ORIGIN` et `SESSION_SECRET` sans jamais journaliser les secrets |
-| Erreur 403 | Vérifier le rôle et la propriété de la ressource côté serveur ; ne pas contourner le contrôle dans l'interface |
-| Erreur 429 | Vérifier la fréquence d'appel et les limites configurées ; le stockage rate-limit mémoire n'est pas partagé entre plusieurs instances |
-| Paiement en attente | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable |
+| Symptôme               | Contrôles à effectuer                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend inaccessible  | Vérifier le port frontend, le processus Vite et les logs du terminal                                                                  |
+| API indisponible       | Appeler `/api/health`, vérifier le port backend, les variables d'environnement et les logs Fastify                                    |
+| Erreur de connexion DB | Vérifier `DATABASE_URL`, l'existence du volume/fichier et `npm run db:status`                                                         |
+| Migration en attente   | Sauvegarder la base, examiner la migration, puis exécuter `npm run db:deploy`                                                         |
+| Session refusée        | Vérifier le cookie, HTTPS/SameSite, `APP_ORIGIN` et `SESSION_SECRET` sans jamais journaliser les secrets                              |
+| Erreur 403             | Vérifier le rôle et la propriété de la ressource côté serveur ; ne pas contourner le contrôle dans l'interface                        |
+| Erreur 429             | Vérifier la fréquence d'appel et les limites configurées ; le stockage rate-limit mémoire n'est pas partagé entre plusieurs instances |
+| Paiement en attente    | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable  |
 
 ## 8. Sauvegarde et retour arrière
 
