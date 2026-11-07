@@ -345,7 +345,10 @@ describe('Fashion storefront', () => {
           return apiResponse({ address }, 201);
         }
         if (url === '/api/customer/orders' && method === 'POST') {
-          return apiResponse({ order: { id: 'order-new-address' }, orders: [{ id: 'order-new-address' }] }, 201);
+          return apiResponse(
+            { order: { id: 'order-new-address' }, orders: [{ id: 'order-new-address' }] },
+            201,
+          );
         }
         if (url === '/api/customer/checkout') {
           return apiResponse({ error: 'Le paiement en ligne n’est pas encore configuré.' }, 503);
