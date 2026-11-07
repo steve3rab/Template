@@ -1,15 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 test('customer can register and persist a real unpaid order', async ({ page }) => {
-  page.on('response', async (response) => {
-    const url = new URL(response.url());
-    if (/^\/api\/customer\/(cart|addresses|orders|checkout)$/.test(url.pathname)) {
-      const body = await response.text().catch(() => '');
-      console.log(
-        `Checkout trace: ${response.request().method()} ${url.pathname} -> ${response.status()} ${body.slice(0, 300)}`,
-      );
-    }
-  });
   await page.goto('/');
   await page
     .getByRole('button', { name: /ajouter au panier/i })
@@ -53,8 +44,28 @@ test('customer can register and persist a real unpaid order', async ({ page }) =
   await page.getByLabel('Code postal').fill('75001');
   await page.getByLabel('Ville').fill('Paris');
   await page.getByRole('checkbox').check();
+  const addressResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/customer/addresses') && response.request().method() === 'POST',
+  );
+  const orderResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/customer/orders') && response.request().method() === 'POST',
+  );
+  const checkoutResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/customer/checkout') && response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: /enregistrer la commande et continuer/i }).click();
 
+  const [addressResponse, orderResponse, checkoutResponse] = await Promise.all([
+    addressResponsePromise,
+    orderResponsePromise,
+    checkoutResponsePromise,
+  ]);
+  expect(addressResponse.status()).toBe(201);
+  expect(orderResponse.status()).toBe(201);
+  expect(checkoutResponse.status()).toBe(503);
   await expect(page.getByRole('heading', { name: /merci pour votre commande/i })).toBeVisible();
   await expect(page.getByText(/aucun paiement n’a été effectué/i)).toBeVisible();
 

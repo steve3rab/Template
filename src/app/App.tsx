@@ -812,6 +812,10 @@ export function App() {
       const orderIds = orderPayload.orders?.map((order) => order.id) ?? [orderPayload.order.id];
       setCart({});
       checkoutPendingRef.current = false;
+      // Confirm the persisted order before contacting Stripe. Payment setup is a
+      // separate step and must never hide a successfully created unpaid order.
+      setCheckoutDone(true);
+      setView('checkout');
       try {
         const checkoutPayload = await apiRequest(
           '/api/customer/checkout',
