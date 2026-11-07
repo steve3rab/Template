@@ -13,7 +13,10 @@ export function registerCustomerOrderRoutes(
   prisma: PrismaClient,
   resolveUser: ResolveUser,
 ): void {
-  app.post('/api/customer/orders', async (request, reply) => {
+  app.post(
+    '/api/customer/orders',
+    { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } },
+    async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
     if (!user) return;
 
@@ -44,7 +47,8 @@ export function registerCustomerOrderRoutes(
       }
       throw error;
     }
-  });
+    },
+  );
 
   app.get('/api/customer/orders', async (request, reply) => {
     const user = await requireUser(request, reply, prisma, resolveUser);
