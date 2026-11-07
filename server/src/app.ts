@@ -205,6 +205,7 @@ export async function createApp(
 
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
+    reply.header('Referrer-Policy', 'no-referrer');
     // Browser-level denial: the application must never request device or sensor location.
     reply.header(
       'Permissions-Policy',
