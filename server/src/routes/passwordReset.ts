@@ -80,8 +80,13 @@ export function registerPasswordResetRoutes(app: FastifyInstance, prisma: Prisma
             localOrigin = false;
           }
           // Return the token only to an explicitly local development frontend; never log it.
-          if (localOrigin) developmentResetUrl = `${origin}/reset-password?token=${token}`;
+          if (localOrigin) {
+            developmentResetUrl = `${origin}/reset-password?token=${token}`;
+          } else {
+            await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
+          }
         } else {
+          await prisma.passwordResetToken.deleteMany({ where: { id: resetToken.id } });
           request.log.error(
             'PASSWORD_RESET_WEBHOOK_URL is missing; password reset email was not delivered.',
           );
