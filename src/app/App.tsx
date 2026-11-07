@@ -1013,7 +1013,7 @@ export function App() {
             >
               <img
                 className="hero-photo"
-                src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1400&q=90"
+                src="/images/seed/atelier-hero.svg"
                 alt={translate(
                   'Silhouette en tenue contemporaine dans des tons neutres',
                   'Model wearing a contemporary outfit in neutral tones',

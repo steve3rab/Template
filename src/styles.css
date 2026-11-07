@@ -1,18 +1,5 @@
-@font-face {
-  font-family: 'Atelier UI';
-  src: local('Avenir Next'), local('Segoe UI'), local('Arial');
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-}
-
-:root {
-  font-family: 'Atelier UI', 'Avenir Next', 'Segoe UI', Arial, sans-serif;
-  --font-display: 'Iowan Old Style', 'Baskerville', 'Palatino Linotype', Georgia, serif;
-}
 :root {
   font-family:
-    'Atelier UI',
     'Avenir Next',
     'Segoe UI',
     ui-sans-serif,
