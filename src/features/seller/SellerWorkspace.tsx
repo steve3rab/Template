@@ -695,22 +695,20 @@ export function SellerWorkspace({
               key: 'product',
               header: t('Produit', 'Product'),
               sortValue: (product) => product.name,
-              render: (product) => <strong>{product.name}</strong>,
-            },
-            {
-              key: 'name',
-              header: t('Nom', 'Name'),
               render: (product) => (
-                <input
-                  aria-label={t(`Nom ${product.name}`, `Name ${product.name}`)}
-                  defaultValue={product.name}
-                  maxLength={120}
-                  onBlur={(event) => {
-                    const value = event.target.value.trim();
-                    if (value.length >= 2 && value !== product.name)
-                      void updateProduct(product, { name: value });
-                  }}
-                />
+                <div className="data-table__stack">
+                  <strong>{product.name}</strong>
+                  <input
+                    aria-label={t(`Nom ${product.name}`, `Name ${product.name}`)}
+                    defaultValue={product.name}
+                    maxLength={120}
+                    onBlur={(event) => {
+                      const value = event.target.value.trim();
+                      if (value.length >= 2 && value !== product.name)
+                        void updateProduct(product, { name: value });
+                    }}
+                  />
+                </div>
               ),
             },
             {
