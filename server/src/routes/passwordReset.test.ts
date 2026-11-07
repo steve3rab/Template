@@ -173,6 +173,10 @@ describe('password reset routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json().developmentResetUrl).toBeUndefined();
     expect(resetCreate).toHaveBeenCalledOnce();
+    expect(
+      // A token without a delivery path must not remain usable in a preview environment.
+      (await Promise.resolve(resetCreate.mock.results[0]?.value))?.id,
+    ).toBe('reset-1');
   });
 
   it('creates a hashed reset token and sends a reset link through the configured webhook', async () => {
