@@ -81,18 +81,19 @@ suite('PostgreSQL concurrency guarantees', () => {
       },
     });
 
-    const reservations = await Promise.all([
-      prisma.product.updateMany({
-        where: { id: product.id, active: true, stock: { gte: 1 } },
-        data: { stock: { decrement: 1 } },
-      }),
-      prisma.product.updateMany({
-        where: { id: product.id, active: true, stock: { gte: 1 } },
-        data: { stock: { decrement: 1 } },
-      }),
-    ]);
+    // Twenty independent contenders attempt to reserve the final unit at once.
+    // The conditional stock predicate must make exactly one reservation succeed.
+    const reservations = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        prisma.product.updateMany({
+          where: { id: product.id, active: true, stock: { gte: 1 } },
+          data: { stock: { decrement: 1 } },
+        }),
+      ),
+    );
 
     expect(reservations.reduce((total, result) => total + result.count, 0)).toBe(1);
+    expect(reservations.filter((result) => result.count === 0)).toHaveLength(19);
     const finalProduct = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
     expect(finalProduct.stock).toBe(0);
   });
