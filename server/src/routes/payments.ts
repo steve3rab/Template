@@ -121,53 +121,53 @@ export function registerPaymentRoutes(
       config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
     },
     async (request, reply) => {
-          const user = await requireUser(request, reply, prisma, resolveUser);
-          if (!user) return;
+      const user = await requireUser(request, reply, prisma, resolveUser);
+      if (!user) return;
 
-          const body = checkoutInputSchema.safeParse(request.body);
-          if (!body.success) return reply.code(400).send({ error: 'Invalid checkout request.' });
+      const body = checkoutInputSchema.safeParse(request.body);
+      if (!body.success) return reply.code(400).send({ error: 'Invalid checkout request.' });
 
-          const secretKey = process.env.STRIPE_SECRET_KEY;
-          if (!secretKey) {
-            return reply.code(503).send({ error: 'Le paiement en ligne n’est pas encore configuré.' });
-          }
+      const secretKey = process.env.STRIPE_SECRET_KEY;
+      if (!secretKey) {
+        return reply.code(503).send({ error: 'Le paiement en ligne n’est pas encore configuré.' });
+      }
 
-          const orders = await prisma.order.findMany({
-            where: { id: { in: body.data.orderIds }, userId: user.id },
-            include: { items: true },
-          });
-          if (orders.length !== body.data.orderIds.length) {
-            return reply.code(404).send({ error: 'One or more orders were not found.' });
-          }
-          if (
-            orders.some(
-              (order) =>
-                order.paymentStatus !== 'UNPAID' ||
-                order.status !== 'PENDING' ||
-                order.items.length === 0,
-            )
-          ) {
-            return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
-          }
+      const orders = await prisma.order.findMany({
+        where: { id: { in: body.data.orderIds }, userId: user.id },
+        include: { items: true },
+      });
+      if (orders.length !== body.data.orderIds.length) {
+        return reply.code(404).send({ error: 'One or more orders were not found.' });
+      }
+      if (
+        orders.some(
+          (order) =>
+            order.paymentStatus !== 'UNPAID' ||
+            order.status !== 'PENDING' ||
+            order.items.length === 0,
+        )
+      ) {
+        return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
+      }
 
-          const existingReferences = orders
-            .map((order) => order.paymentReference)
-            .filter((value): value is string => Boolean(value));
-          if (existingReferences.length > 0) {
-            if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
-              return reply
-                .code(409)
-                .send({ error: 'Orders are linked to different payment sessions.' });
-            }
-            let existingResponse: Response;
-            try {
-              existingResponse = await fetch(
-                `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
-                  existingReferences[0] ?? '',
-                )}`,
-                {
-                  headers: { Authorization: `Bearer ${secretKey}` },
-                  signal: AbortSignal.timeout(10000),
+      const existingReferences = orders
+        .map((order) => order.paymentReference)
+        .filter((value): value is string => Boolean(value));
+      if (existingReferences.length > 0) {
+        if (existingReferences.length !== orders.length || new Set(existingReferences).size !== 1) {
+          return reply
+            .code(409)
+            .send({ error: 'Orders are linked to different payment sessions.' });
+        }
+        let existingResponse: Response;
+        try {
+          existingResponse = await fetch(
+            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
+              existingReferences[0] ?? '',
+            )}`,
+            {
+              headers: { Authorization: `Bearer ${secretKey}` },
+              signal: AbortSignal.timeout(10000),
             },
           );
         } catch {
@@ -491,33 +491,33 @@ export function registerPaymentRoutes(
     '/api/admin/orders/:id/refund',
     { config: { rateLimit: { max: 5, timeWindow: '15 minutes' } } },
     async (request, reply) => {
-        const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
-        if (!admin) return;
+    const admin = await requireUser(request, reply, prisma, resolveUser, ['ADMIN']);
+    if (!admin) return;
 
-        const params = z.object({ id: z.string().min(1).max(128) }).safeParse(request.params);
-        const body = z
-          .object({
-            amountCents: z.number().int().positive().optional(),
-            requestKey: z.string().uuid(),
-          })
-          .strict()
-          .safeParse(request.body ?? {});
-        if (!params.success || !body.success)
-          return reply.code(400).send({ error: 'Invalid refund request.' });
+    const params = z.object({ id: z.string().min(1).max(128) }).safeParse(request.params);
+    const body = z
+      .object({
+        amountCents: z.number().int().positive().optional(),
+        requestKey: z.string().uuid(),
+      })
+      .strict()
+      .safeParse(request.body ?? {});
+    if (!params.success || !body.success)
+      return reply.code(400).send({ error: 'Invalid refund request.' });
 
-        const order = await prisma.order.findUnique({ where: { id: params.data.id } });
-        if (!order) return reply.code(404).send({ error: 'Order not found.' });
-        const existingRefund = await prisma.financialTransaction.findFirst({
-          where: { orderId: order.id, type: 'REFUND', requestKey: body.data.requestKey },
-          orderBy: { createdAt: 'asc' },
-        });
-        if (existingRefund?.status === 'SUCCEEDED') {
-          return reply.send({
-            refund: {
-              id: existingRefund.stripeObjectId,
-              amountCents: existingRefund.amountCents,
-              currency: existingRefund.currency,
-              status: 'succeeded',
+    const order = await prisma.order.findUnique({ where: { id: params.data.id } });
+    if (!order) return reply.code(404).send({ error: 'Order not found.' });
+    const existingRefund = await prisma.financialTransaction.findFirst({
+      where: { orderId: order.id, type: 'REFUND', requestKey: body.data.requestKey },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (existingRefund?.status === 'SUCCEEDED') {
+      return reply.send({
+        refund: {
+          id: existingRefund.stripeObjectId,
+          amountCents: existingRefund.amountCents,
+          currency: existingRefund.currency,
+          status: 'succeeded',
         },
         refundedCents: order.refundedCents,
         remainingRefundableCents: order.totalCents - order.refundedCents,
