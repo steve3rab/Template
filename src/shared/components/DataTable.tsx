@@ -128,7 +128,6 @@ export function DataTable<T>({
                         type="button"
                         className="data-table__sort"
                         onClick={() => toggleSort(column)}
-                        aria-label={`${column.header}, ${active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'not sorted'}`}
                       >
                         <span>{column.header}</span>
                         <span className="data-table__sort-icon" aria-hidden="true">

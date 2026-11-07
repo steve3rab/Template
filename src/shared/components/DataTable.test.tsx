@@ -52,7 +52,7 @@ describe('DataTable', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /amount, not sorted/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Amount' }));
     const table = screen.getByRole('table', { name: 'Records' });
     expect(within(table).getAllByRole('row')[1]).toHaveTextContent('Record 23');
     expect(screen.getByRole('columnheader', { name: /amount/i })).toHaveAttribute(
@@ -60,7 +60,7 @@ describe('DataTable', () => {
       'ascending',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /amount, ascending/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Amount' }));
     expect(within(table).getAllByRole('row')[1]).toHaveTextContent('Record 01');
     expect(screen.getByRole('columnheader', { name: /amount/i })).toHaveAttribute(
       'aria-sort',
