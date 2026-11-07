@@ -195,7 +195,9 @@ describe('SellerWorkspace translations', () => {
     window.removeEventListener('template-toast', onToast);
   });
 
-  it('recovers from a network rejection without displaying a misleading empty catalogue', async () => {
+  it(
+    'recovers from a network rejection without displaying a misleading empty catalogue',
+    async () => {
     let dashboardRequests = 0;
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
