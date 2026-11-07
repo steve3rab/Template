@@ -52,6 +52,24 @@ export function SellerWorkspace({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [productFilter, setProductFilter] = useState<'all' | 'published' | 'hidden' | 'low-stock'>('all');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState<'all' | Order['status']>('all');
+  const visibleProducts = products.filter((product) => {
+    const query = productSearch.trim().toLocaleLowerCase();
+    const matchesSearch = `${product.name} ${product.category}`.toLocaleLowerCase().includes(query);
+    const matchesFilter = productFilter === 'all' ||
+      (productFilter === 'published' && product.active) ||
+      (productFilter === 'hidden' && !product.active) ||
+      (productFilter === 'low-stock' && product.stock <= 5);
+    return matchesSearch && matchesFilter;
+  });
+  const visibleOrders = orders.filter((order) => {
+    const query = orderSearch.trim().toLocaleLowerCase();
+    const haystack = `${order.id} ${order.customer?.email ?? ''} ${order.items.map((item) => item.productName).join(' ')}`.toLocaleLowerCase();
+    return haystack.includes(query) && (orderFilter === 'all' || order.status === orderFilter);
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -624,6 +642,17 @@ export function SellerWorkspace({
             </p>
           </div>
         </div>
+        <div className="workspace-filters">
+          <label>{t('Rechercher un produit', 'Search products')}
+            <input type="search" aria-label={t('Rechercher un produit', 'Search products')} value={productSearch} onChange={(event) => setProductSearch(event.target.value)} placeholder={t('Nom ou catégorie', 'Name or category')} />
+          </label>
+          <label>{t('Afficher', 'Show')}
+            <select aria-label={t('Filtrer les produits', 'Filter products')} value={productFilter} onChange={(event) => setProductFilter(event.target.value as typeof productFilter)}>
+              <option value="all">{t('Tous', 'All')}</option><option value="published">{t('Publiés', 'Published')}</option><option value="hidden">{t('Masqués', 'Hidden')}</option><option value="low-stock">{t('Stock faible (≤ 5)', 'Low stock (≤ 5)')}</option>
+            </select>
+          </label>
+          <span className="field-hint">{visibleProducts.length} / {products.length}</span>
+        </div>
         {products.length === 0 ? (
           <p>
             {t(
@@ -632,7 +661,7 @@ export function SellerWorkspace({
             )}
           </p>
         ) : (
-          products.map((product) => (
+          visibleProducts.map((product) => (
             <div className="best-seller-row" key={product.id}>
               <div className="best-seller-name">
                 <strong>{product.name}</strong>
@@ -695,6 +724,7 @@ export function SellerWorkspace({
             </div>
           ))
         )}
+        {products.length > 0 && visibleProducts.length === 0 && <p className="empty-state" role="status">{t('Aucun produit ne correspond à ces filtres.', 'No products match these filters.')}</p>}
       </section>
       <section className="seller-panel" style={{ marginTop: 24 }}>
         <div className="panel-heading">
@@ -708,12 +738,23 @@ export function SellerWorkspace({
             </p>
           </div>
         </div>
+        <div className="workspace-filters">
+          <label>{t('Rechercher une commande', 'Search orders')}
+            <input type="search" aria-label={t('Rechercher une commande', 'Search orders')} value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder={t('N° commande, client ou produit', 'Order, customer or product')} />
+          </label>
+          <label>{t('Statut', 'Status')}
+            <select aria-label={t('Filtrer les commandes', 'Filter orders')} value={orderFilter} onChange={(event) => setOrderFilter(event.target.value as typeof orderFilter)}>
+              <option value="all">{t('Tous les statuts', 'All statuses')}</option><option value="PENDING">{t('En attente', 'Pending')}</option><option value="PROCESSING">{t('En préparation', 'Processing')}</option><option value="SHIPPED">{t('Expédiées', 'Shipped')}</option><option value="DELIVERED">{t('Livrées', 'Delivered')}</option><option value="CANCELLED">{t('Annulées', 'Cancelled')}</option>
+            </select>
+          </label>
+          <span className="field-hint">{visibleOrders.length} / {orders.length}</span>
+        </div>
         {orders.length === 0 ? (
           <p>
             {t('Aucune commande enregistrée pour le moment.', 'No orders have been recorded yet.')}
           </p>
         ) : (
-          orders.map((order) => (
+          visibleOrders.map((order) => (
             <div className="best-seller-row" key={order.id}>
               <div className="best-seller-name">
                 <strong>
@@ -745,7 +786,7 @@ export function SellerWorkspace({
                 <select
                   aria-label={t(`Statut commande ${order.id}`, `Order status ${order.id}`)}
                   value={order.status}
-                  disabled={order.status === 'DELIVERED' || order.status === 'CANCELLED'}
+                  disabled={loading || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
                   onChange={(event) => {
                     const parsedStatus = orderStatusSchema.safeParse(event.target.value);
                     if (parsedStatus.success) void updateOrder(order.id, parsedStatus.data);
@@ -767,6 +808,7 @@ export function SellerWorkspace({
             </div>
           ))
         )}
+        {orders.length > 0 && visibleOrders.length === 0 && <p className="empty-state" role="status">{t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}</p>}
       </section>
       <p className="fine-print">
         {t(
