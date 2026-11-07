@@ -3699,3 +3699,33 @@ button {
     animation-duration: 1600ms;
   }
 }
+
+
+/* Keep the expanded catalogue filter toolbar usable on narrow touch screens. */
+@media (max-width: 760px) {
+  .catalogue-tools {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .catalogue-tools > .search-box {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .catalogue-tools > .favorite-filter,
+  .catalogue-tools > .sort-label {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .catalogue-tools > .sort-label {
+    flex: 1 1 110px;
+  }
+
+  .catalogue-tools > .sort-label select {
+    width: 100%;
+    max-width: 100%;
+  }
+}

@@ -218,7 +218,7 @@ describe('customer order access control', () => {
       where: { id: 'product-1', active: true, stock: { gte: 2 } },
       data: { stock: { decrement: 2 } },
     });
-    expect(store.txCartDeleteMany).not.toHaveBeenCalled();
+    expect(store.txCartDeleteMany).toHaveBeenCalledWith({ where: { userId: user.id } });
   });
 
   it('splits multi-seller carts and reserves stock using server-side prices', async () => {

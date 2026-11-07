@@ -139,6 +139,30 @@ describe('Fashion storefront', () => {
     expect(screen.queryByRole('heading', { name: 'Sneakers Everyday' })).not.toBeInTheDocument();
   });
 
+  it('filters out-of-stock products and prevents adding unavailable items', async () => {
+    const user = userEvent.setup();
+    const productsWithOutOfStock = catalogue.map((product) =>
+      product.id === '1' ? { ...product, stock: 0 } : product,
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/products') return apiResponse({ products: productsWithOutOfStock });
+        if (url === '/api/auth/me') return apiResponse({ error: 'Not authenticated.' }, 401);
+        return apiResponse({ error: 'Not authenticated.' }, 401);
+      }),
+    );
+
+    render(<App />);
+    await user.click(screen.getByRole('checkbox', { name: 'En stock uniquement' }));
+    expect(screen.queryByRole('heading', { name: 'Veste Studio' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sneakers Everyday' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: 'En stock uniquement' }));
+    expect(screen.getByRole('button', { name: /épuisé/i })).toBeDisabled();
+  });
+
   it('adds a product to the cart and allows quantity changes', async () => {
     const user = userEvent.setup();
     render(<App />);
