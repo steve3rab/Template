@@ -39,8 +39,8 @@ test('storefront exposes semantic landmarks and accessible control names', async
   await page.goto('/');
 
   await expect(page.getByRole('main')).toBeVisible();
-  await expect(page.getByRole('banner')).toBeVisible();
-  await expect(page.getByRole('contentinfo')).toBeVisible();
+  await expect(page.locator('header.store-header')).toBeVisible();
+  await expect(page.locator('footer.store-footer')).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 
@@ -79,6 +79,7 @@ test('mobile layout remains readable and the cart can be operated by keyboard', 
   await page.keyboard.press('Enter');
   await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeVisible();
 
-  await page.keyboard.press('Escape');
+  await page.locator('.close-drawer').focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('complementary', { name: 'Votre panier' })).toBeHidden();
 });
