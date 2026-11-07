@@ -99,6 +99,10 @@ Les conventions d'architecture, de TypeScript strict, de validation des entrées
 
 Toute nouvelle logique réutilisable doit avoir un module et des tests ciblés.
 
+## Confidentialité et géolocalisation
+
+La géolocalisation navigateur et les capteurs de position sont refusés par la politique `Permissions-Policy`. Les journaux d'accès Nginx sont désactivés dans le déploiement fourni et Fastify n'écrit pas les journaux automatiques contenant les IP. Les journaux du CDN et de l'hébergeur doivent être configurés séparément. Voir [PRODUCTION.md](docs/PRODUCTION.md).
+
 ## Contrôles qualité
 
 La stratégie détaillée de couverture, les tests FR/EN, les contrôles mobiles/accessibilité et les procédures d'exploitation sont regroupés dans [docs/QUALITY_AND_OPERATIONS.md](docs/QUALITY_AND_OPERATIONS.md).
