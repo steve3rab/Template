@@ -226,6 +226,9 @@ export async function createApp(
     global: true,
     max: e2eRateLimitOverride ? 1000 : 120,
     timeWindow: '1 minute',
+    // Route-level limits are disabled only for the isolated multi-project E2E server.
+    // Unit tests and all non-test environments keep the configured per-route limits.
+    skip: e2eRateLimitOverride ? () => true : undefined,
     ...(useSharedRateLimitStore
       ? {
           store: UpstashRateLimitStore,
