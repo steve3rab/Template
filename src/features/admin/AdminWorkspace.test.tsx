@@ -94,7 +94,7 @@ describe('AdminWorkspace', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       /aucun compte ne correspond à ces filtres/i,
     );
-    fireEvent.change(screen.getByRole('searchbox', { name: /search accounts/i }), {
+    fireEvent.change(screen.getByRole('searchbox', { name: /rechercher un compte/i }), {
       target: { value: '' },
     });
     expect(screen.getByText('seller@example.test')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('AdminWorkspace', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       /aucun produit ne correspond à ces filtres/i,
     );
-    fireEvent.change(screen.getByRole('searchbox', { name: /search products/i }), {
+    fireEvent.change(screen.getByRole('searchbox', { name: /rechercher un produit/i }), {
       target: { value: '' },
     });
     expect(screen.getByText('Sac')).toBeInTheDocument();
