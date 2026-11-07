@@ -18,8 +18,8 @@
 L'application n'utilise pas la géolocalisation de l'appareil et interdit les API navigateur correspondantes :
 
 - L'en-tête `Permissions-Policy` refuse `geolocation`, caméra, microphone et capteurs de mouvement/orientation.
-- Les réponses Fastify et les serveurs Vite (développement/preview) envoient cette politique.
-- Nginx applique la même politique et désactive les journaux d'accès qui conserveraient les adresses IP et les URL des visiteurs.
+- Les réponses Fastify et les serveurs Vite (développement/preview) envoient cette politique et la politique `Referrer-Policy: no-referrer`.
+- Nginx applique la même politique, interdit le partage du référent HTTP et désactive les journaux d'accès qui conserveraient les adresses IP et les URL des visiteurs.
 - Fastify désactive les journaux automatiques de requêtes et les erreurs serveur sont journalisées sans sérialiseur réseau de requête.
 - La politique CSP de Nginx limite les connexions réseau du navigateur à l'origine de l'application.
 
