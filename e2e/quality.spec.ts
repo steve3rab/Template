@@ -56,6 +56,21 @@ test('legal pages retain the selected language and expose a way back', async ({ 
   await expect(page.getByRole('heading', { name: 'Effortless style.' })).toBeVisible();
 });
 
+
+test('password reset page follows the selected language', async ({ page }) => {
+  await page.goto('/reset-password');
+
+  await expect(
+    page.getByRole('heading', { name: 'Réinitialiser le mot de passe' }),
+  ).toBeVisible();
+  await expect(page.getByText(/ce lien de réinitialisation est incomplet/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
+  await expect(page.getByText(/this password reset link is incomplete/i)).toBeVisible();
+  await expect(page.getByLabel('New password')).toBeVisible();
+});
+
 test('storefront exposes semantic landmarks and accessible control names', async ({ page }) => {
   await page.goto('/');
 
