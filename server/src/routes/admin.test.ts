@@ -92,7 +92,6 @@ describe('admin role management', () => {
     expect(userFindMany).not.toHaveBeenCalled();
   });
 
-
   it('exposes a dedicated administrator identity endpoint only to admins', async () => {
     setup('SELLER');
     await app.ready();
