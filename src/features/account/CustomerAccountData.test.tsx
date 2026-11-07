@@ -136,6 +136,35 @@ describe('CustomerAccountData', () => {
     expect(orderRequests).toBe(2);
   });
 
+  it('lets a customer promote an owned saved address to the default address', async () => {
+    let currentDefault = false;
+    const address = {
+      id: 'address-2', label: 'Work', recipient: 'Alex Martin', line1: '2 avenue du Test',
+      postalCode: '75002', city: 'Paris', country: 'FR', isDefault: false,
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/auth/me') return apiResponse({ user: { email: 'client@example.com' } });
+      if (url === '/api/customer/addresses/address-2/default' && init?.method === 'PATCH') {
+        currentDefault = true;
+        return apiResponse({ address: { ...address, isDefault: true } });
+      }
+      if (url === '/api/customer/addresses') return apiResponse({ addresses: [{ ...address, isDefault: currentDefault }] });
+      if (url === '/api/customer/orders') return apiResponse({ orders: [] });
+      return apiResponse({ error: 'Not found.' }, 404);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const user = userEvent.setup();
+    render(<CustomerAccountData language="en" />);
+    expect(await screen.findByText('Work')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /set as default/i }));
+    expect(await screen.findByText(/default address updated/i)).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/customer/addresses/address-2/default', expect.objectContaining({ method: 'PATCH' }));
+    expect(screen.getByText(/Work · Default/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /set as default/i })).not.toBeInTheDocument();
+  });
+
   it('rejects whitespace-only address fields and submits normalized values once', async () => {
     let submittedAddress: unknown;
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
