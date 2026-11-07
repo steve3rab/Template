@@ -133,6 +133,8 @@ export async function createApp(
 
   const app = Fastify({
     logger: process.env.NODE_ENV !== 'test',
+    // Do not write client IP addresses or network metadata to automatic request logs.
+    disableRequestLogging: true,
     trustProxy: process.env.TRUST_PROXY === 'true',
     bodyLimit: 16 * 1024,
   });
@@ -203,6 +205,11 @@ export async function createApp(
 
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control', 'no-store');
+    // Browser-level denial: the application must never request device or sensor location.
+    reply.header(
+      'Permissions-Policy',
+      'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
+    );
     if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return;
     // Stripe authenticates webhooks using its signed raw body, not browser Origin.
     if (request.url.split('?')[0] === '/api/webhooks/stripe') return;
@@ -217,7 +224,13 @@ export async function createApp(
       error.statusCode && error.statusCode >= 400 && error.statusCode < 500
         ? error.statusCode
         : 500;
-    if (statusCode === 500) request.log.error(error);
+    if (statusCode === 500) {
+      // Avoid request.log here: its default serializers can include client network addresses.
+      app.log.error(
+        { err: error, method: request.method, route: request.routeOptions.url },
+        'Request failed',
+      );
+    }
     return reply.code(statusCode).send({
       error: statusCode < 500 ? 'Invalid request.' : 'Internal server error.',
     });
