@@ -23,20 +23,20 @@ export function registerFavoriteRoutes(
     '/api/customer/favorites/:productId',
     { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
-    const user = await requireUser(request, reply, prisma, resolveUser);
-    if (!user) return;
-    const params = productIdParamsSchema.safeParse(request.params);
-    if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
-    const product = await prisma.product.findFirst({
-      where: { id: params.data.productId, active: true },
-    });
-    if (!product) return reply.code(404).send({ error: 'Product not found.' });
-    const favorite = await prisma.favorite.upsert({
-      where: { userId_productId: { userId: user.id, productId: product.id } },
-      create: { userId: user.id, productId: product.id },
-      update: {},
-    });
-    return reply.code(201).send({ favorite });
+      const user = await requireUser(request, reply, prisma, resolveUser);
+      if (!user) return;
+      const params = productIdParamsSchema.safeParse(request.params);
+      if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
+      const product = await prisma.product.findFirst({
+        where: { id: params.data.productId, active: true },
+      });
+      if (!product) return reply.code(404).send({ error: 'Product not found.' });
+      const favorite = await prisma.favorite.upsert({
+        where: { userId_productId: { userId: user.id, productId: product.id } },
+        create: { userId: user.id, productId: product.id },
+        update: {},
+      });
+      return reply.code(201).send({ favorite });
     },
   );
 
@@ -44,14 +44,14 @@ export function registerFavoriteRoutes(
     '/api/customer/favorites/:productId',
     { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (request, reply) => {
-    const user = await requireUser(request, reply, prisma, resolveUser);
-    if (!user) return;
-    const params = productIdParamsSchema.safeParse(request.params);
-    if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
-    await prisma.favorite.deleteMany({
-      where: { userId: user.id, productId: params.data.productId },
-    });
-    return reply.code(204).send();
+      const user = await requireUser(request, reply, prisma, resolveUser);
+      if (!user) return;
+      const params = productIdParamsSchema.safeParse(request.params);
+      if (!params.success) return reply.code(400).send({ error: 'Invalid product id.' });
+      await prisma.favorite.deleteMany({
+        where: { userId: user.id, productId: params.data.productId },
+      });
+      return reply.code(204).send();
     },
   );
 }
