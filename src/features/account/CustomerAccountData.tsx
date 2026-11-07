@@ -367,14 +367,87 @@ export function CustomerAccountData({ language = 'fr' }: { language?: Language }
             ariaLabel={t('Mes commandes', 'My orders')}
             data={visibleOrders}
             rowKey={(order) => order.id}
-            emptyMessage={orders.length === 0 ? t('Vous n’avez pas encore de commande.', 'You have no orders yet.') : t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}
-            labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }}
+            emptyMessage={
+              orders.length === 0
+                ? t('Vous n’avez pas encore de commande.', 'You have no orders yet.')
+                : t(
+                    'Aucune commande ne correspond à ces filtres.',
+                    'No orders match these filters.',
+                  )
+            }
+            labels={{
+              pageSize: t('Lignes par page', 'Rows per page'),
+              previous: t('Précédent', 'Previous'),
+              next: t('Suivant', 'Next'),
+              page: t('Page', 'Page'),
+              of: t('sur', 'of'),
+              rows: t('lignes', 'rows'),
+            }}
             columns={[
-              { key: 'order', header: t('Commande', 'Order'), sortValue: (order) => order.id, render: (order) => <strong>{order.id.slice(-8)}</strong> },
-              { key: 'createdAt', header: t('Date', 'Date'), sortValue: (order) => order.createdAt, render: (order) => new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR') },
-              { key: 'status', header: t('Statut', 'Status'), sortValue: (order) => order.status, render: (order) => <div className="data-table__stack"><strong>{orderStatusLabel(order.status, order.paymentStatus, language)}</strong><span>{t('Paiement :', 'Payment:')} {paymentStatusLabel(order.paymentStatus, language)}</span></div> },
-              { key: 'items', header: t('Articles', 'Items'), render: (order) => order.items.map((item) => item.productName + ' × ' + item.quantity).join(', ') },
-              { key: 'total', header: t('Total', 'Total'), sortValue: (order) => order.totalCents, align: 'right', render: (order) => <div className="data-table__stack"><strong>{formatMoney(order.totalCents)}</strong>{order.financialTransactions && order.financialTransactions.length > 0 && <div className="financial-history" aria-label={t('Historique financier', 'Financial history')}>{order.financialTransactions.map((transaction) => <span key={transaction.id}>{transaction.type === 'REFUND' ? t('Remboursement', 'Refund') : t('Paiement', 'Payment')} · {formatMoney(transaction.amountCents)} · {transaction.status === 'PENDING' ? t('En cours', 'Pending') : t('Confirmé', 'Confirmed')}</span>)}</div>}</div> },
+              {
+                key: 'order',
+                header: t('Commande', 'Order'),
+                sortValue: (order) => order.id,
+                render: (order) => <strong>{order.id.slice(-8)}</strong>,
+              },
+              {
+                key: 'createdAt',
+                header: t('Date', 'Date'),
+                sortValue: (order) => order.createdAt,
+                render: (order) =>
+                  new Date(order.createdAt).toLocaleDateString(
+                    language === 'en' ? 'en-GB' : 'fr-FR',
+                  ),
+              },
+              {
+                key: 'status',
+                header: t('Statut', 'Status'),
+                sortValue: (order) => order.status,
+                render: (order) => (
+                  <div className="data-table__stack">
+                    <strong>{orderStatusLabel(order.status, order.paymentStatus, language)}</strong>
+                    <span>
+                      {t('Paiement :', 'Payment:')}{' '}
+                      {paymentStatusLabel(order.paymentStatus, language)}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                key: 'items',
+                header: t('Articles', 'Items'),
+                render: (order) =>
+                  order.items.map((item) => item.productName + ' × ' + item.quantity).join(', '),
+              },
+              {
+                key: 'total',
+                header: t('Total', 'Total'),
+                sortValue: (order) => order.totalCents,
+                align: 'right',
+                render: (order) => (
+                  <div className="data-table__stack">
+                    <strong>{formatMoney(order.totalCents)}</strong>
+                    {order.financialTransactions && order.financialTransactions.length > 0 && (
+                      <div
+                        className="financial-history"
+                        aria-label={t('Historique financier', 'Financial history')}
+                      >
+                        {order.financialTransactions.map((transaction) => (
+                          <span key={transaction.id}>
+                            {transaction.type === 'REFUND'
+                              ? t('Remboursement', 'Refund')
+                              : t('Paiement', 'Payment')}{' '}
+                            · {formatMoney(transaction.amountCents)} ·{' '}
+                            {transaction.status === 'PENDING'
+                              ? t('En cours', 'Pending')
+                              : t('Confirmé', 'Confirmed')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
             ]}
           />
           <h3 style={{ marginTop: 24 }}>{t('Adresses enregistrées', 'Saved addresses')}</h3>

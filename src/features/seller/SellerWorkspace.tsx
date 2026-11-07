@@ -798,15 +798,99 @@ export function SellerWorkspace({
           ariaLabel={t('Commandes clients', 'Customer orders')}
           data={visibleOrders}
           rowKey={(order) => order.id}
-          emptyMessage={orders.length === 0 ? t('Aucune commande enregistrée pour le moment.', 'No orders have been recorded yet.') : t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')}
-          labels={{ pageSize: t('Lignes par page', 'Rows per page'), previous: t('Précédent', 'Previous'), next: t('Suivant', 'Next'), page: t('Page', 'Page'), of: t('sur', 'of'), rows: t('lignes', 'rows') }}
+          emptyMessage={
+            orders.length === 0
+              ? t(
+                  'Aucune commande enregistrée pour le moment.',
+                  'No orders have been recorded yet.',
+                )
+              : t('Aucune commande ne correspond à ces filtres.', 'No orders match these filters.')
+          }
+          labels={{
+            pageSize: t('Lignes par page', 'Rows per page'),
+            previous: t('Précédent', 'Previous'),
+            next: t('Suivant', 'Next'),
+            page: t('Page', 'Page'),
+            of: t('sur', 'of'),
+            rows: t('lignes', 'rows'),
+          }}
           columns={[
-            { key: 'order', header: t('Commande', 'Order'), sortValue: (order) => order.id, render: (order) => <strong>{order.id.slice(-8)}</strong> },
-            { key: 'customer', header: t('Client et articles', 'Customer and items'), sortValue: (order) => order.customer?.email ?? '', render: (order) => <div className="data-table__stack"><strong>{order.customer?.email ?? t('Client', 'Customer')}</strong><span>{order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</span></div> },
-            { key: 'createdAt', header: t('Date', 'Date'), sortValue: (order) => order.createdAt, render: (order) => new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR') },
-            { key: 'payment', header: t('Paiement', 'Payment'), sortValue: (order) => order.paymentStatus, render: (order) => ({ PAID: t('Payé', 'Paid'), UNPAID: t('À régler', 'Unpaid'), REFUNDED: t('Remboursé', 'Refunded'), PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'), FAILED: t('Échec du paiement', 'Payment failed') } as Record<string, string>)[order.paymentStatus] ?? order.paymentStatus },
-            { key: 'total', header: t('Total', 'Total'), sortValue: (order) => order.totalCents, align: 'right', render: (order) => formatMoney(order.totalCents) },
-            { key: 'status', header: t('Statut', 'Status'), sortValue: (order) => order.status, render: (order) => <select aria-label={t(`Statut commande ${order.id}`, `Order status ${order.id}`)} value={order.status} disabled={loading || order.status === 'DELIVERED' || order.status === 'CANCELLED'} onChange={(event) => { const parsedStatus = orderStatusSchema.safeParse(event.target.value); if (parsedStatus.success) void updateOrder(order.id, parsedStatus.data); }}><option value="PENDING">{t('En attente', 'Pending')}</option><option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>{t('En préparation', 'Processing')}</option><option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>{t('Expédiée', 'Shipped')}</option><option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>{t('Livrée', 'Delivered')}</option><option value="CANCELLED">{t('Annulée', 'Cancelled')}</option></select> },
+            {
+              key: 'order',
+              header: t('Commande', 'Order'),
+              sortValue: (order) => order.id,
+              render: (order) => <strong>{order.id.slice(-8)}</strong>,
+            },
+            {
+              key: 'customer',
+              header: t('Client et articles', 'Customer and items'),
+              sortValue: (order) => order.customer?.email ?? '',
+              render: (order) => (
+                <div className="data-table__stack">
+                  <strong>{order.customer?.email ?? t('Client', 'Customer')}</strong>
+                  <span>
+                    {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}
+                  </span>
+                </div>
+              ),
+            },
+            {
+              key: 'createdAt',
+              header: t('Date', 'Date'),
+              sortValue: (order) => order.createdAt,
+              render: (order) =>
+                new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'fr-FR'),
+            },
+            {
+              key: 'payment',
+              header: t('Paiement', 'Payment'),
+              sortValue: (order) => order.paymentStatus,
+              render: (order) =>
+                (
+                  ({
+                    PAID: t('Payé', 'Paid'),
+                    UNPAID: t('À régler', 'Unpaid'),
+                    REFUNDED: t('Remboursé', 'Refunded'),
+                    PARTIALLY_REFUNDED: t('Partiellement remboursé', 'Partially refunded'),
+                    FAILED: t('Échec du paiement', 'Payment failed'),
+                  }) as Record<string, string>
+                )[order.paymentStatus] ?? order.paymentStatus,
+            },
+            {
+              key: 'total',
+              header: t('Total', 'Total'),
+              sortValue: (order) => order.totalCents,
+              align: 'right',
+              render: (order) => formatMoney(order.totalCents),
+            },
+            {
+              key: 'status',
+              header: t('Statut', 'Status'),
+              sortValue: (order) => order.status,
+              render: (order) => (
+                <select
+                  aria-label={t(`Statut commande ${order.id}`, `Order status ${order.id}`)}
+                  value={order.status}
+                  disabled={loading || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
+                  onChange={(event) => {
+                    const parsedStatus = orderStatusSchema.safeParse(event.target.value);
+                    if (parsedStatus.success) void updateOrder(order.id, parsedStatus.data);
+                  }}
+                >
+                  <option value="PENDING">{t('En attente', 'Pending')}</option>
+                  <option value="PROCESSING" disabled={order.paymentStatus !== 'PAID'}>
+                    {t('En préparation', 'Processing')}
+                  </option>
+                  <option value="SHIPPED" disabled={order.paymentStatus !== 'PAID'}>
+                    {t('Expédiée', 'Shipped')}
+                  </option>
+                  <option value="DELIVERED" disabled={order.paymentStatus !== 'PAID'}>
+                    {t('Livrée', 'Delivered')}
+                  </option>
+                  <option value="CANCELLED">{t('Annulée', 'Cancelled')}</option>
+                </select>
+              ),
+            },
           ]}
         />
       </section>
