@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     headers: {
+      'Referrer-Policy': 'no-referrer',
       'Permissions-Policy':
         'geolocation=(), camera=(), microphone=(), accelerometer=(), gyroscope=(), magnetometer=()',
     },
