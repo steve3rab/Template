@@ -67,12 +67,14 @@ const addressSchema = z.object({
 export const apiSchemas = {
   products: z.object({
     products: z.array(productSchema),
-    pagination: z.object({
-      page: z.number().int(),
-      pageSize: z.number().int(),
-      total: z.number().int(),
-      totalPages: z.number().int(),
-    }).optional(),
+    pagination: z
+      .object({
+        page: z.number().int(),
+        pageSize: z.number().int(),
+        total: z.number().int(),
+        totalPages: z.number().int(),
+      })
+      .optional(),
   }),
   customerCart: z.object({
     items: z.array(

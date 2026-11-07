@@ -30,7 +30,10 @@ describe('public product catalog', () => {
       pagination: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
     });
     expect(findMany).toHaveBeenCalledWith({
-      where: { active: true }, orderBy: { createdAt: 'desc' }, skip: 0, take: 100,
+      where: { active: true },
+      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 100,
     });
     expect(count).toHaveBeenCalledWith({ where: { active: true } });
   });
@@ -55,7 +58,10 @@ describe('public product catalog', () => {
       priceCents: { gte: 1000, lte: 9000 },
     };
     expect(findMany).toHaveBeenCalledWith({
-      where, orderBy: { priceCents: 'asc' }, skip: 12, take: 12,
+      where,
+      orderBy: { priceCents: 'asc' },
+      skip: 12,
+      take: 12,
     });
     expect(count).toHaveBeenCalledWith({ where });
   });
@@ -64,9 +70,13 @@ describe('public product catalog', () => {
     const { findMany } = setup();
     await app.ready();
     await app.inject({ method: 'GET', url: '/api/products?sort=price-desc' });
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { priceCents: 'desc' } }));
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { priceCents: 'desc' } }),
+    );
     await app.inject({ method: 'GET', url: '/api/products?sort=name-asc' });
-    expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ orderBy: { name: 'asc' } }));
+    expect(findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ orderBy: { name: 'asc' } }),
+    );
   });
 
   it.each([

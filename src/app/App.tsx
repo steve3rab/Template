@@ -593,7 +593,12 @@ export function App() {
     const currentQuantity = cart[product.id] ?? 0;
     if (product.stock !== undefined && (product.stock <= 0 || currentQuantity >= product.stock)) {
       setToastKind('error');
-      setNotice(translate('La quantité disponible pour ce produit est atteinte.', 'The available stock for this product has been reached.'));
+      setNotice(
+        translate(
+          'La quantité disponible pour ce produit est atteinte.',
+          'The available stock for this product has been reached.',
+        ),
+      );
       return;
     }
     setCart((current) => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
@@ -1173,8 +1178,20 @@ export function App() {
                     <span className="visual-label">
                       {categoryLabel(product.category).toUpperCase()}
                     </span>
-                    <button className="quick-add" onClick={() => addToCart(product)} disabled={product.stock === 0 || (product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock)}>
-                      {product.stock === 0 ? translate('Épuisé', 'Out of stock') : product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock ? translate('Stock atteint', 'Stock limit reached') : translate('Ajouter au panier', 'Add to cart')} <span>＋</span>
+                    <button
+                      className="quick-add"
+                      onClick={() => addToCart(product)}
+                      disabled={
+                        product.stock === 0 ||
+                        (product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock)
+                      }
+                    >
+                      {product.stock === 0
+                        ? translate('Épuisé', 'Out of stock')
+                        : product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock
+                          ? translate('Stock atteint', 'Stock limit reached')
+                          : translate('Ajouter au panier', 'Add to cart')}{' '}
+                      <span>＋</span>
                     </button>
                   </div>
                   <div className="product-meta">
@@ -1189,7 +1206,12 @@ export function App() {
                   </div>
                   <p className="product-description">{productDescription(product)}</p>
                   {product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
-                    <p className="product-variants" role="status">{translate(`Plus que ${product.stock} en stock`, `Only ${product.stock} left in stock`)}</p>
+                    <p className="product-variants" role="status">
+                      {translate(
+                        `Plus que ${product.stock} en stock`,
+                        `Only ${product.stock} left in stock`,
+                      )}
+                    </p>
                   )}
                   {product.sizes && product.sizes.length > 0 && (
                     <p className="product-variants">
@@ -1226,10 +1248,32 @@ export function App() {
               ))}
             </div>
             {filteredProducts.length > catalogPageSize && (
-              <nav className="catalogue-pagination" aria-label={translate('Pagination du catalogue', 'Catalogue pagination')}>
-                <button type="button" className="outline-button" disabled={safeCatalogPage <= 1} onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}>{translate('Précédent', 'Previous')}</button>
-                <span aria-live="polite">{translate(`Page ${safeCatalogPage} sur ${catalogPageCount}`, `Page ${safeCatalogPage} of ${catalogPageCount}`)}</span>
-                <button type="button" className="outline-button" disabled={safeCatalogPage >= catalogPageCount} onClick={() => setCatalogPage((page) => Math.min(catalogPageCount, page + 1))}>{translate('Suivant', 'Next')}</button>
+              <nav
+                className="catalogue-pagination"
+                aria-label={translate('Pagination du catalogue', 'Catalogue pagination')}
+              >
+                <button
+                  type="button"
+                  className="outline-button"
+                  disabled={safeCatalogPage <= 1}
+                  onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}
+                >
+                  {translate('Précédent', 'Previous')}
+                </button>
+                <span aria-live="polite">
+                  {translate(
+                    `Page ${safeCatalogPage} sur ${catalogPageCount}`,
+                    `Page ${safeCatalogPage} of ${catalogPageCount}`,
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="outline-button"
+                  disabled={safeCatalogPage >= catalogPageCount}
+                  onClick={() => setCatalogPage((page) => Math.min(catalogPageCount, page + 1))}
+                >
+                  {translate('Suivant', 'Next')}
+                </button>
               </nav>
             )}
             {!catalogLoading && !catalogFailed && filteredProducts.length === 0 && (
