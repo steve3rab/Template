@@ -75,7 +75,7 @@ Pour chaque nouvelle page ou fonctionnalité :
 Tests automatiques disponibles :
 
 - `src/shared/i18n.test.ts` vérifie la parité des clés et l'absence de chaînes vides dans le catalogue.
-- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique, la navigation légale, les landmarks, les noms de boutons et un parcours clavier mobile.
+- `e2e/quality.spec.ts` vérifie le changement FR/EN sur la boutique et le compte client, la navigation légale, les landmarks, les noms de boutons et un parcours clavier mobile.
 
 La vérification automatique ne peut pas garantir la qualité éditoriale de chaque traduction. Une relecture humaine reste nécessaire, en particulier pour les conditions contractuelles et les messages de paiement.
 
