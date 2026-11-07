@@ -33,6 +33,7 @@ export class UpstashRateLimitStore implements FastifyRateLimitStore {
     suppliedTimeWindow?: number,
     _max?: number,
   ): void {
+    void _max;
     void this.increment(key, suppliedTimeWindow).then(
       (result) => callback(null, result),
       (error: unknown) =>
