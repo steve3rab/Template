@@ -12,11 +12,12 @@ describe('UpstashRateLimitStore', () => {
   it('uses one atomic Redis command and returns the shared counter and TTL', async () => {
     vi.stubEnv('RATE_LIMIT_REDIS_REST_URL', 'https://redis.example.test');
     vi.stubEnv('RATE_LIMIT_REDIS_REST_TOKEN', 'test-token');
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({ result: [4, 52_000] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ result: [4, 52_000] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
     );
     vi.stubGlobal('fetch', fetchMock);
     const store = new UpstashRateLimitStore({ timeWindow: 60_000 } as never);
@@ -44,7 +45,10 @@ describe('UpstashRateLimitStore', () => {
   it('propagates shared storage failures instead of allowing the request', async () => {
     vi.stubEnv('RATE_LIMIT_REDIS_REST_URL', 'https://redis.example.test');
     vi.stubEnv('RATE_LIMIT_REDIS_REST_TOKEN', 'test-token');
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 503 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('', { status: 503 })),
+    );
     const store = new UpstashRateLimitStore({ timeWindow: 60_000 } as never);
 
     const error = await new Promise<Error>((resolve) => {

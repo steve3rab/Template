@@ -133,5 +133,6 @@ export function registerAdminRoutes(
       });
       await prisma.session.deleteMany({ where: { userId: user.id } });
       return { user };
-    });
-  }
+    },
+  );
+}

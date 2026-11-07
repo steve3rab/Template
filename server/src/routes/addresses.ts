@@ -42,10 +42,10 @@ export function registerAddressRoutes(
             city: body.data.city,
             country: body.data.country,
             isDefault: body.data.isDefault,
-        },
+          },
+        });
       });
-    });
-    return reply.code(201).send({ address });
+      return reply.code(201).send({ address });
     },
   );
 

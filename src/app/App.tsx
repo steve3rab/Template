@@ -50,8 +50,7 @@ const products: Product[] = [
     oldPrice: 120,
     color: 'sand',
     icon: '🧥',
-    image:
-      '/images/seed/veste-studio.svg',
+    image: '/images/seed/veste-studio.svg',
     tag: 'BEST-SELLER',
     description: 'Une coupe structurée, facile à porter du matin au soir.',
   },
@@ -62,8 +61,7 @@ const products: Product[] = [
     price: 74,
     color: 'mint',
     icon: '👟',
-    image:
-      '/images/seed/sneakers-everyday.svg',
+    image: '/images/seed/sneakers-everyday.svg',
     tag: 'NOUVEAU',
     description: 'Le confort au quotidien, avec une silhouette minimaliste.',
   },
@@ -74,8 +72,7 @@ const products: Product[] = [
     price: 59,
     color: 'rose',
     icon: '👜',
-    image:
-      '/images/seed/sac-epure.svg',
+    image: '/images/seed/sac-epure.svg',
     description: 'Un sac compact et pratique pour garder l’essentiel à portée de main.',
   },
   {
@@ -85,8 +82,7 @@ const products: Product[] = [
     price: 65,
     color: 'lavender',
     icon: '🧶',
-    image:
-      '/images/seed/pull-essentiel.svg',
+    image: '/images/seed/pull-essentiel.svg',
     description: 'Une maille douce et une coupe décontractée.',
   },
   {
@@ -97,8 +93,7 @@ const products: Product[] = [
     oldPrice: 45,
     color: 'blue',
     icon: '🕶️',
-    image:
-      '/images/seed/lunettes-soleil.svg',
+    image: '/images/seed/lunettes-soleil.svg',
     tag: '-22 %',
     description: 'Une touche graphique pour les journées ensoleillées.',
   },
@@ -109,8 +104,7 @@ const products: Product[] = [
     price: 92,
     color: 'peach',
     icon: '👞',
-    image:
-      '/images/seed/baskets-city.svg',
+    image: '/images/seed/baskets-city.svg',
     description: 'Des lignes sobres qui s’accordent avec toutes vos tenues.',
   },
   {
@@ -120,8 +114,7 @@ const products: Product[] = [
     price: 48,
     color: 'blue',
     icon: '👔',
-    image:
-      '/images/seed/chemise-relax.svg',
+    image: '/images/seed/chemise-relax.svg',
     description: 'Une chemise légère pensée pour les superpositions.',
   },
   {
@@ -131,8 +124,7 @@ const products: Product[] = [
     price: 25,
     color: 'sand',
     icon: '🧢',
-    image:
-      '/images/seed/casquette-club.svg',
+    image: '/images/seed/casquette-club.svg',
     tag: 'ESSENTIEL',
     description: 'La finition simple qui change un look.',
   },

@@ -27,12 +27,7 @@ export class UpstashRateLimitStore implements FastifyRateLimitStore {
     this.options = options as unknown as RouteAwareOptions;
   }
 
-  incr(
-    key: string,
-    callback: CounterCallback,
-    suppliedTimeWindow?: number,
-    _max?: number,
-  ): void {
+  incr(key: string, callback: CounterCallback, suppliedTimeWindow?: number, _max?: number): void {
     void _max;
     void this.increment(key, suppliedTimeWindow).then(
       (result) => callback(null, result),

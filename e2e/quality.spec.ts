@@ -18,9 +18,7 @@ test('French and English storefront labels stay in sync when switching languages
   await page.goto('/');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(
-    page.getByRole('heading', { name: 'Le style, en toute simplicité.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Le style, en toute simplicité.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Compte client' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Panier, 0 article(s)' })).toBeVisible();
 
@@ -39,9 +37,7 @@ test('French and English storefront labels stay in sync when switching languages
   await expect(page.getByRole('heading', { name: 'Votre compte' })).toBeVisible();
   await page.getByRole('button', { name: 'Collection', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-  await expect(
-    page.getByRole('heading', { name: 'Le style, en toute simplicité.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Le style, en toute simplicité.' })).toBeVisible();
 });
 
 test('legal pages retain the selected language and expose a way back', async ({ page }) => {
@@ -56,13 +52,10 @@ test('legal pages retain the selected language and expose a way back', async ({ 
   await expect(page.getByRole('heading', { name: 'Effortless style.' })).toBeVisible();
 });
 
-
 test('password reset page follows the selected language', async ({ page }) => {
   await page.goto('/reset-password');
 
-  await expect(
-    page.getByRole('heading', { name: 'Réinitialiser le mot de passe' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Réinitialiser le mot de passe' })).toBeVisible();
   await expect(page.getByText(/ce lien de réinitialisation est incomplet/i)).toBeVisible();
 
   await page.getByRole('button', { name: 'English' }).click();
@@ -70,7 +63,6 @@ test('password reset page follows the selected language', async ({ page }) => {
   await expect(page.getByText(/this password reset link is incomplete/i)).toBeVisible();
   await expect(page.getByLabel('New password')).toBeVisible();
 });
-
 
 test('browser geolocation and device sensors are denied by security policy', async ({ page }) => {
   const response = await page.goto('/');

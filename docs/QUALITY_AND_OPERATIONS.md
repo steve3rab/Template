@@ -126,17 +126,17 @@ La commande `npm run check` regroupe le typage, ESLint, Prettier, les couverture
 
 ## 8. Exploitation et diagnostic
 
-| Symptôme               | Contrôles à effectuer                                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend inaccessible  | Vérifier le port frontend, le processus Vite et les logs du terminal                                                                  |
-| API indisponible       | Appeler `/api/health`, vérifier le port backend, les variables d'environnement et les logs Fastify                                    |
-| Erreur de connexion DB | Vérifier `DATABASE_URL`, l'existence du volume/fichier et `npm run db:status`                                                         |
-| Migration en attente   | Sauvegarder la base, examiner la migration, puis exécuter `npm run db:deploy`                                                         |
-| Session refusée        | Vérifier le cookie, HTTPS/SameSite, `APP_ORIGIN` et `SESSION_SECRET` sans jamais journaliser les secrets                              |
-| Erreur 403             | Vérifier le rôle et la propriété de la ressource côté serveur ; ne pas contourner le contrôle dans l'interface                        |
-| Erreur 429             | Vérifier la fréquence d'appel et les limites configurées ; en production, contrôler aussi la disponibilité Redis REST et ses identifiants |
+| Symptôme                | Contrôles à effectuer                                                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend inaccessible   | Vérifier le port frontend, le processus Vite et les logs du terminal                                                                                                   |
+| API indisponible        | Appeler `/api/health`, vérifier le port backend, les variables d'environnement et les logs Fastify                                                                     |
+| Erreur de connexion DB  | Vérifier `DATABASE_URL`, l'existence du volume/fichier et `npm run db:status`                                                                                          |
+| Migration en attente    | Sauvegarder la base, examiner la migration, puis exécuter `npm run db:deploy`                                                                                          |
+| Session refusée         | Vérifier le cookie, HTTPS/SameSite, `APP_ORIGIN` et `SESSION_SECRET` sans jamais journaliser les secrets                                                               |
+| Erreur 403              | Vérifier le rôle et la propriété de la ressource côté serveur ; ne pas contourner le contrôle dans l'interface                                                         |
+| Erreur 429              | Vérifier la fréquence d'appel et les limites configurées ; en production, contrôler aussi la disponibilité Redis REST et ses identifiants                              |
 | Rate limit indisponible | Vérifier RATE_LIMIT_REDIS_REST_URL, RATE_LIMIT_REDIS_REST_TOKEN et la connectivité HTTPS vers Redis ; l'API échoue volontairement en mode fermé si Redis ne répond pas |
-| Paiement en attente    | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable  |
+| Paiement en attente     | Vérifier la livraison du webhook Stripe et sa signature ; ne jamais marquer manuellement une commande payée sans confirmation fiable                                   |
 
 ## 9. Sauvegarde et retour arrière
 

@@ -39,8 +39,8 @@ export default function () {
   responses.forEach((response, index) => {
     const health = index % 2 === 0;
     check(response, {
-      [health ? 'health endpoint returns 200' : 'catalogue endpoint returns 200']:
-        (result) => result.status === 200,
+      [health ? 'health endpoint returns 200' : 'catalogue endpoint returns 200']: (result) =>
+        result.status === 200,
       ...(health
         ? {}
         : {

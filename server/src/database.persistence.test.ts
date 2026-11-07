@@ -115,9 +115,9 @@ describeWithDatabase('SQLite persistence', () => {
     });
 
     try {
-      await expect(
-        createCustomerOrdersFromCart(client, user.id, address),
-      ).rejects.toMatchObject({ code: 'INSUFFICIENT_STOCK' });
+      await expect(createCustomerOrdersFromCart(client, user.id, address)).rejects.toMatchObject({
+        code: 'INSUFFICIENT_STOCK',
+      });
 
       // The cart was deleted before the stock check; the real DB transaction must restore it.
       expect(await client.cartItem.count({ where: { userId: user.id } })).toBe(1);
@@ -184,5 +184,4 @@ describeWithDatabase('SQLite persistence', () => {
       await client.user.deleteMany({ where: { id: { in: [first.id, second.id] } } });
     }
   });
-
 });
