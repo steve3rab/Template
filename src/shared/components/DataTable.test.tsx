@@ -138,5 +138,4 @@ describe('DataTable', () => {
     expect(screen.queryByRole('button', { name: 'Name' })).not.toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).not.toHaveAttribute('aria-sort');
   });
-
 });
