@@ -361,10 +361,10 @@ describe('Fashion storefront', () => {
       await screen.findByRole('heading', { name: /finaliser ma commande/i }),
     ).toBeInTheDocument();
 
-    await user.type(screen.getByLabel(/destinataire/i), 'Camille Martin');
-    await user.type(screen.getByLabel('Adresse', { exact: true }), '12 rue des Fleurs');
-    await user.type(screen.getByLabel('Code postal'), '75011');
-    await user.type(screen.getByLabel('Ville'), 'Paris');
+    await user.type(screen.getByLabelText(/destinataire/i), 'Camille Martin');
+    await user.type(screen.getByLabelText('Adresse', { exact: true }), '12 rue des Fleurs');
+    await user.type(screen.getByLabelText('Code postal'), '75011');
+    await user.type(screen.getByLabelText('Ville'), 'Paris');
     await user.click(screen.getByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
 
