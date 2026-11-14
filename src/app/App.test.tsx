@@ -161,12 +161,16 @@ describe('Fashion storefront', () => {
 
   it('resets catalogue pagination when a category filter changes', async () => {
     const user = userEvent.setup();
-    const manyProducts = Array.from({ length: 15 }, (_, index) => ({
-      ...catalogue[index % catalogue.length]!,
-      id: String(index + 1),
-      name: `Produit ${index + 1}`,
-      category: index < 13 ? 'Vêtements' : 'Chaussures',
-    }));
+    const manyProducts = Array.from({ length: 15 }, (_, index) => {
+      const product = catalogue[index % catalogue.length];
+      if (!product) throw new Error('Catalogue fixture is incomplete.');
+      return {
+        ...product,
+        id: String(index + 1),
+        name: `Produit ${index + 1}`,
+        category: index < 13 ? 'Vêtements' : 'Chaussures',
+      };
+    });
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL) => {
