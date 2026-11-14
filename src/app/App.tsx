@@ -203,6 +203,7 @@ export function App() {
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogFailed, setCatalogFailed] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [toastKind, setToastKind] = useState<'info' | 'success' | 'error'>('info');
   const [notice, setNotice] = useState(() => {
     if (paymentState === 'success') {
@@ -267,6 +268,9 @@ export function App() {
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
   }, [catalog, category, favorites, favoritesOnly, inStockOnly, query, sort]);
+  useEffect(() => {
+    setCatalogPage(1);
+  }, [category, query, favoritesOnly, inStockOnly, sort]);
   const catalogPageSize = 12;
   const catalogPageCount = Math.max(1, Math.ceil(filteredProducts.length / catalogPageSize));
   const safeCatalogPage = Math.min(catalogPage, catalogPageCount);
@@ -1174,7 +1178,16 @@ export function App() {
                   </div>
                   <div className="product-meta">
                     <div>
-                      <h3>{product.name}</h3>
+                      <h3>
+                        <button
+                          type="button"
+                          className="product-title-button"
+                          onClick={() => setSelectedProduct(product)}
+                          aria-label={translate(`Voir le détail de ${product.name}`, `View ${product.name} details`)}
+                        >
+                          {product.name}
+                        </button>
+                      </h3>
                       <p>{categoryLabel(product.category)}</p>
                     </div>
                     <div className="product-price">
@@ -1775,6 +1788,73 @@ export function App() {
         <button className="seller-exit" onClick={() => setView('shop')}>
           {translate('← Retour à la boutique', '← Back to shop')}
         </button>
+      )}
+      {selectedProduct && (
+        <div
+          className="product-detail-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedProduct(null);
+          }}
+        >
+          <section
+            className="product-detail-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-detail-title"
+          >
+            <button
+              type="button"
+              className="product-detail-close"
+              aria-label={translate('Fermer la fiche produit', 'Close product details')}
+              onClick={() => setSelectedProduct(null)}
+            >
+              ×
+            </button>
+            <div className={`product-detail-visual ${selectedProduct.color}`}>
+              <img src={selectedProduct.image} alt={selectedProduct.name} />
+            </div>
+            <div className="product-detail-content">
+              <span className="eyebrow">{categoryLabel(selectedProduct.category).toUpperCase()}</span>
+              <h2 id="product-detail-title">{selectedProduct.name}</h2>
+              <p className="product-detail-price">{formatPrice(selectedProduct.price)}</p>
+              <p>{productDescription(selectedProduct)}</p>
+              {selectedProduct.oldPrice && (
+                <p className="product-detail-old-price">
+                  {translate('Prix précédent :', 'Previous price:')} <del>{formatPrice(selectedProduct.oldPrice)}</del>
+                </p>
+              )}
+              {selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
+                <p><strong>{translate('Tailles disponibles :', 'Available sizes:')}</strong> {selectedProduct.sizes.join(', ')}</p>
+              )}
+              {selectedProduct.dimensions && (
+                <p><strong>{translate('Dimensions :', 'Dimensions:')}</strong> {selectedProduct.dimensions}</p>
+              )}
+              {selectedProduct.stock === 0 ? (
+                <p className="product-detail-stock" role="status">{translate('Actuellement indisponible', 'Currently unavailable')}</p>
+              ) : selectedProduct.stock !== undefined && selectedProduct.stock <= 5 ? (
+                <p className="product-detail-stock" role="status">
+                  {translate(`Plus que ${selectedProduct.stock} en stock`, `Only ${selectedProduct.stock} left in stock`)}
+                </p>
+              ) : (
+                <p className="product-detail-stock">{translate('Disponible', 'Available')}</p>
+              )}
+              <button
+                type="button"
+                className="dark-button full-button"
+                disabled={selectedProduct.stock === 0 || (selectedProduct.stock !== undefined && (cart[selectedProduct.id] ?? 0) >= selectedProduct.stock)}
+                onClick={() => {
+                  addToCart(selectedProduct);
+                  setSelectedProduct(null);
+                }}
+              >
+                {selectedProduct.stock === 0
+                  ? translate('Épuisé', 'Out of stock')
+                  : translate('Ajouter au panier', 'Add to cart')}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
       {cartOpen && (
         <div className="drawer-backdrop">
