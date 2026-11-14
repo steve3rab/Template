@@ -360,7 +360,9 @@ describe('Fashion storefront', () => {
     expect(orderRequest?.body).toContain('"addressId":"address-1"');
   });
 
-  it('confirms an order after saving a new address when Stripe checkout is unavailable', async () => {
+  it(
+    'confirms an order after saving a new address when Stripe checkout is unavailable',
+    async () => {
     const user = userEvent.setup();
     const address = {
       id: 'new-address-1',
