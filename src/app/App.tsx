@@ -885,7 +885,10 @@ export function App() {
     }
   }
   return (
-    <main className="store-app">
+    <main className="store-app" id="main-content" tabIndex={-1}>
+      <a className="skip-link" href="#main-content">
+        {translate('Aller au contenu principal', 'Skip to main content')}
+      </a>
       <div className="announcement">
         {translate(
           'SÉLECTION ATELIER · PAIEMENT EN LIGNE · CONDITIONS DE RETOUR EN PIED DE PAGE',
