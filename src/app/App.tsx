@@ -185,6 +185,26 @@ export function App() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [catalogPage, setCatalogPage] = useState(1);
+  const changeCategory = (nextCategory: Category) => {
+    setCategory(nextCategory);
+    setCatalogPage(1);
+  };
+  const changeQuery = (nextQuery: string) => {
+    setQuery(nextQuery);
+    setCatalogPage(1);
+  };
+  const toggleFavoritesOnly = () => {
+    setFavoritesOnly((current) => !current);
+    setCatalogPage(1);
+  };
+  const changeInStockOnly = (checked: boolean) => {
+    setInStockOnly(checked);
+    setCatalogPage(1);
+  };
+  const changeSort = (nextSort: string) => {
+    setSort(nextSort);
+    setCatalogPage(1);
+  };
   const [cart, setCart] = useState<Record<string, number>>(() =>
     readStoredJson('atelier-cart', {}, isCart),
   );
@@ -281,9 +301,6 @@ export function App() {
     if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'fr'));
     return result;
   }, [catalog, category, favorites, favoritesOnly, inStockOnly, query, sort]);
-  useEffect(() => {
-    setCatalogPage(1);
-  }, [category, query, favoritesOnly, inStockOnly, sort]);
   const catalogPageSize = 12;
   const catalogPageCount = Math.max(1, Math.ceil(filteredProducts.length / catalogPageSize));
   const safeCatalogPage = Math.min(catalogPage, catalogPageCount);
@@ -900,7 +917,7 @@ export function App() {
             aria-current={view === 'shop' && category === 'Tout' ? 'page' : undefined}
             onClick={() => {
               setView('shop');
-              setCategory('Tout');
+              changeCategory('Tout');
             }}
           >
             {translate('Collection', 'Collection')}
@@ -913,7 +930,7 @@ export function App() {
               aria-current={view === 'shop' && category === item ? 'page' : undefined}
               onClick={() => {
                 setView('shop');
-                setCategory(item);
+                changeCategory(item);
               }}
             >
               {categoryLabel(item)}
@@ -999,7 +1016,7 @@ export function App() {
               <button
                 className="dark-button"
                 onClick={() => {
-                  setCategory('Tout');
+                  changeCategory('Tout');
                   document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
@@ -1070,14 +1087,14 @@ export function App() {
                     aria-label={translate('Rechercher un produit', 'Search products')}
                     placeholder={translate('Rechercher...', 'Search...')}
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => changeQuery(event.target.value)}
                   />
                 </label>
                 <button
                   type="button"
                   className={favoritesOnly ? 'favorite-filter selected' : 'favorite-filter'}
                   aria-pressed={favoritesOnly}
-                  onClick={() => setFavoritesOnly((current) => !current)}
+                  onClick={toggleFavoritesOnly}
                 >
                   <span aria-hidden="true">{favoritesOnly ? '♥' : '♡'}</span>{' '}
                   {translate('Favoris', 'Favourites')}
@@ -1086,7 +1103,7 @@ export function App() {
                   <input
                     type="checkbox"
                     checked={inStockOnly}
-                    onChange={(event) => setInStockOnly(event.target.checked)}
+                    onChange={(event) => changeInStockOnly(event.target.checked)}
                   />
                   {translate('En stock uniquement', 'In stock only')}
                 </label>
@@ -1094,7 +1111,7 @@ export function App() {
                   <span className="visually-hidden">
                     {translate('Trier les produits', 'Sort products')}
                   </span>
-                  <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                  <select value={sort} onChange={(event) => changeSort(event.target.value)}>
                     <option value="featured">{translate('À la une', 'Featured')}</option>
                     <option value="price-up">
                       {translate('Prix croissant', 'Price: low to high')}
@@ -1306,8 +1323,8 @@ export function App() {
                   <button
                     className="outline-button"
                     onClick={() => {
-                      setQuery('');
-                      setCategory('Tout');
+                      changeQuery('');
+                      changeCategory('Tout');
                       setFavoritesOnly(false);
                     }}
                   >
