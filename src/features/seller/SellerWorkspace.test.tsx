@@ -50,6 +50,69 @@ describe('SellerWorkspace translations', () => {
     expect(screen.getByText(/no orders have been recorded yet/i)).toBeInTheDocument();
   });
 
+  it('compresses seller photos before sending product data to the API', async () => {
+    const product = {
+      id: 'photo-product',
+      name: 'Photo product',
+      description: '',
+      category: 'Vêtements',
+      priceCents: 2990,
+      stock: 10,
+      active: true,
+    };
+    let createPayload: Record<string, unknown> | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.startsWith('/api/seller/dashboard'))
+          return apiResponse({
+            periodDays: 30,
+            revenueCents: 0,
+            orders: 0,
+            paidOrders: 0,
+            unitsSold: 0,
+            products: 0,
+            lowStockProducts: 0,
+            currency: 'EUR',
+          });
+        if (url === '/api/seller/products' && !init?.method)
+          return apiResponse({ products: [] });
+        if (url === '/api/seller/orders') return apiResponse({ orders: [] });
+        if (url === '/api/seller/products' && init?.method === 'POST') {
+          createPayload = JSON.parse(String(init.body)) as Record<string, unknown>;
+          return apiResponse({ product }, 201);
+        }
+        return apiResponse({ error: 'Not found.' }, 404);
+      }),
+    );
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi.fn(async () => ({ width: 2400, height: 1800, close: vi.fn() }) as unknown as ImageBitmap),
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['optimized-image'], { type: 'image/webp' }));
+    });
+
+    const user = userEvent.setup();
+    render(<SellerWorkspace range="30" language="en" />);
+    await screen.findByRole('heading', { name: /add a product/i });
+
+    const file = new File(['original-image'], 'product.jpg', { type: 'image/jpeg' });
+    await user.upload(screen.getByLabelText(/product photos/i), file);
+
+    expect(await screen.findByRole('img', { name: /product image preview 1/i })).toHaveAttribute(
+      'src',
+      expect.stringMatching(/^data:image\/webp;base64,/),
+    );
+    await user.click(screen.getByRole('button', { name: /create product/i }));
+
+    expect(createPayload?.imageUrls).toEqual([expect.stringMatching(/^data:image\/webp;base64,/)]);
+  });
+
   it('shows a recoverable loading error instead of a false empty state and retries', async () => {
     let dashboardRequests = 0;
     vi.stubGlobal(
