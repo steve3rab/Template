@@ -159,6 +159,34 @@ describe('Fashion storefront', () => {
     expect(screen.queryByRole('heading', { name: 'Sneakers Everyday' })).not.toBeInTheDocument();
   });
 
+  it('resets catalogue pagination when a category filter changes', async () => {
+    const user = userEvent.setup();
+    const manyProducts = Array.from({ length: 15 }, (_, index) => ({
+      ...catalogue[index % catalogue.length]!,
+      id: String(index + 1),
+      name: `Produit ${index + 1}`,
+      category: index < 13 ? 'Vêtements' : 'Chaussures',
+    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/products') return apiResponse({ products: manyProducts });
+        if (url === '/api/auth/me') return apiResponse({ error: 'Not authenticated.' }, 401);
+        return apiResponse({ error: 'Not authenticated.' }, 401);
+      }),
+    );
+
+    render(<App />);
+    expect(await screen.findByText('Page 1 sur 2')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Suivant' }));
+    expect(screen.getByText('Page 2 sur 2')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Vêtements', exact: true }));
+    expect(screen.getByText('Page 1 sur 2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Produit 1' })).toBeInTheDocument();
+  });
+
   it('filters out-of-stock products and prevents adding unavailable items', async () => {
     const user = userEvent.setup();
     const productsWithOutOfStock = catalogue.map((product) =>
