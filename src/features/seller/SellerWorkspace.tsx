@@ -3,6 +3,7 @@ import { formatCents } from '../../shared/utils/formatCurrency';
 import { PRODUCT_CATEGORIES } from '../../shared/categories';
 import { translateText, type Language } from '../../shared/i18n';
 import { DataTable } from '../../shared/components/DataTable';
+import { compressImage } from '../../shared/utils/compressImage';
 
 import {
   apiRequest,
@@ -428,7 +429,8 @@ export function SellerWorkspace({
               accept="image/png,image/jpeg,image/webp"
               multiple
               onChange={(event) => {
-                const selectedFiles = Array.from(event.target.files ?? []);
+                const input = event.currentTarget;
+                const selectedFiles = Array.from(input.files ?? []);
                 const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
                 if (
                   selectedFiles.length > 5 ||
@@ -445,40 +447,28 @@ export function SellerWorkspace({
                       },
                     }),
                   );
-                  event.target.value = '';
+                  input.value = '';
                   return;
                 }
+                if (selectedFiles.some((file) => file.size > 15 * 1024 * 1024)) {
+                  window.dispatchEvent(
+                    new CustomEvent('template-toast', {
+                      detail: {
+                        message: t(
+                          'Chaque photo doit faire moins de 15 Mo avant compression.',
+                          'Each image must be smaller than 15 MB before compression.',
+                        ),
+                        type: 'error',
+                      },
+                    }),
+                  );
+                  input.value = '';
+                  return;
+                }
+
                 setImagesLoading(true);
-                void Promise.all(
-                  selectedFiles.map(
-                    (file) =>
-                      new Promise<string>((resolve, reject) => {
-                        if (file.size > 1_200_000) {
-                          reject(
-                            new Error(
-                              t(`${file.name} dépasse 1,2 Mo.`, `${file.name} exceeds 1.2 MB.`),
-                            ),
-                          );
-                          return;
-                        }
-                        const reader = new FileReader();
-                        reader.onload = () =>
-                          typeof reader.result === 'string'
-                            ? resolve(reader.result)
-                            : reject(
-                                new Error(
-                                  t('Lecture de photo impossible.', 'Unable to read image.'),
-                                ),
-                              );
-                        reader.onerror = () =>
-                          reject(
-                            new Error(t('Lecture de photo impossible.', 'Unable to read image.')),
-                          );
-                        reader.readAsDataURL(file);
-                      }),
-                  ),
-                )
-                  .then(setImages)
+                void Promise.all(selectedFiles.map((file) => compressImage(file)))
+                  .then((results) => setImages(results.map((result) => result.dataUrl)))
                   .catch((error: unknown) =>
                     window.dispatchEvent(
                       new CustomEvent('template-toast', {
@@ -486,13 +476,16 @@ export function SellerWorkspace({
                           message:
                             error instanceof Error
                               ? error.message
-                              : t('Photo invalide.', 'Invalid image.'),
+                              : t('Compression de photo impossible.', 'Unable to compress image.'),
                           type: 'error',
                         },
                       }),
                     ),
                   )
-                  .finally(() => setImagesLoading(false));
+                  .finally(() => {
+                    setImagesLoading(false);
+                    input.value = '';
+                  });
               }}
             />
             <span className="field-hint">
