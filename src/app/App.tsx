@@ -1216,7 +1216,10 @@ export function App() {
                           type="button"
                           className="product-title-button"
                           onClick={() => setSelectedProduct(product)}
-                          aria-label={translate(`Voir le détail de ${product.name}`, `View ${product.name} details`)}
+                          aria-label={translate(
+                            `Voir le détail de ${product.name}`,
+                            `View ${product.name} details`,
+                          )}
                         >
                           {product.name}
                         </button>
@@ -1552,7 +1555,9 @@ export function App() {
                             {address.label}
                             {address.isDefault
                               ? ` · ${translate('Par défaut', 'Default')}`
-                              : ''} — {address.recipient}, {address.line1}, {address.postalCode}{' '}
+                              : ''}
+                            {' — '}
+                            {address.recipient}, {address.line1}, {address.postalCode}{' '}
                             {address.city}
                           </option>
                         ))}
@@ -1851,26 +1856,40 @@ export function App() {
               <img src={selectedProduct.image} alt={selectedProduct.name} />
             </div>
             <div className="product-detail-content">
-              <span className="eyebrow">{categoryLabel(selectedProduct.category).toUpperCase()}</span>
+              <span className="eyebrow">
+                {categoryLabel(selectedProduct.category).toUpperCase()}
+              </span>
               <h2 id="product-detail-title">{selectedProduct.name}</h2>
               <p className="product-detail-price">{formatPrice(selectedProduct.price)}</p>
               <p>{productDescription(selectedProduct)}</p>
               {selectedProduct.oldPrice && (
                 <p className="product-detail-old-price">
-                  {translate('Prix précédent :', 'Previous price:')} <del>{formatPrice(selectedProduct.oldPrice)}</del>
+                  {translate('Prix précédent :', 'Previous price:')}{' '}
+                  <del>{formatPrice(selectedProduct.oldPrice)}</del>
                 </p>
               )}
               {selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
-                <p><strong>{translate('Tailles disponibles :', 'Available sizes:')}</strong> {selectedProduct.sizes.join(', ')}</p>
+                <p>
+                  <strong>{translate('Tailles disponibles :', 'Available sizes:')}</strong>{' '}
+                  {selectedProduct.sizes.join(', ')}
+                </p>
               )}
               {selectedProduct.dimensions && (
-                <p><strong>{translate('Dimensions :', 'Dimensions:')}</strong> {selectedProduct.dimensions}</p>
+                <p>
+                  <strong>{translate('Dimensions :', 'Dimensions:')}</strong>{' '}
+                  {selectedProduct.dimensions}
+                </p>
               )}
               {selectedProduct.stock === 0 ? (
-                <p className="product-detail-stock" role="status">{translate('Actuellement indisponible', 'Currently unavailable')}</p>
+                <p className="product-detail-stock" role="status">
+                  {translate('Actuellement indisponible', 'Currently unavailable')}
+                </p>
               ) : selectedProduct.stock !== undefined && selectedProduct.stock <= 5 ? (
                 <p className="product-detail-stock" role="status">
-                  {translate(`Plus que ${selectedProduct.stock} en stock`, `Only ${selectedProduct.stock} left in stock`)}
+                  {translate(
+                    `Plus que ${selectedProduct.stock} en stock`,
+                    `Only ${selectedProduct.stock} left in stock`,
+                  )}
                 </p>
               ) : (
                 <p className="product-detail-stock">{translate('Disponible', 'Available')}</p>
@@ -1878,7 +1897,11 @@ export function App() {
               <button
                 type="button"
                 className="dark-button full-button"
-                disabled={selectedProduct.stock === 0 || (selectedProduct.stock !== undefined && (cart[selectedProduct.id] ?? 0) >= selectedProduct.stock)}
+                disabled={
+                  selectedProduct.stock === 0 ||
+                  (selectedProduct.stock !== undefined &&
+                    (cart[selectedProduct.id] ?? 0) >= selectedProduct.stock)
+                }
                 onClick={() => {
                   addToCart(selectedProduct);
                   setSelectedProduct(null);
