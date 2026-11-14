@@ -182,7 +182,7 @@ describe('Fashion storefront', () => {
     await user.click(screen.getByRole('button', { name: 'Suivant' }));
     expect(screen.getByText('Page 2 sur 2')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Vêtements', exact: true }));
+    await user.click(screen.getByRole('button', { name: /^Vêtements$/ }));
     expect(screen.getByText('Page 1 sur 2')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Produit 1' })).toBeInTheDocument();
   });
