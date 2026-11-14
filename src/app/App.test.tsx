@@ -127,6 +127,10 @@ describe('Fashion storefront', () => {
       within(dialog).getByRole('button', { name: 'Fermer la fiche produit' }),
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Voir le détail de Veste Studio' }));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('uses product photography with accessible text alternatives', () => {
