@@ -232,6 +232,19 @@ export function App() {
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
   useEffect(() => {
+    if (!selectedProduct) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedProduct(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedProduct]);
+  useEffect(() => {
     const onToast = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
       const detail = event.detail as { message?: unknown; type?: unknown };
