@@ -363,77 +363,77 @@ describe('Fashion storefront', () => {
   it(
     'confirms an order after saving a new address when Stripe checkout is unavailable',
     async () => {
-    const user = userEvent.setup();
-    const address = {
-      id: 'new-address-1',
-      label: 'Livraison',
-      recipient: 'Camille Martin',
-      line1: '12 rue des Fleurs',
-      postalCode: '75011',
-      city: 'Paris',
-      country: 'FR',
-      isDefault: true,
-    };
-    const requests: { url: string; method: string }[] = [];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = String(input);
-        const method = (init?.method ?? 'GET').toUpperCase();
-        requests.push({ url, method });
-        if (url === '/api/products') return apiResponse({ products: catalogue });
-        if (url === '/api/auth/me') {
-          return apiResponse({ user: { email: 'client@example.com' } });
-        }
-        if (url === '/api/customer/cart' && method === 'GET') {
-          return apiResponse({ items: [{ productId: '1', quantity: 1 }] });
-        }
-        if (url === '/api/customer/favorites') return apiResponse({ favorites: [] });
-        if (url === '/api/customer/addresses' && method === 'GET') {
-          return apiResponse({ addresses: [] });
-        }
-        if (url === '/api/customer/cart' && method === 'PUT') {
-          return apiResponse({ ok: true });
-        }
-        if (url === '/api/customer/addresses' && method === 'POST') {
-          return apiResponse({ address }, 201);
-        }
-        if (url === '/api/customer/orders' && method === 'POST') {
-          return apiResponse(
-            { order: { id: 'order-new-address' }, orders: [{ id: 'order-new-address' }] },
-            201,
-          );
-        }
-        if (url === '/api/customer/checkout') {
-          return apiResponse({ error: 'Le paiement en ligne n’est pas encore configuré.' }, 503);
-        }
-        return apiResponse({ error: 'Not found.' }, 404);
-      }),
-    );
-
-    render(<App />);
-    await user.click(await screen.findByRole('button', { name: 'Panier, 1 article(s)' }));
-    await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
-    expect(
-      await screen.findByRole('heading', { name: /finaliser ma commande/i }),
-    ).toBeInTheDocument();
-
-    await user.type(screen.getByLabelText(/destinataire/i), 'Camille Martin');
-    await user.type(screen.getByLabelText('Adresse', { exact: true }), '12 rue des Fleurs');
-    await user.type(screen.getByLabelText('Code postal'), '75011');
-    await user.type(screen.getByLabelText('Ville'), 'Paris');
-    await user.click(screen.getByRole('checkbox'));
-    await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
-
-    expect(
-      await screen.findByRole('heading', { name: /merci pour votre commande/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/aucun paiement n’a été effectué pour le moment/i)).toBeInTheDocument();
-    expect(requests).toContainEqual({ url: '/api/customer/addresses', method: 'POST' });
-    expect(requests).toContainEqual({ url: '/api/customer/orders', method: 'POST' });
-    expect(requests).toContainEqual({ url: '/api/customer/checkout', method: 'POST' });
-  });
-
+      const user = userEvent.setup();
+      const address = {
+        id: 'new-address-1',
+        label: 'Livraison',
+        recipient: 'Camille Martin',
+        line1: '12 rue des Fleurs',
+        postalCode: '75011',
+        city: 'Paris',
+        country: 'FR',
+        isDefault: true,
+      };
+      const requests: { url: string; method: string }[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          const method = (init?.method ?? 'GET').toUpperCase();
+          requests.push({ url, method });
+          if (url === '/api/products') return apiResponse({ products: catalogue });
+          if (url === '/api/auth/me') {
+            return apiResponse({ user: { email: 'client@example.com' } });
+          }
+          if (url === '/api/customer/cart' && method === 'GET') {
+            return apiResponse({ items: [{ productId: '1', quantity: 1 }] });
+          }
+          if (url === '/api/customer/favorites') return apiResponse({ favorites: [] });
+          if (url === '/api/customer/addresses' && method === 'GET') {
+            return apiResponse({ addresses: [] });
+          }
+          if (url === '/api/customer/cart' && method === 'PUT') {
+            return apiResponse({ ok: true });
+          }
+          if (url === '/api/customer/addresses' && method === 'POST') {
+            return apiResponse({ address }, 201);
+          }
+          if (url === '/api/customer/orders' && method === 'POST') {
+            return apiResponse(
+              { order: { id: 'order-new-address' }, orders: [{ id: 'order-new-address' }] },
+              201,
+            );
+          }
+          if (url === '/api/customer/checkout') {
+            return apiResponse({ error: 'Le paiement en ligne n’est pas encore configuré.' }, 503);
+          }
+          return apiResponse({ error: 'Not found.' }, 404);
+        }),
+      );
+  
+      render(<App />);
+      await user.click(await screen.findByRole('button', { name: 'Panier, 1 article(s)' }));
+      await user.click(screen.getByRole('button', { name: /passer à la commande/i }));
+      expect(
+        await screen.findByRole('heading', { name: /finaliser ma commande/i }),
+      ).toBeInTheDocument();
+  
+      await user.type(screen.getByLabelText(/destinataire/i), 'Camille Martin');
+      await user.type(screen.getByLabelText('Adresse', { exact: true }), '12 rue des Fleurs');
+      await user.type(screen.getByLabelText('Code postal'), '75011');
+      await user.type(screen.getByLabelText('Ville'), 'Paris');
+      await user.click(screen.getByRole('checkbox'));
+      await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
+  
+      expect(
+        await screen.findByRole('heading', { name: /merci pour votre commande/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/aucun paiement n’a été effectué pour le moment/i)).toBeInTheDocument();
+      expect(requests).toContainEqual({ url: '/api/customer/addresses', method: 'POST' });
+      expect(requests).toContainEqual({ url: '/api/customer/orders', method: 'POST' });
+      expect(requests).toContainEqual({ url: '/api/customer/checkout', method: 'POST' });
+    },
+  );
   it('shows that checkout is a demo rather than a real payment', async () => {
     const user = userEvent.setup();
     render(<App />);
