@@ -11,6 +11,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    locale: 'fr-FR',
     trace: 'off',
     screenshot: 'off',
   },
