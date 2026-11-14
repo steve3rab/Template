@@ -113,6 +113,22 @@ describe('Fashion storefront', () => {
     expect(screen.queryByRole('button', { name: /Espace vendeur/ })).not.toBeInTheDocument();
   });
 
+  it('opens and closes an accessible product detail dialog', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'Voir le détail de Veste Studio' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Veste Studio' });
+    expect(within(dialog).getByText(/coupe structurée/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/89,00/)).toBeInTheDocument();
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Fermer la fiche produit' }),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('uses product photography with accessible text alternatives', () => {
     render(<App />);
     const photo = screen.getByRole('img', { name: 'Veste Studio' });
