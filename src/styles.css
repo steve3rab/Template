@@ -4418,7 +4418,7 @@ button:not(:disabled):active {
 .product-detail-content > p {
   margin: 0;
   color: #73746a;
-  font-size: .9rem;
+  font-size: 0.9rem;
   line-height: 1.75;
 }
 .product-detail-content .product-detail-price {
@@ -4428,7 +4428,7 @@ button:not(:disabled):active {
 }
 .product-detail-content .product-detail-old-price,
 .product-detail-content .product-detail-stock {
-  font-size: .8rem;
+  font-size: 0.8rem;
 }
 .product-detail-content .product-detail-stock {
   color: #65714d;
