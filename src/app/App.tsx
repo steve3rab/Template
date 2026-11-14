@@ -9,6 +9,7 @@ import { formatCurrency } from '../shared/utils/formatCurrency';
 import { readStoredJson, writeStoredJson } from '../shared/utils/safeStorage';
 import { apiRequest, apiSchemas, type CustomerAddress } from '../shared/api/client';
 import { PRODUCT_CATEGORIES } from '../shared/categories';
+import { useTranslation } from '../shared/i18n';
 
 function isCart(value: unknown): value is Record<string, number> {
   return (
@@ -132,9 +133,7 @@ const products: Product[] = [
 type View = 'shop' | 'account' | 'seller' | 'admin' | 'checkout' | 'legal' | 'reset';
 
 export function App() {
-  const [language, setLanguage] = useState<'fr' | 'en'>(() =>
-    window.localStorage.getItem('template-react-language') === 'en' ? 'en' : 'fr',
-  );
+  const { language, setLanguage } = useTranslation();
   const translate = useCallback(
     (fr: string, en: string) => (language === 'en' ? en : fr),
     [language],
@@ -231,10 +230,6 @@ export function App() {
   const checkoutSubmitRef = useRef(false);
   const [sellerRange, setSellerRange] = useState('30');
   const [legalPage, setLegalPage] = useState<LegalPageKind>('terms');
-  useEffect(() => {
-    document.documentElement.lang = language;
-    window.localStorage.setItem('template-react-language', language);
-  }, [language]);
   useEffect(() => {
     const onToast = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
