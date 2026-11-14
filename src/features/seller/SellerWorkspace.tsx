@@ -467,9 +467,15 @@ export function SellerWorkspace({
                 }
 
                 setImagesLoading(true);
-                void Promise.all(selectedFiles.map((file) => compressImage(file)))
-                  .then((results) => setImages(results.map((result) => result.dataUrl)))
-                  .catch((error: unknown) =>
+                void (async () => {
+                  try {
+                    const optimizedImages: string[] = [];
+                    for (const file of selectedFiles) {
+                      const optimized = await compressImage(file);
+                      optimizedImages.push(optimized.dataUrl);
+                    }
+                    setImages(optimizedImages);
+                  } catch (error) {
                     window.dispatchEvent(
                       new CustomEvent('template-toast', {
                         detail: {
@@ -480,12 +486,12 @@ export function SellerWorkspace({
                           type: 'error',
                         },
                       }),
-                    ),
-                  )
-                  .finally(() => {
+                    );
+                  } finally {
                     setImagesLoading(false);
                     input.value = '';
-                  });
+                  }
+                })();
               }}
             />
             <span className="field-hint">
