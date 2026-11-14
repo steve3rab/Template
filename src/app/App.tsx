@@ -1326,6 +1326,9 @@ export function App() {
                       changeQuery('');
                       changeCategory('Tout');
                       setFavoritesOnly(false);
+                      setInStockOnly(false);
+                      setSort('featured');
+                      setCatalogPage(1);
                     }}
                   >
                     {translate('Réinitialiser les filtres', 'Reset filters')}
