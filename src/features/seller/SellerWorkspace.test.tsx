@@ -110,7 +110,7 @@ describe('SellerWorkspace translations', () => {
     );
     await user.click(screen.getByRole('button', { name: /create product/i }));
 
-    expect(createPayload?.imageUrls).toEqual([expect.stringMatching(/^data:image\/webp;base64,/)]);
+    expect(createPayload?.['imageUrls']).toEqual([expect.stringMatching(/^data:image\/webp;base64,/)]);
   });
 
   it('shows a recoverable loading error instead of a false empty state and retries', async () => {
