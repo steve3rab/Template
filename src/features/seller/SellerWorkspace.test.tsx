@@ -1,13 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SellerWorkspace } from './SellerWorkspace';
 
 function apiResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  return {
+    ok: status >= 200 && status < 300,
     status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+    json: async () => body,
+    clone() {
+      return this;
+    },
+  } as Response;
 }
 
 describe('SellerWorkspace translations', () => {
@@ -107,7 +111,9 @@ describe('SellerWorkspace translations', () => {
       'src',
       expect.stringMatching(/^data:image\/webp;base64,/),
     );
-    await user.click(screen.getByRole('button', { name: /create product/i }));
+    const createButton = screen.getByRole('button', { name: /create product/i });
+    await waitFor(() => expect(createButton).toBeEnabled());
+    await user.click(createButton);
 
     expect(createPayload?.['imageUrls']).toEqual([
       expect.stringMatching(/^data:image\/webp;base64,/),
