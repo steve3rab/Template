@@ -111,6 +111,7 @@ describe('SellerWorkspace translations', () => {
       'src',
       expect.stringMatching(/^data:image\/webp;base64,/),
     );
+    await user.type(screen.getByLabelText(/product name/i), 'Photo product');
     const createButton = screen.getByRole('button', { name: /create product/i });
     await waitFor(() => expect(createButton).toBeEnabled());
     await user.click(createButton);
