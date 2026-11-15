@@ -180,12 +180,16 @@ describe('Stripe payment routes', () => {
         status: 'PENDING',
         paymentReference: null,
       },
-      data: { paymentReference: 'cs_test_123' },
+      data: {
+        paymentReference: 'cs_test_123',
+        reservationExpiresAt: expect.any(Date),
+      },
     });
     const request = vi.mocked(fetch).mock.calls[0]?.[1];
     expect(String(request?.body)).toContain(
       'line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=2500',
     );
+    expect(String(request?.body)).toContain('expires_at=');
   });
 
   it('reuses a session already linked by a concurrent idempotent checkout request', async () => {
