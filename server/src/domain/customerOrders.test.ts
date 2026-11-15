@@ -71,6 +71,7 @@ describe('createCustomerOrdersFromCart', () => {
         sellerId: 'seller-1',
         addressId: address.id,
         totalCents: 5000,
+        reservationExpiresAt: expect.any(Date),
         items: {
           create: [
             {
