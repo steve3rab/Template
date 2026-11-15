@@ -197,7 +197,9 @@ describe('Stripe payment routes', () => {
       updateMany.mockResolvedValueOnce({ count: 0 });
       vi.mocked(prisma.order.findMany)
         .mockResolvedValueOnce([order])
-        .mockResolvedValueOnce([{ ...order, paymentReference: 'cs_test_concurrent' }] as never);
+        .mockResolvedValueOnce(
+          [{ ...order, paymentReference: 'cs_test_concurrent' }] as never,
+        );
       const fetchMock = vi.fn(
         async () =>
           new Response(
