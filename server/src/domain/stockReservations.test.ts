@@ -33,50 +33,51 @@ describe('releaseExpiredUnlinkedReservations', () => {
   it(
     'cancels an expired unpaid order and restores every linked product quantity atomically',
     async () => {
-    const store = setup([
-      {
-        id: 'order-1',
-        items: [
-          { productId: 'product-1', quantity: 2 },
-          { productId: 'product-2', quantity: 1 },
-          { productId: null, quantity: 4 },
-        ],
-      },
-    ]);
+      const store = setup([
+        {
+          id: 'order-1',
+          items: [
+            { productId: 'product-1', quantity: 2 },
+            { productId: 'product-2', quantity: 1 },
+            { productId: null, quantity: 4 },
+          ],
+        },
+      ]);
 
-    await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(1);
+      await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(1);
 
-    expect(store.orderFindMany).toHaveBeenCalledWith({
-      where: {
-        status: 'PENDING',
-        paymentStatus: 'UNPAID',
-        paymentReference: null,
-        reservationExpiresAt: { lte: now },
-      },
-      include: { items: { select: { productId: true, quantity: true } } },
-      orderBy: { reservationExpiresAt: 'asc' },
-      take: 100,
-    });
-    expect(store.orderUpdateMany).toHaveBeenCalledWith({
-      where: {
-        id: 'order-1',
-        status: 'PENDING',
-        paymentStatus: 'UNPAID',
-        paymentReference: null,
-        reservationExpiresAt: { lte: now },
-      },
-      data: { status: 'CANCELLED' },
-    });
-    expect(store.productUpdateMany).toHaveBeenNthCalledWith(1, {
-      where: { id: 'product-1' },
-      data: { stock: { increment: 2 } },
-    });
-    expect(store.productUpdateMany).toHaveBeenNthCalledWith(2, {
-      where: { id: 'product-2' },
-      data: { stock: { increment: 1 } },
-    });
-    expect(store.productUpdateMany).toHaveBeenCalledTimes(2);
-  });
+      expect(store.orderFindMany).toHaveBeenCalledWith({
+        where: {
+          status: 'PENDING',
+          paymentStatus: 'UNPAID',
+          paymentReference: null,
+          reservationExpiresAt: { lte: now },
+        },
+        include: { items: { select: { productId: true, quantity: true } } },
+        orderBy: { reservationExpiresAt: 'asc' },
+        take: 100,
+      });
+      expect(store.orderUpdateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'order-1',
+          status: 'PENDING',
+          paymentStatus: 'UNPAID',
+          paymentReference: null,
+          reservationExpiresAt: { lte: now },
+        },
+        data: { status: 'CANCELLED' },
+      });
+      expect(store.productUpdateMany).toHaveBeenNthCalledWith(1, {
+        where: { id: 'product-1' },
+        data: { stock: { increment: 2 } },
+      });
+      expect(store.productUpdateMany).toHaveBeenNthCalledWith(2, {
+        where: { id: 'product-2' },
+        data: { stock: { increment: 1 } },
+      });
+      expect(store.productUpdateMany).toHaveBeenCalledTimes(2);
+    },
+  );
 
   it(
     'does not restore stock when another process already cancelled or paid the order',
@@ -86,11 +87,12 @@ describe('releaseExpiredUnlinkedReservations', () => {
         0,
       );
 
-    await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(0);
+      await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(0);
 
-    expect(store.orderUpdateMany).toHaveBeenCalledTimes(1);
-    expect(store.productUpdateMany).not.toHaveBeenCalled();
-  });
+      expect(store.orderUpdateMany).toHaveBeenCalledTimes(1);
+      expect(store.productUpdateMany).not.toHaveBeenCalled();
+    },
+  );
 
   it('does not query or release orders that still have a Stripe session reference', async () => {
     const store = setup([]);
