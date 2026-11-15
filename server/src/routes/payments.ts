@@ -242,7 +242,7 @@ export function registerPaymentRoutes(
 
       const orderIds = orders.map((order) => order.id).sort();
       // Match the inventory hold to Stripe's Checkout Session lifetime.
-      const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+      const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 35 * 60;
       const reservationExpiresAt = new Date(checkoutExpiresAt * 1000);
       const params = new URLSearchParams({
         mode: 'payment',
