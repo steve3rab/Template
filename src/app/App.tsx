@@ -1198,14 +1198,12 @@ export function App() {
                       onClick={() => addToCart(product)}
                       disabled={
                         product.stock === 0 ||
-                        (product.stock !== undefined &&
-                          (cart[product.id] ?? 0) >= product.stock)
+                        (product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock)
                       }
                     >
                       {product.stock === 0
                         ? translate('Épuisé', 'Out of stock')
-                        : product.stock !== undefined &&
-                          (cart[product.id] ?? 0) >= product.stock
+                        : product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock
                           ? translate('Stock atteint', 'Stock limit reached')
                           : translate('Ajouter au panier', 'Add to cart')}{' '}
                       <span>＋</span>
@@ -1555,9 +1553,7 @@ export function App() {
                         {checkoutAddresses.map((address) => (
                           <option key={address.id} value={address.id}>
                             {address.label}
-                            {address.isDefault
-                              ? ` · ${translate('Par défaut', 'Default')}`
-                              : ''}
+                            {address.isDefault ? ` · ${translate('Par défaut', 'Default')}` : ''}
                             {' — '}
                             {address.recipient}, {address.line1}, {address.postalCode}{' '}
                             {address.city}

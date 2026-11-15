@@ -188,45 +188,40 @@ describe('Stripe payment routes', () => {
     );
   });
 
-  it(
-    'reuses a session already linked by a concurrent idempotent checkout request',
-    async () => {
-      vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
-      vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');
-      const prisma = setup();
-      updateMany.mockResolvedValueOnce({ count: 0 });
-      vi.mocked(prisma.order.findMany)
-        .mockResolvedValueOnce([order])
-        .mockResolvedValueOnce(
-          [{ ...order, paymentReference: 'cs_test_concurrent' }] as never,
-        );
-      const fetchMock = vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify({
-              id: 'cs_test_concurrent',
-              url: 'https://checkout.stripe.com/c/pay/cs_test_concurrent',
-            }),
-            { status: 200, headers: { 'content-type': 'application/json' } },
-          ),
-      );
-      vi.stubGlobal('fetch', fetchMock);
-      await app.ready();
+  it('reuses a session already linked by a concurrent idempotent checkout request', async () => {
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    vi.stubEnv('APP_ORIGIN', 'http://localhost:5173');
+    const prisma = setup();
+    updateMany.mockResolvedValueOnce({ count: 0 });
+    vi.mocked(prisma.order.findMany)
+      .mockResolvedValueOnce([order])
+      .mockResolvedValueOnce([{ ...order, paymentReference: 'cs_test_concurrent' }] as never);
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'cs_test_concurrent',
+            url: 'https://checkout.stripe.com/c/pay/cs_test_concurrent',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/customer/checkout',
-        headers: { 'content-type': 'application/json' },
-        payload: { orderIds: ['order-1'] },
-      });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/customer/checkout',
+      headers: { 'content-type': 'application/json' },
+      payload: { orderIds: ['order-1'] },
+    });
 
-      expect(response.statusCode).toBe(200);
-      expect(response.json().checkoutUrl).toBe(
-        'https://checkout.stripe.com/c/pay/cs_test_concurrent',
-      );
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(response.statusCode).toBe(200);
+    expect(response.json().checkoutUrl).toBe(
+      'https://checkout.stripe.com/c/pay/cs_test_concurrent',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 
   it('rejects refund requests from non-admin users before accessing Stripe', async () => {
     const prisma = setup();
