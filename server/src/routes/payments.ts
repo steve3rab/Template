@@ -144,7 +144,10 @@ export function registerPaymentRoutes(
           (order) =>
             order.paymentStatus !== 'UNPAID' ||
             order.status !== 'PENDING' ||
-            order.items.length === 0,
+            order.items.length === 0 ||
+            (order.reservationExpiresAt !== null &&
+              order.reservationExpiresAt !== undefined &&
+              order.reservationExpiresAt.getTime() <= Date.now()),
         )
       ) {
         return reply.code(409).send({ error: 'One or more orders cannot be paid.' });
@@ -238,8 +241,12 @@ export function registerPaymentRoutes(
       }
 
       const orderIds = orders.map((order) => order.id).sort();
+      // Match the inventory hold to Stripe's Checkout Session lifetime.
+      const checkoutExpiresAt = Math.floor(Date.now() / 1000) + 30 * 60;
+      const reservationExpiresAt = new Date(checkoutExpiresAt * 1000);
       const params = new URLSearchParams({
         mode: 'payment',
+        expires_at: String(checkoutExpiresAt),
         client_reference_id: orderIds[0] ?? '',
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/?payment=cancelled`,
@@ -309,7 +316,10 @@ export function registerPaymentRoutes(
           status: 'PENDING',
           paymentReference: null,
         },
-        data: { paymentReference: session.data.id },
+        data: {
+          paymentReference: session.data.id,
+          reservationExpiresAt,
+        },
       });
       if (saved.count !== orderIds.length) {
         // A concurrent request with the same Stripe idempotency key may already
