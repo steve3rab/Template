@@ -22,6 +22,7 @@ import { registerPaymentRoutes } from './routes/payments.js';
 import { hashToken } from './auth/tokenHash.js';
 import { isPrismaUniqueConstraintError } from './utils/prismaErrors.js';
 import { UpstashRateLimitStore } from './security/upstashRateLimitStore.js';
+import { releaseExpiredUnlinkedReservations } from './domain/stockReservations.js';
 
 const SESSION_COOKIE = 'template_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -157,6 +158,16 @@ export async function createApp(
     trustProxy: process.env.TRUST_PROXY === 'true',
     bodyLimit: 16 * 1024,
   });
+
+  // Unlinked unpaid orders (for example when Stripe is not configured) must
+  // not hold inventory indefinitely. Stripe-linked orders are released by the
+  // signed expiration webhook instead.
+  const reservationCleanupTimer = setInterval(() => {
+    void releaseExpiredUnlinkedReservations(prisma).catch((error: unknown) => {
+      app.log.error({ err: error }, 'Expired stock reservation cleanup failed.');
+    });
+  }, 60_000);
+  reservationCleanupTimer.unref();
 
   // Keep the exact JSON bytes for Stripe's webhook signature verification.
   app.removeContentTypeParser('application/json');
@@ -496,6 +507,9 @@ export async function createApp(
   registerCommerceRoutes(app, prisma, currentUser);
   registerPaymentRoutes(app, prisma, currentUser);
 
-  app.addHook('onClose', async () => prisma.$disconnect());
+  app.addHook('onClose', async () => {
+    clearInterval(reservationCleanupTimer);
+    await prisma.$disconnect();
+  });
   return app;
 }
