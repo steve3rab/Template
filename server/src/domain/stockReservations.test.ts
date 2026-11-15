@@ -30,7 +30,9 @@ function setup(
 describe('releaseExpiredUnlinkedReservations', () => {
   const now = new Date('2026-11-15T12:00:00.000Z');
 
-  it('cancels an expired unpaid order and restores every linked product quantity atomically', async () => {
+  it(
+    'cancels an expired unpaid order and restores every linked product quantity atomically',
+    async () => {
     const store = setup([
       {
         id: 'order-1',
@@ -76,8 +78,13 @@ describe('releaseExpiredUnlinkedReservations', () => {
     expect(store.productUpdateMany).toHaveBeenCalledTimes(2);
   });
 
-  it('does not restore stock when another process already cancelled or paid the order', async () => {
-    const store = setup([{ id: 'order-raced', items: [{ productId: 'product-1', quantity: 3 }] }], 0);
+  it(
+    'does not restore stock when another process already cancelled or paid the order',
+    async () => {
+      const store = setup(
+        [{ id: 'order-raced', items: [{ productId: 'product-1', quantity: 3 }] }],
+        0,
+      );
 
     await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(0);
 
