@@ -423,12 +423,16 @@ describe('Fashion storefront', () => {
       await user.type(screen.getByLabelText('Code postal'), '75011');
       await user.type(screen.getByLabelText('Ville'), 'Paris');
       await user.click(screen.getByRole('checkbox'));
-      await user.click(screen.getByRole('button', { name: /enregistrer la commande et continuer/i }));
+      await user.click(
+        screen.getByRole('button', { name: /enregistrer la commande et continuer/i }),
+      );
 
       expect(
         await screen.findByRole('heading', { name: /merci pour votre commande/i }),
       ).toBeInTheDocument();
-      expect(screen.getByText(/aucun paiement n’a été effectué pour le moment/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/aucun paiement n’a été effectué pour le moment/i),
+      ).toBeInTheDocument();
       expect(requests).toContainEqual({ url: '/api/customer/addresses', method: 'POST' });
       expect(requests).toContainEqual({ url: '/api/customer/orders', method: 'POST' });
       expect(requests).toContainEqual({ url: '/api/customer/checkout', method: 'POST' });
