@@ -120,6 +120,7 @@ model Order {
   currency          String      @default("EUR")
   paymentStatus     String      @default("UNPAID")
   paymentReference  String?
+  reservationExpiresAt DateTime?
   refundedCents     Int         @default(0)
   shippingRecipient String
   shippingLine1     String
@@ -139,6 +140,7 @@ model Order {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@index([paymentStatus])
+  @@index([status, paymentStatus, reservationExpiresAt])
 }
 
 model OrderItem {
