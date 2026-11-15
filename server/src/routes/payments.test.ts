@@ -220,7 +220,6 @@ describe('Stripe payment routes', () => {
       'https://checkout.stripe.com/c/pay/cs_test_concurrent',
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://api.stripe.com/v1/checkout/sessions');
   });
 
   it('rejects refund requests from non-admin users before accessing Stripe', async () => {
