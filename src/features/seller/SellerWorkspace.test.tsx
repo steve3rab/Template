@@ -285,13 +285,13 @@ describe('SellerWorkspace translations', () => {
         return apiResponse({ error: 'Not found.' }, 404);
       });
       vi.stubGlobal('fetch', fetchMock);
-  
+
       const user = userEvent.setup();
       render(<SellerWorkspace range="30" language="en" />);
-  
+
       expect(await screen.findByRole('alert')).toHaveTextContent(/unable to load seller data/i);
       expect(screen.queryByText(/no products yet/i)).not.toBeInTheDocument();
-  
+
       await user.click(screen.getByRole('button', { name: /try again/i }));
       expect(await screen.findByText(/no products yet/i)).toBeInTheDocument();
       expect(dashboardRequests).toBe(2);
