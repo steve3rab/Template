@@ -79,15 +79,21 @@ const catalogue = [
 ];
 
 function apiResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  return {
+    ok: status >= 200 && status < 300,
     status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+    json: async () => body,
+    clone() {
+      return this;
+    },
+  } as Response;
 }
 
 describe('Fashion storefront', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    // Keep the default language deterministic on runners whose browser locale is English.
+    window.localStorage.setItem('template-react-language', 'fr');
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL) => {
