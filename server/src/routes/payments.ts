@@ -312,19 +312,39 @@ export function registerPaymentRoutes(
         data: { paymentReference: session.data.id },
       });
       if (saved.count !== orderIds.length) {
-        try {
-          await fetch(
-            `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
-              session.data.id,
-            )}/expire`,
-            {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${secretKey}` },
-              signal: AbortSignal.timeout(10000),
-            },
-          );
-        } catch {
-          request.log.error('Unable to expire an unlinked Stripe Checkout session.');
+        // A concurrent request with the same Stripe idempotency key may already
+        // have linked this exact session to every order. Reuse it instead of
+        // expiring a session that another browser request is currently using.
+        const currentOrders = await prisma.order.findMany({
+          where: { id: { in: orderIds }, userId: user.id },
+          select: { id: true, paymentReference: true },
+        });
+        const sessionAlreadyLinked =
+          currentOrders.length === orderIds.length &&
+          currentOrders.every((order) => order.paymentReference === session.data.id);
+
+        if (sessionAlreadyLinked) {
+          return reply.send({ checkoutUrl: session.data.url });
+        }
+
+        const sessionHasAnyOwner = currentOrders.some(
+          (order) => order.paymentReference === session.data.id,
+        );
+        if (!sessionHasAnyOwner) {
+          try {
+            await fetch(
+              `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(
+                session.data.id,
+              )}/expire`,
+              {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${secretKey}` },
+                signal: AbortSignal.timeout(10000),
+              },
+            );
+          } catch {
+            request.log.error('Unable to expire an unlinked Stripe Checkout session.');
+          }
         }
         return reply.code(409).send({ error: 'Orders changed while checkout was being prepared.' });
       }
