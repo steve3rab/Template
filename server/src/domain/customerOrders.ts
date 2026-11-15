@@ -1,4 +1,5 @@
 import type { Address, Prisma, PrismaClient } from '@prisma/client';
+import { STOCK_RESERVATION_TTL_MS } from './stockReservations.js';
 
 type ShippingAddress = Pick<
   Address,
@@ -24,6 +25,7 @@ export async function createCustomerOrdersFromCart(
   userId: string,
   address: ShippingAddress,
 ): Promise<Prisma.OrderGetPayload<{ include: { items: true } }>[]> {
+  const reservationExpiresAt = new Date(Date.now() + STOCK_RESERVATION_TTL_MS);
   return prisma.$transaction(async (tx) => {
     const cart = await tx.cartItem.findMany({ where: { userId } });
     if (!cart.length) throw new CustomerOrderCreationError('EMPTY_CART');
@@ -78,6 +80,7 @@ export async function createCustomerOrdersFromCart(
           sellerId: group.sellerId,
           addressId: address.id,
           totalCents: group.totalCents,
+          reservationExpiresAt,
           shippingRecipient: address.recipient,
           shippingLine1: address.line1,
           shippingLine2: address.line2,
