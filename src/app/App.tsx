@@ -1198,12 +1198,14 @@ export function App() {
                       onClick={() => addToCart(product)}
                       disabled={
                         product.stock === 0 ||
-                        (product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock)
+                        (product.stock !== undefined &&
+                          (cart[product.id] ?? 0) >= product.stock)
                       }
                     >
                       {product.stock === 0
                         ? translate('Épuisé', 'Out of stock')
-                        : product.stock !== undefined && (cart[product.id] ?? 0) >= product.stock
+                        : product.stock !== undefined &&
+                          (cart[product.id] ?? 0) >= product.stock
                           ? translate('Stock atteint', 'Stock limit reached')
                           : translate('Ajouter au panier', 'Add to cart')}{' '}
                       <span>＋</span>
