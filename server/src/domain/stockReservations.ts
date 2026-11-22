@@ -23,7 +23,10 @@ export async function releaseExpiredUnlinkedReservations(
       paymentReference: null,
       reservationExpiresAt: { lte: now },
     },
-    include: { items: { select: { productId: true, quantity: true } } },
+    select: {
+      id: true,
+      items: { select: { productId: true, quantity: true } },
+    },
     orderBy: { reservationExpiresAt: 'asc' },
     take: EXPIRY_BATCH_SIZE,
   });
