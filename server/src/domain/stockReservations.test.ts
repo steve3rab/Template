@@ -97,7 +97,9 @@ describe('releaseExpiredUnlinkedReservations', () => {
     },
   );
 
-  it('does not query or release orders that still have a Stripe session reference', async () => {
+  it(
+    'does not query or release orders that still have a Stripe session reference',
+    async () => {
     const store = setup([]);
 
     await expect(releaseExpiredUnlinkedReservations(store.prisma, now)).resolves.toBe(0);
@@ -109,5 +111,6 @@ describe('releaseExpiredUnlinkedReservations', () => {
     );
     expect(store.orderUpdateMany).not.toHaveBeenCalled();
     expect(store.productUpdateMany).not.toHaveBeenCalled();
-  });
+    },
+  );
 });
