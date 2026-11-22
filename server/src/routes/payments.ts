@@ -658,7 +658,8 @@ export function registerPaymentRoutes(
           }
           return reply.code(202).send({
             pending: true,
-            message: 'This refund request is already being processed. Retry with the same request key.',
+            message:
+              'This refund request is already being processed. Retry with the same request key.',
           });
         }
         if (!reservation)
