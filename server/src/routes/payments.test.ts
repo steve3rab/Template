@@ -309,6 +309,44 @@ describe('Stripe payment routes', () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
   });
 
+  it('returns the existing pending refund when identical admin requests race on the unique request key', async () => {
+    const admin = { id: 'admin-1', role: 'ADMIN' } as User;
+    const prisma = setup(1000, async () => admin);
+    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_example');
+    const pendingRefund = {
+      id: 'financial-transaction-existing',
+      stripeObjectId: 'stable-refund-idempotency-key',
+      requestKey: '00000000-0000-4000-8000-000000000012',
+      status: 'PENDING',
+      amountCents: 1200,
+      currency: 'EUR',
+      createdAt: new Date(),
+    };
+    vi.mocked(prisma.financialTransactionFindFirst)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(pendingRefund as never);
+    vi.mocked(prisma.financialTransactionCreate).mockRejectedValueOnce({ code: 'P2002' });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/orders/order-1/refund',
+      payload: {
+        amountCents: 1200,
+        requestKey: '00000000-0000-4000-8000-000000000012',
+      },
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toMatchObject({ pending: true });
+    expect(response.json().message).toMatch(/already being processed/i);
+    expect(prisma.financialTransactionFindFirst).toHaveBeenCalledTimes(3);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('processes a partial refund and records it in the financial ledger', async () => {
     const admin = { id: 'admin-1', role: 'ADMIN' } as User;
     const prisma = setup(1000, async () => admin);

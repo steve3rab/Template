@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { ResolveUser } from '../auth/requireUser.js';
 import { requireUser } from '../auth/requireUser.js';
 import { checkoutInputSchema } from '../schemas/commerce.js';
+import { isPrismaUniqueConstraintError } from '../utils/prismaErrors.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -603,29 +604,63 @@ export function registerPaymentRoutes(
           .digest('hex');
 
       if (!isRetry) {
-        const reservation = await prisma.$transaction(async (tx) => {
-          const changed = await tx.order.updateMany({
-            where: {
-              id: order.id,
-              paymentStatus: order.paymentStatus,
+        let reservation: boolean;
+        try {
+          reservation = await prisma.$transaction(async (tx) => {
+            const changed = await tx.order.updateMany({
+              where: {
+                id: order.id,
+                paymentStatus: order.paymentStatus,
+                refundedCents: order.refundedCents,
+              },
+              data: { refundedCents: { increment: amountCents } },
+            });
+            if (changed.count !== 1) return false;
+            await tx.financialTransaction.create({
+              data: {
+                orderId: order.id,
+                stripeObjectId: idempotencyKey,
+                type: 'REFUND',
+                requestKey: body.data.requestKey,
+                status: 'PENDING',
+                amountCents,
+                currency: order.currency,
+              },
+            });
+            return true;
+          });
+        } catch (error) {
+          if (!isPrismaUniqueConstraintError(error)) throw error;
+
+          // Two admin requests can race before either sees the other's pending
+          // intent. The unique requestKey constraint is the final idempotency
+          // boundary; re-read the winner instead of surfacing a 500 to the client.
+          const concurrentRefund = await prisma.financialTransaction.findFirst({
+            where: { orderId: order.id, type: 'REFUND', requestKey: body.data.requestKey },
+            orderBy: { createdAt: 'asc' },
+          });
+          if (!concurrentRefund) throw error;
+          if (concurrentRefund.status === 'SUCCEEDED') {
+            return reply.send({
+              refund: {
+                id: concurrentRefund.stripeObjectId,
+                amountCents: concurrentRefund.amountCents,
+                currency: concurrentRefund.currency,
+                status: 'succeeded',
+              },
               refundedCents: order.refundedCents,
-            },
-            data: { refundedCents: { increment: amountCents } },
+              remainingRefundableCents: order.totalCents - order.refundedCents,
+              paymentStatus: order.paymentStatus,
+            });
+          }
+          if (concurrentRefund.status !== 'PENDING') {
+            return reply.code(409).send({ error: 'This refund request cannot be retried.' });
+          }
+          return reply.code(202).send({
+            pending: true,
+            message: 'This refund request is already being processed. Retry with the same request key.',
           });
-          if (changed.count !== 1) return false;
-          await tx.financialTransaction.create({
-            data: {
-              orderId: order.id,
-              stripeObjectId: idempotencyKey,
-              type: 'REFUND',
-              requestKey: body.data.requestKey,
-              status: 'PENDING',
-              amountCents,
-              currency: order.currency,
-            },
-          });
-          return true;
-        });
+        }
         if (!reservation)
           return reply.code(409).send({ error: 'Order refund state changed. Refresh and retry.' });
       }
