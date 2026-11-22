@@ -53,7 +53,10 @@ describe('releaseExpiredUnlinkedReservations', () => {
           paymentReference: null,
           reservationExpiresAt: { lte: now },
         },
-        select: { id: true, items: { select: { productId: true, quantity: true } } },
+        select: {
+          id: true,
+          items: { select: { productId: true, quantity: true } },
+        },
         orderBy: { reservationExpiresAt: 'asc' },
         take: 100,
       });
